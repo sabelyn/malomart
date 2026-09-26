@@ -1,0 +1,8 @@
+{
+  "extends": "@mm/config/tsconfig",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src", "test", "eslint.config.mjs"]
+}

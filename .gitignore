@@ -1,0 +1,18 @@
+coverage
+dist
+node_modules
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# Local settings
+.env
+!.env.example
+/local
+*.local
+*.local.*
+
+
+# Turborepo
+.turbo

@@ -1,0 +1,11 @@
+{
+  "extends": "@mm/config/tsconfig",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node", "vitest/globals"],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "test", "eslint.config.mjs", "vite.config.mts"]
+}
