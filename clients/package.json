@@ -8,6 +8,14 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./dist/index.mjs"
+    },
+    "./db": {
+      "types": "./src/dbClient.ts",
+      "default": "./dist/dbClient.js"
+    },
+    "./s3": {
+      "types": "./src/s3Client.ts",
+      "default": "./dist/s3Client.js"
     }
   },
   "scripts": {

@@ -1,7 +1,7 @@
-import { enum as zenum, partialRecord, iso, record, strictObject, number, uuid } from "zod";
 import type { infer as zinfer } from "zod";
+import { iso, partialRecord, record, strictObject, uuid, enum as zenum } from "zod";
 
-import { PositiveInt } from "@/common/types";
+import { PositiveInt } from "../common/types";
 
 export const OrderStatus = {
   Placed: "Placed",
@@ -11,7 +11,7 @@ export const OrderStatus = {
   Cancelled: "Cancelled"
 } as const;
 export const OrderStatusSchema = zenum(OrderStatus);
-export type OrderStatus = typeof OrderStatus[keyof typeof OrderStatus];
+export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
 
 export const OrderItemEntry = strictObject({
   amount: PositiveInt,

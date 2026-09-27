@@ -27,6 +27,7 @@
   },
   "scripts": {
     "build": "vite build",
+    "check": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest run --project unit"

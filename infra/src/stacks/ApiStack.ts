@@ -1,5 +1,3 @@
-import path from "node:path";
-
 import { CfnOutput, Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
 import { CorsHttpMethod, HttpApi, HttpMethod, HttpNoneAuthorizer, VpcLink } from "aws-cdk-lib/aws-apigatewayv2";
 import type { IHttpRouteAuthorizer } from "aws-cdk-lib/aws-apigatewayv2";
@@ -19,11 +17,15 @@ import {
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { DnsRecordType, PrivateDnsNamespace } from "aws-cdk-lib/aws-servicediscovery";
 import type { Construct } from "constructs";
+import path from "node:path";
 
 import type { AuthStack } from "./AuthStack";
+import type { DbStack } from "./DbStack";
+import { INDEXES } from "./DbStack";
 
 type Props = {
   authStack: AuthStack;
+  dbStack: DbStack;
 };
 
 type RouteAccess = "public" | "user" | "admin";
@@ -55,9 +57,7 @@ export class ApiStack extends Stack {
     const vpc = new Vpc(this, "Vpc", {
       maxAzs: 2,
       natGateways: 0,
-      subnetConfiguration: [
-        { name: "Public", subnetType: SubnetType.PUBLIC }
-      ]
+      subnetConfiguration: [{ name: "Public", subnetType: SubnetType.PUBLIC }]
     });
 
     const cluster = new Cluster(this, "Cluster", {
@@ -70,6 +70,7 @@ export class ApiStack extends Stack {
       vpc
     });
 
+    const { tables } = props.dbStack;
     const taskDefinition = new FargateTaskDefinition(this, "TaskDefinition", {
       cpu: 256,
       memoryLimitMiB: 512,
@@ -78,6 +79,7 @@ export class ApiStack extends Stack {
         operatingSystemFamily: OperatingSystemFamily.LINUX
       }
     });
+    tables.products.grants.readWriteData(taskDefinition.taskRole);
 
     const logGroup = new LogGroup(this, "ApiLogs", {
       retention: RetentionDays.ONE_WEEK,
@@ -94,6 +96,10 @@ export class ApiStack extends Stack {
         ADMIN_SCOPE: adminScope,
         FRONTEND_URL,
         PORT: String(API_PORT),
+        TABLE_INDEXES: JSON.stringify(INDEXES),
+        TABLE_NAMES: JSON.stringify(
+          Object.fromEntries(Object.entries(tables).map(([key, table]) => [key, table.tableName]))
+        ),
         USER_POOL_ID: userPool.userPoolId,
         USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId
       },
@@ -121,9 +127,7 @@ export class ApiStack extends Stack {
       cluster,
       taskDefinition,
       desiredCount: 1,
-      capacityProviderStrategies: [
-        { capacityProvider: "FARGATE_SPOT", weight: 1 }
-      ],
+      capacityProviderStrategies: [{ capacityProvider: "FARGATE_SPOT", weight: 1 }],
       minHealthyPercent: 100,
       maxHealthyPercent: 200,
       assignPublicIp: true,

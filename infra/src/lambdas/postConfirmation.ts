@@ -10,11 +10,13 @@ export const handler: PostConfirmationTriggerHandler = async event => {
     return event;
   }
 
-  await cognito.send(new AdminAddUserToGroupCommand({
-    UserPoolId: event.userPoolId,
-    Username: event.userName,
-    GroupName: CUSTOMER_GROUP
-  }));
+  await cognito.send(
+    new AdminAddUserToGroupCommand({
+      UserPoolId: event.userPoolId,
+      Username: event.userName,
+      GroupName: CUSTOMER_GROUP
+    })
+  );
 
   return event;
 };

@@ -11,7 +11,7 @@ export const Category = {
   Weapons: "Weapons"
 } as const;
 export const CategorySchema = zenum(Category);
-export type Category = typeof Category[keyof typeof Category];
+export type Category = (typeof Category)[keyof typeof Category];
 
 export const Product = strictObject({
   id: uuid(),

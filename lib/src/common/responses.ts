@@ -1,12 +1,11 @@
-import { strictObject } from "zod";
 import type { infer as zinfer } from "zod";
+import { boolean, strictObject, string } from "zod";
 
-import { PositiveInt, NonnegativeInt } from "./types";
+import { PositiveInt } from "./types";
 
 export const PaginationData = strictObject({
-  page: PositiveInt,
-  limit: PositiveInt,
-  total: NonnegativeInt,
-  totalPages: PositiveInt
+  cursor: string().optional(),
+  hasNext: boolean(),
+  limit: PositiveInt
 });
 export type PaginationData = zinfer<typeof PaginationData>;

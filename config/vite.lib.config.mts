@@ -15,9 +15,7 @@ export const defineLibConfig = (configUrl: string, entries: string[]) => {
 
   return defineConfig({
     resolve: {
-      alias: [
-        { find: /^@\//, replacement: `${root}src/` }
-      ]
+      alias: [{ find: /^@\//, replacement: `${root}src/` }]
     },
     build: {
       target: "node24",
@@ -30,11 +28,7 @@ export const defineLibConfig = (configUrl: string, entries: string[]) => {
         fileName: (_format, name) => `${name}.mjs`
       },
       rolldownOptions: {
-        external: [
-          /^node:/,
-          ...builtinModules,
-          ...deps.map(dep => new RegExp(`^${dep}(/.*)?$`))
-        ],
+        external: [/^node:/, ...builtinModules, ...deps.map(dep => new RegExp(`^${dep}(/.*)?$`))],
         output: {
           preserveModules: true,
           preserveModulesRoot: `${root}src`

@@ -1,8 +1,8 @@
 import type { infer as zinfer } from "zod";
 import { strictObject } from "zod";
 
+import { PaginationData } from "../common/responses";
 import { Product } from "./types";
-import { PaginationData } from "@/common/responses";
 
 export const ProductOverview = Product.pick({
   id: true,
@@ -12,7 +12,7 @@ export const ProductOverview = Product.pick({
 export type ProductOverview = zinfer<typeof ProductOverview>;
 
 export const ListProductsResponse = strictObject({
-  products: ProductOverview.array(),
+  data: ProductOverview.array(),
   pagination: PaginationData
 });
 export type ListProductsResponse = zinfer<typeof ListProductsResponse>;

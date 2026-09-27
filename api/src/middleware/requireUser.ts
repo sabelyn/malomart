@@ -7,4 +7,4 @@ export const requireUser = (req: Request, res: Response, next: NextFunction) => 
     throw new StatusCodeError(401, "Unauthorized");
   }
   return next();
-}
+};

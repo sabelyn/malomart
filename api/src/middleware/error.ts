@@ -17,4 +17,4 @@ export const error = (err: Error, _req: Request, res: Response, _next: NextFunct
   return res.status(500).json({
     message: "Something unexpected happened. Try again later."
   });
-}
+};

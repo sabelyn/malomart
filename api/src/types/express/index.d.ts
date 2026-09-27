@@ -2,7 +2,7 @@ import type { DependencyContainer } from "tsyringe";
 
 import type { User } from "../user";
 
-export { };
+export {};
 
 declare global {
   namespace Express {
@@ -12,4 +12,3 @@ declare global {
     }
   }
 }
-

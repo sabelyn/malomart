@@ -5,9 +5,7 @@ const src = fileURLToPath(new URL("./src", import.meta.url));
 
 export default defineConfig({
   resolve: {
-    alias: [
-      { find: /^@\//, replacement: `${src}/` }
-    ]
+    alias: [{ find: /^@\//, replacement: `${src}/` }]
   },
   ssr: {
     target: "node",

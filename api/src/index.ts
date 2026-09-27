@@ -10,10 +10,12 @@ import api from "@/routes";
 import env from "./env";
 
 const app = express();
-app.use(cors({
-  origin: env.FRONTEND_URL,
-  allowedHeaders: "Content-Type, Authorization"
-}));
+app.use(
+  cors({
+    origin: env.FRONTEND_URL,
+    allowedHeaders: "Content-Type, Authorization"
+  })
+);
 
 app.get("/health", (_req, res) => res.sendStatus(200));
 
@@ -44,6 +46,6 @@ const start = () => {
   const server = app.listen(env.PORT, () => console.log(`API is listening on port ${env.PORT}.`));
   process.once("SIGTERM", signal => shutdown(server, signal));
   process.once("SIGINT", signal => shutdown(server, signal));
-}
+};
 
 start();

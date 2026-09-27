@@ -1,7 +1,4 @@
-import path from "node:path";
-
 import { Stack } from "aws-cdk-lib";
-import type { Construct } from "constructs";
 import {
   FeaturePlan,
   LambdaVersion,
@@ -13,6 +10,8 @@ import {
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Architecture, Runtime } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
+import type { Construct } from "constructs";
+import path from "node:path";
 
 const ADMIN_GROUP = "admin";
 const CUSTOMER_GROUP = "customer";
@@ -74,10 +73,12 @@ export class AuthStack extends Stack {
         CUSTOMER_GROUP
       }
     });
-    postConfirmation.addToRolePolicy(new PolicyStatement({
-      actions: ["cognito-idp:AdminAddUserToGroup"],
-      resources: [this.formatArn({ service: "cognito-idp", resource: "userpool", resourceName: "*" })]
-    }));
+    postConfirmation.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["cognito-idp:AdminAddUserToGroup"],
+        resources: [this.formatArn({ service: "cognito-idp", resource: "userpool", resourceName: "*" })]
+      })
+    );
     this.userPool.addTrigger(UserPoolOperation.POST_CONFIRMATION, postConfirmation);
   }
 }

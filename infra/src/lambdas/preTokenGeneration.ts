@@ -3,7 +3,7 @@ import type { PreTokenGenerationV2TriggerHandler } from "aws-lambda";
 const ADMIN_GROUP = process.env.ADMIN_GROUP!;
 const ADMIN_SCOPE = process.env.ADMIN_SCOPE!;
 
-export const handler: PreTokenGenerationV2TriggerHandler = async event => {
+export const handler: PreTokenGenerationV2TriggerHandler = event => {
   const groups = event.request.groupConfiguration.groupsToOverride ?? [];
 
   if (groups.includes(ADMIN_GROUP)) {
@@ -12,5 +12,5 @@ export const handler: PreTokenGenerationV2TriggerHandler = async event => {
     };
   }
 
-  return event;
+  return Promise.resolve(event);
 };

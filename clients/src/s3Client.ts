@@ -17,7 +17,7 @@ let baseClient: S3Client;
 export const s3Client = () => {
   baseClient ??= new S3Client({});
   return baseClient;
-}
+};
 
 export const getUploadUrl = (client: S3Client, bucket: string, key: string, opts?: UploadUrlOptions) => {
   const command = new PutObjectCommand({

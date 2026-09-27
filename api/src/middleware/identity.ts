@@ -32,10 +32,9 @@ export const identity = async (req: Request, res: Response, next: NextFunction) 
 
     req.container = scopedContainer;
     req.user = user;
-
   } catch (err) {
     throw new StatusCodeError(401, "Unauthorized", err);
   }
 
   return next();
-}
+};

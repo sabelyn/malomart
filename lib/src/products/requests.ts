@@ -1,6 +1,7 @@
-import { strictObject, number, uuid } from "zod";
-import type { infer as zinfer } from "zod";
+import type { input, infer as zinfer } from "zod";
+import { number, object, strictObject, uuid } from "zod";
 
+import { atLeastOneKeyRefinement, PaginationQuery, QueryBool } from "../common";
 import { CategorySchema, Product } from "./types";
 
 export const CreateProductBody = Product.pick({
@@ -12,11 +13,21 @@ export const CreateProductBody = Product.pick({
 });
 export type CreateProductBody = zinfer<typeof CreateProductBody>;
 
+export const ListProductsQuery = object({
+  ...PaginationQuery.shape,
+  category: CategorySchema.optional(),
+  inStock: QueryBool.optional()
+});
+export type ListProductsQuery = zinfer<typeof ListProductsQuery>;
+export type ListProductsQueryInput = input<typeof ListProductsQuery>;
+
 export const UpdateProductBody = Product.pick({
   title: true,
   description: true,
   price: true
-}).partial();
+})
+  .partial()
+  .refine(atLeastOneKeyRefinement);
 export type UpdateProductBody = zinfer<typeof UpdateProductBody>;
 
 export const StockUpdate = strictObject({
