@@ -4,7 +4,7 @@ import { container } from "tsyringe";
 
 import { USER } from "@/contracts/tokens";
 import env from "@/env";
-import { StatusCodeError } from "@/errors/StatusCodeError";
+import { unauthorized } from "@/errors/helpers";
 
 const verifier = CognitoJwtVerifier.create({
   clientId: env.USER_POOL_CLIENT_ID,
@@ -33,7 +33,7 @@ export const identity = async (req: Request, res: Response, next: NextFunction) 
     req.container = scopedContainer;
     req.user = user;
   } catch (err) {
-    throw new StatusCodeError(401, "Unauthorized", err);
+    throw unauthorized(err);
   }
 
   return next();

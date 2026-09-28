@@ -4,7 +4,7 @@ import { container } from "tsyringe";
 
 import type { IProductService } from "@/contracts";
 import { PRODUCT_SERVICE } from "@/contracts/tokens";
-import { StatusCodeError } from "@/errors/StatusCodeError";
+import { ApiError } from "@/errors/ApiError";
 import api from "@/routes";
 import { asAdmin, asRegularUser, createTestApp } from "../../helpers/testApp";
 
@@ -71,12 +71,13 @@ describe("GET /products", () => {
     const res = await request(app).get("/products").query(query);
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toMatch(/^Request failed validation/);
+    expect(res.body.message).toBe("Request validation failed.");
+    expect(res.body.details).toBeDefined();
     expect(service.listProducts).not.toHaveBeenCalled();
   });
 
   it("passes through service errors", async () => {
-    service.listProducts.mockRejectedValue(new StatusCodeError(400, "Invalid cursor."));
+    service.listProducts.mockRejectedValue(new ApiError(400, "Invalid cursor."));
 
     const res = await request(app).get("/products").query({ cursor: "bad" });
 
@@ -102,7 +103,7 @@ describe("GET /products/:id", () => {
   });
 
   it("returns a 404 when the product does not exist", async () => {
-    service.getProduct.mockRejectedValue(new StatusCodeError(404, "Product could not be found."));
+    service.getProduct.mockRejectedValue(new ApiError(404, "Product could not be found."));
 
     const res = await request(app).get(`/products/${ID}`);
 
@@ -126,7 +127,7 @@ describe("GET /products/:id", () => {
     const res = await request(app).get(`/products/${ID}`);
 
     expect(res.status).toBe(500);
-    expect(res.body).toEqual({ message: "Something unexpected happened. Try again later." });
+    expect(res.body).toEqual({ message: "Something went wrong handling this request.", details: { endpoint: "getProduct" } });
   });
 });
 
@@ -206,7 +207,7 @@ describe("PUT /products/:id", () => {
   });
 
   it("returns a 404 when the product does not exist", async () => {
-    service.updateProduct.mockRejectedValue(new StatusCodeError(404, "Product could not be found."));
+    service.updateProduct.mockRejectedValue(new ApiError(404, "Product could not be found."));
 
     const res = await request(app).put(`/products/${ID}`).set(asAdmin).send(update);
 

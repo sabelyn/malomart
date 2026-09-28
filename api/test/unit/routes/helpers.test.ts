@@ -2,7 +2,7 @@ import { Endpoint, Route } from "@mm/lib/api";
 import type { Response } from "express";
 import { strictObject, string, ZodError } from "zod";
 
-import { StatusCodeError } from "@/errors/StatusCodeError";
+import { ApiError } from "@/errors/ApiError";
 import { requireAdmin, requireUser } from "@/middleware";
 import { pathAndMiddleware, respond } from "@/routes/helpers";
 
@@ -81,9 +81,9 @@ describe("respond", () => {
       thrown = err;
     }
 
-    expect(thrown).toBeInstanceOf(StatusCodeError);
+    expect(thrown).toBeInstanceOf(ApiError);
     expect(thrown).toMatchObject({ statusCode: 500, details: { endpoint: "op" } });
-    expect((thrown as StatusCodeError).cause).toBeInstanceOf(ZodError);
+    expect((thrown as ApiError).cause).toBeInstanceOf(ZodError);
     expect(res.json).not.toHaveBeenCalled();
   });
 

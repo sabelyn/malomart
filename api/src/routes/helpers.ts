@@ -2,7 +2,7 @@ import type { Body, Endpoint, Params, Query } from "@mm/lib/api";
 import { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 
-import { StatusCodeError } from "@/errors/StatusCodeError";
+import { internal } from "@/errors/helpers";
 import { requireAdmin, requireUser } from "@/middleware";
 
 type Middleware = (req: Request, res: Response, next: NextFunction) => void | Response | Promise<Response> | Promise<void>;
@@ -21,7 +21,7 @@ export const respond = <TEndpoint extends AnyEndpoint>(res: Response, endpoint: 
     return endpoint.response(res, body);
   } catch (err) {
     if (err instanceof ZodError) {
-      throw new StatusCodeError(500, "Something unexpected happened. Try again later.", err, { endpoint: endpoint.id });
+      throw internal(err, { endpoint: endpoint.id });
     }
     throw err;
   }

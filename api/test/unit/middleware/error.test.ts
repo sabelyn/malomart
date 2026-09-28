@@ -1,16 +1,19 @@
 import type { Request, Response } from "express";
+import type { MockInstance } from "vitest";
 import { number, strictObject } from "zod";
 
-import { StatusCodeError } from "@/errors/StatusCodeError";
+import { ApiError } from "@/errors/ApiError";
 import { error } from "@/middleware/error";
 
 const mockResponse = () => {
   const res = {
     status: vi.fn(),
-    json: vi.fn()
+    json: vi.fn(),
+    set: vi.fn()
   };
   res.status.mockReturnValue(res);
   res.json.mockReturnValue(res);
+  res.set.mockReturnValue(res);
   return res;
 };
 
@@ -21,32 +24,43 @@ const handle = (err: Error) => {
   return { res, next };
 };
 
-describe("error", () => {
-  it("responds with the status and message of a StatusCodeError", () => {
-    const { res, next } = handle(new StatusCodeError(404, "Not found"));
+let log: MockInstance<typeof console.error>;
 
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({ message: "Not found" });
+beforeEach(() => {
+  log = vi.spyOn(console, "error").mockImplementation(() => {});
+});
+
+describe("error", () => {
+  it("responds with the status, message, and details of an ApiError", () => {
+    const { res, next } = handle(new ApiError(400, "Bad cursor", { details: { cursor: "abc" } }));
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: "Bad cursor", details: { cursor: "abc" } });
     expect(next).not.toHaveBeenCalled();
   });
 
-  it("does not log client StatusCodeErrors", () => {
-    const log = vi.spyOn(console, "error").mockImplementation(() => {});
-
-    handle(new StatusCodeError(404, "Not found"));
+  it.each([401, 403])("does not log %i errors", statusCode => {
+    handle(new ApiError(statusCode, "Nope"));
 
     expect(log).not.toHaveBeenCalled();
   });
 
-  it("logs server StatusCodeErrors while still sending their message", () => {
-    const log = vi.spyOn(console, "error").mockImplementation(() => {});
-    const err = new StatusCodeError(503, "Busy");
+  it.each([400, 404, 500, 503])("logs %i errors", statusCode => {
+    handle(new ApiError(statusCode, "Oops"));
 
-    const { res } = handle(err);
+    expect(log).toHaveBeenCalledWith(expect.objectContaining({ statusCode, message: "Oops" }));
+  });
 
-    expect(log).toHaveBeenCalledWith(err);
-    expect(res.status).toHaveBeenCalledWith(503);
-    expect(res.json).toHaveBeenCalledWith({ message: "Busy" });
+  it("sets Retry-After for retryable errors", () => {
+    const { res } = handle(new ApiError(503, "Busy", { retryable: true }));
+
+    expect(res.set).toHaveBeenCalledWith("Retry-After", expect.any(String));
+  });
+
+  it("does not set Retry-After for non-retryable errors", () => {
+    const { res } = handle(new ApiError(500, "Broken"));
+
+    expect(res.set).not.toHaveBeenCalled();
   });
 
   it("responds with a 400 and the validation issues for a ZodError", () => {
@@ -55,19 +69,20 @@ describe("error", () => {
     const { res } = handle(result.error!);
 
     expect(res.status).toHaveBeenCalledWith(400);
-    const [{ message }] = res.json.mock.lastCall!;
-    expect(message).toMatch(/^Request failed validation: /);
-    expect(message).toContain("price");
+    const [{ message, details }] = res.json.mock.lastCall!;
+    expect(message).toBe("Request validation failed.");
+    expect(details).toMatchObject({ properties: { price: expect.anything() } });
   });
 
-  it("logs and hides details of unexpected errors behind a 500", () => {
-    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+  it("hides details of unexpected errors behind a 500 and logs the cause", () => {
     const err = new Error("database exploded");
 
     const { res } = handle(err);
 
-    expect(log).toHaveBeenCalledWith(err);
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ message: "Something unexpected happened. Try again later." });
+    expect(res.json).toHaveBeenCalledWith({ message: "Something went wrong handling this request.", details: undefined });
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({ statusCode: 500, cause: expect.objectContaining({ message: "database exploded" }) })
+    );
   });
 });

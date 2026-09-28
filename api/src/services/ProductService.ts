@@ -6,18 +6,19 @@ import { getPaginatedResults, InvalidCursorError } from "@mm/clients";
 import type { CreateProductBody, ListProductsQuery, Product, UpdateProductBody } from "@mm/lib";
 import { isDefined, ProductDto, ProductOverview } from "@mm/lib";
 import { inject, injectable } from "tsyringe";
+import { ZodError } from "zod";
 
 import type { IProductService } from "@/contracts";
 import { DB } from "@/contracts/tokens";
 import env from "@/env";
-import { StatusCodeError } from "@/errors/StatusCodeError";
+import { badRequest, internal, notFound } from "@/errors/helpers";
 
 const TableName = env.TABLE_NAMES.products;
 const categoryIndex = env.TABLE_INDEXES.productsByCategory;
 
 @injectable()
 export class ProductService implements IProductService {
-  constructor(@inject(DB) private readonly db: DynamoDBDocumentClient) {}
+  constructor(@inject(DB) private readonly db: DynamoDBDocumentClient) { }
 
   createProduct = async (data: CreateProductBody) => {
     const Item: Product = {
@@ -50,7 +51,7 @@ export class ProductService implements IProductService {
 
     const response = await this.db.send(command);
     if (!response.Item) {
-      throw new StatusCodeError(404, "Product could not be found.", null, { productId: id });
+      throw notFound("Product could not be found.");
     }
 
     return this.toProductDto(response.Item);
@@ -93,7 +94,7 @@ export class ProductService implements IProductService {
       };
     } catch (err) {
       if (err instanceof InvalidCursorError) {
-        throw new StatusCodeError(400, err.message, err, { cursor });
+        throw badRequest(err.message, { cause: err, details: { cursor } });
       }
       throw err;
     }
@@ -131,13 +132,24 @@ export class ProductService implements IProductService {
       return this.toProductDto(response.Attributes);
     } catch (err) {
       if (err instanceof ConditionalCheckFailedException) {
-        throw new StatusCodeError(404, "Product could not be found.", err, { productId: id, updateData: data });
+        throw notFound("Product could not be found.");
       }
       throw err;
     }
   };
 
-  private toProductDto = (data: unknown) => ProductDto.parse(data);
+  private toProductDto = (data: unknown) => this.parseStored(() => ProductDto.parse(data));
 
-  private toProductsList = (data: unknown[]) => ProductOverview.array().parse(data);
+  private toProductsList = (data: unknown[]) => this.parseStored(() => ProductOverview.array().parse(data));
+
+  private parseStored = <T>(parse: () => T): T => {
+    try {
+      return parse();
+    } catch (err) {
+      if (err instanceof ZodError) {
+        throw internal(err);
+      }
+      throw err;
+    }
+  };
 }

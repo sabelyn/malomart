@@ -1,10 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
 
-import { StatusCodeError } from "@/errors/StatusCodeError";
+import { unauthorized } from "@/errors/helpers";
 
 export const requireUser = (req: Request, res: Response, next: NextFunction) => {
   if (!req.user) {
-    throw new StatusCodeError(401, "Unauthorized");
+    throw unauthorized();
   }
   return next();
 };

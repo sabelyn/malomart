@@ -4,7 +4,7 @@ import type { CreateProductBody, Product } from "@mm/lib";
 import { Category } from "@mm/lib";
 
 import env from "@/env";
-import { StatusCodeError } from "@/errors/StatusCodeError";
+import { ApiError } from "@/errors/ApiError";
 import { ProductService } from "@/services";
 import { clearTable, putItems } from "../../helpers/db";
 
@@ -59,8 +59,18 @@ describe("getProduct", () => {
   it("throws a 404 when the product does not exist", async () => {
     const result = service.getProduct(crypto.randomUUID());
 
-    await expect(result).rejects.toBeInstanceOf(StatusCodeError);
+    await expect(result).rejects.toBeInstanceOf(ApiError);
     await expect(result).rejects.toMatchObject({ statusCode: 404 });
+  });
+
+  it("throws a 500 when the stored product is malformed", async () => {
+    const product = makeProduct({ price: -1 });
+    await putItems(db, TableName, [product]);
+
+    const result = service.getProduct(product.id);
+
+    await expect(result).rejects.toBeInstanceOf(ApiError);
+    await expect(result).rejects.toMatchObject({ statusCode: 500 });
   });
 });
 
@@ -87,7 +97,7 @@ describe("updateProduct", () => {
     const id = crypto.randomUUID();
     const result = service.updateProduct(id, { price: 120 });
 
-    await expect(result).rejects.toBeInstanceOf(StatusCodeError);
+    await expect(result).rejects.toBeInstanceOf(ApiError);
     await expect(result).rejects.toMatchObject({ statusCode: 404 });
     expect(await getRawItem(id)).toBeUndefined();
   });
@@ -198,7 +208,7 @@ describe("listProducts", () => {
   ])("throws a 400 when the cursor %s", async (_, cursor) => {
     const result = service.listProducts({ limit: 20, cursor });
 
-    await expect(result).rejects.toBeInstanceOf(StatusCodeError);
+    await expect(result).rejects.toBeInstanceOf(ApiError);
     await expect(result).rejects.toMatchObject({ statusCode: 400 });
   });
 

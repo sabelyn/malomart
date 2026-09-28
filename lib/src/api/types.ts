@@ -1,5 +1,5 @@
 import type { input, output, ZodObject, ZodType } from "zod";
-import { strictObject, string } from "zod";
+import { strictObject, string, unknown } from "zod";
 
 export const Tags = {
   Products: "The shop's catalog."
@@ -52,5 +52,6 @@ export type ValidIncomingRequest<
 }
 
 export const ErrorResponse = strictObject({
-  message: string()
+  message: string(),
+  details: unknown().optional()
 });

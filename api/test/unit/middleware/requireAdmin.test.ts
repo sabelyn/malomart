@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 
-import { StatusCodeError } from "@/errors/StatusCodeError";
+import { ApiError } from "@/errors/ApiError";
 import { requireAdmin } from "@/middleware/requireAdmin";
 
 const res = {} as Response;
@@ -19,7 +19,7 @@ describe("requireAdmin", () => {
     const req = { user: { id: "user-123", isAdmin: false } } as Request;
     const next = vi.fn();
 
-    expect(() => requireAdmin(req, res, next)).toThrow(StatusCodeError);
+    expect(() => requireAdmin(req, res, next)).toThrow(ApiError);
     expect(() => requireAdmin(req, res, next)).toThrow(expect.objectContaining({ statusCode: 403 }));
     expect(next).not.toHaveBeenCalled();
   });

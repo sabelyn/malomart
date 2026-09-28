@@ -1,23 +1,19 @@
-import type { Request, Response, NextFunction } from "express";
-import { prettifyError, ZodError } from "zod";
+import type { NextFunction, Request, Response } from "express";
 
-import { StatusCodeError } from "@/errors/StatusCodeError";
+import { describeError, toApiError } from "@/errors/helpers";
 
 export const error = (err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  if (err instanceof StatusCodeError) {
-    if (err.statusCode >= 500) {
-      console.error(err);
-    }
-    return res.status(err.statusCode).json({ message: err.message });
+  const apiError = toApiError(err);
+  if (shouldLog(apiError.statusCode)) {
+    console.error(describeError(apiError));
   }
-  if (err instanceof ZodError) {
-    return res.status(400).json({
-      message: `Request failed validation: ${prettifyError(err)}`
-    });
+  if (apiError.retryable) {
+    res.set("Retry-After", RETRY_AFTER_SECONDS);
   }
-
-  console.error(err);
-  return res.status(500).json({
-    message: "Something unexpected happened. Try again later."
-  });
+  return res.status(apiError.statusCode).json({ message: apiError.message, details: apiError.details });
 };
+
+const RETRY_AFTER_SECONDS = "5";
+
+const NO_LOG_CODES = [401, 403];
+const shouldLog = (statusCode: number) => !NO_LOG_CODES.includes(statusCode);

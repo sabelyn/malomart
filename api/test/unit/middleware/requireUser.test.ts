@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 
-import { StatusCodeError } from "@/errors/StatusCodeError";
+import { ApiError } from "@/errors/ApiError";
 import { requireUser } from "@/middleware/requireUser";
 
 const res = {} as Response;
@@ -19,7 +19,7 @@ describe("requireUser", () => {
     const req = {} as Request;
     const next = vi.fn();
 
-    expect(() => requireUser(req, res, next)).toThrow(StatusCodeError);
+    expect(() => requireUser(req, res, next)).toThrow(ApiError);
     expect(() => requireUser(req, res, next)).toThrow(expect.objectContaining({ statusCode: 401 }));
     expect(next).not.toHaveBeenCalled();
   });

@@ -5,7 +5,7 @@ import type { KeyObject } from "node:crypto";
 import { container } from "tsyringe";
 
 import { USER } from "@/contracts/tokens";
-import { StatusCodeError } from "@/errors/StatusCodeError";
+import { ApiError } from "@/errors/ApiError";
 import { identity } from "@/middleware/identity";
 
 const captured = vi.hoisted(() => ({ verifiers: [] as unknown[] }));
@@ -131,7 +131,7 @@ describe("identity", () => {
 
     const result = identity(req, res, next);
 
-    await expect(result).rejects.toBeInstanceOf(StatusCodeError);
+    await expect(result).rejects.toBeInstanceOf(ApiError);
     await expect(result).rejects.toMatchObject({ statusCode: 401, message: "Unauthorized" });
     expect(next).not.toHaveBeenCalled();
     expect(req.user).toBeUndefined();
