@@ -10,14 +10,14 @@ export const CreateProductBody = Product.pick({
   category: true,
   price: true,
   inStock: true
-});
+}).meta({ id: "CreateProductData" });
 export type CreateProductBody = zinfer<typeof CreateProductBody>;
 
 export const ListProductsQuery = object({
   ...PaginationQuery.shape,
   category: CategorySchema.optional(),
   inStock: QueryBool.optional()
-});
+}).meta({ id: "ListProductsQuery" });
 export type ListProductsQuery = zinfer<typeof ListProductsQuery>;
 export type ListProductsQueryInput = input<typeof ListProductsQuery>;
 
@@ -27,7 +27,8 @@ export const UpdateProductBody = Product.pick({
   price: true
 })
   .partial()
-  .refine(atLeastOneKeyRefinement);
+  .refine(atLeastOneKeyRefinement)
+  .meta({ id: "UpdateProductBody", description: "At least one property must be provided." });
 export type UpdateProductBody = zinfer<typeof UpdateProductBody>;
 
 export const StockUpdate = strictObject({

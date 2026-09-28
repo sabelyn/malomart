@@ -9,5 +9,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "test", "eslint.config.mjs", "vite.config.mts"]
+  "include": ["src", "test", "scripts", "eslint.config.mjs", "vite.config.mts"]
 }

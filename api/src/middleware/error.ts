@@ -5,6 +5,9 @@ import { StatusCodeError } from "@/errors/StatusCodeError";
 
 export const error = (err: Error, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof StatusCodeError) {
+    if (err.statusCode >= 500) {
+      console.error(err);
+    }
     return res.status(err.statusCode).json({ message: err.message });
   }
   if (err instanceof ZodError) {

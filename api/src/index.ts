@@ -3,11 +3,13 @@ import "reflect-metadata";
 import cors from "cors";
 import express from "express";
 import type { Server } from "http";
+import swaggerUi from "swagger-ui-express";
 
 import { registerDependencies } from "@/container";
 import { error, identity } from "@/middleware";
 import api from "@/routes";
 import env from "./env";
+import { buildSpec } from "./swagger";
 
 const app = express();
 app.use(
@@ -19,6 +21,27 @@ app.use(
 
 app.get("/health", (_req, res) => res.sendStatus(200));
 
+if (env.NODE_ENV === "development") {
+  const spec = buildSpec();
+  app.get("/openapi.json", (_req, res) => {
+    res.json(spec);
+  });
+
+  app.use(
+    "/docs",
+    swaggerUi.serve,
+    swaggerUi.setup(undefined, {
+      customSiteTitle: "Malomart API",
+      swaggerOptions: { url: "/openapi.json", displayRequestDuration: true, tryItOutEnabled: true }
+    })
+  );
+
+  app.get("/", (_req, res) => {
+    res.redirect("/docs");
+  });
+}
+
+app.use(express.json());
 app.use(identity);
 app.use(api);
 app.use(error);
@@ -43,7 +66,12 @@ const start = () => {
   };
 
   registerDependencies();
-  const server = app.listen(env.PORT, () => console.log(`API is listening on port ${env.PORT}.`));
+  const server = app.listen(env.PORT, err => {
+    if (err) {
+      throw err;
+    }
+    console.log(`API is listening on port ${env.PORT}.`);
+  });
   process.once("SIGTERM", signal => shutdown(server, signal));
   process.once("SIGINT", signal => shutdown(server, signal));
 };

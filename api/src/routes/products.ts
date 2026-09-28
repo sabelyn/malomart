@@ -1,68 +1,67 @@
-import { CreateProductBody, ListProductsQuery, UpdateProductBody } from "@mm/lib";
+import { createProduct, deleteProduct, getProduct, listProducts, updateProduct } from "@mm/lib/products";
 import { Router } from "express";
-import { uuid } from "zod";
 
 import { PRODUCT_SERVICE } from "@/contracts/tokens";
-import { requireAdmin } from "@/middleware";
+import { pathAndMiddleware, respond } from "./helpers";
 
 const router = Router();
 
-router.get("/", async (req, res, next) => {
+router.get(...pathAndMiddleware(listProducts), async (req, res, next) => {
   try {
-    const query = ListProductsQuery.parse(req.query);
+    const { query } = listProducts.validateRequest(req);
 
     const service = req.container.resolve(PRODUCT_SERVICE);
     const result = await service.listProducts(query);
-    return res.json(result);
+    return respond(res, listProducts, result);
   } catch (err) {
     return next(err);
   }
 });
 
-router.get("/:id", async (req, res, next) => {
+router.get(...pathAndMiddleware(getProduct), async (req, res, next) => {
   try {
-    const id = uuid().parse(req.params.id);
+    const { params: { id } } = getProduct.validateRequest(req);
 
     const service = req.container.resolve(PRODUCT_SERVICE);
     const product = await service.getProduct(id);
-    return res.json(product);
+    return respond(res, getProduct, product);
   } catch (err) {
     return next(err);
   }
 });
 
-router.post("/", requireAdmin, async (req, res, next) => {
+router.post(...pathAndMiddleware(createProduct), async (req, res, next) => {
   try {
-    const body = CreateProductBody.parse(req.body);
+    const { body } = createProduct.validateRequest(req);
 
     const service = req.container.resolve(PRODUCT_SERVICE);
     const product = await service.createProduct(body);
-    return res.status(201).json(product);
+    return respond(res, createProduct, product);
   } catch (err) {
     return next(err);
   }
 });
 
-router.put("/:id", requireAdmin, async (req, res, next) => {
+router.put(...pathAndMiddleware(updateProduct), async (req, res, next) => {
   try {
-    const id = uuid().parse(req.params.id);
-    const body = UpdateProductBody.parse(req.body);
+    const { body, params: { id }
+    } = updateProduct.validateRequest(req);
 
     const service = req.container.resolve(PRODUCT_SERVICE);
     const product = await service.updateProduct(id, body);
-    return res.json(product);
+    return respond(res, updateProduct, product);
   } catch (err) {
     return next(err);
   }
 });
 
-router.delete("/:id", requireAdmin, async (req, res, next) => {
+router.delete(...pathAndMiddleware(deleteProduct), async (req, res, next) => {
   try {
-    const id = uuid().parse(req.params.id);
+    const { params: { id } } = deleteProduct.validateRequest(req);
 
     const service = req.container.resolve(PRODUCT_SERVICE);
     await service.deleteProduct(id);
-    return res.sendStatus(204);
+    return respond(res, deleteProduct);
   } catch (err) {
     return next(err);
   }

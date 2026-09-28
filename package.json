@@ -9,7 +9,8 @@
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "test": "turbo run test",
-    "format": "prettier . --write"
+    "format": "prettier . --write",
+    "spec": "pnpm --filter api spec"
   },
   "devDependencies": {
     "prettier": "^3.9.6",
