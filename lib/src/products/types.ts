@@ -4,6 +4,7 @@ import type { infer as zinfer } from "zod";
 import { Id } from "../common";
 
 export const Category = {
+  Armor: "Armor",
   Arrows: "Arrows",
   Bombs: "Bombs",
   Food: "Food",

@@ -11,6 +11,7 @@
     "test": "turbo run test",
     "format": "prettier . --write",
     "spec": "pnpm --filter api spec",
+    "deploy:frontend": "pnpm --filter @mm/ui build && pnpm --filter @mm/infra cdk deploy MaloMartDev/MaloMartFrontendStack",
     "local:up": "docker compose up -d --wait",
     "local:down": "docker compose down",
     "local:deploy": "pnpm --filter @mm/infra cdk:local deploy \"MaloMartLocal/*\" --require-approval never --outputs-file ../local/cdk-outputs.json"

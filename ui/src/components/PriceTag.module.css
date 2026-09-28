@@ -1,0 +1,26 @@
+.tag {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.was {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-style: italic;
+  color: var(--mantine-color-dark-2);
+  font-size: var(--mantine-font-size-md);
+}
+
+.now {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-family: var(--mm-font-sign);
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--mantine-color-discount-5);
+}
+
+.rupee {
+  image-rendering: pixelated;
+}

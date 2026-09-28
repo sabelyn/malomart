@@ -8,5 +8,7 @@ allowBuilds:
   cpu-features: true
   esbuild: true
   protobufjs: true
+  # Ships prebuilt binaries via @img/* packages; its script only compiles from source as a fallback.
+  sharp: false
   ssh2: true
   unrs-resolver: true

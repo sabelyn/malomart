@@ -1,0 +1,38 @@
+:root {
+  --mm-font-sign: 'Shrikhand', 'Arial Black', sans-serif;
+  --mm-focus: var(--mantine-color-twili-4);
+  --mm-gilt-rule: 1px solid var(--mantine-color-gilt-7);
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--mantine-color-dark-7);
+  background-image:
+    radial-gradient(ellipse 120% 60% at 50% 0%, rgb(199 116 58 / 0.22), transparent 70%),
+    linear-gradient(180deg, #2b3a42 0%, var(--mantine-color-dark-7) 45%);
+  background-repeat: no-repeat;
+}
+
+:focus-visible,
+.mantine-focus-auto:focus-visible,
+.mantine-focus-always:focus {
+  outline: 3px solid var(--mm-focus);
+  outline-offset: 3px;
+  box-shadow: 0 0 12px rgb(95 212 200 / 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+p,
+figure,
+blockquote {
+  margin: 0;
+}
