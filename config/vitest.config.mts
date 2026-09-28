@@ -3,6 +3,7 @@ import { defineConfig } from "vitest/config";
 
 type TestConfigOptions = {
   setupFiles?: string[];
+  integrationSetupFiles?: string[];
 };
 
 export const defineTestConfig = (configUrl: string, opts?: TestConfigOptions) => {
@@ -34,7 +35,9 @@ export const defineTestConfig = (configUrl: string, opts?: TestConfigOptions) =>
           extends: true,
           test: {
             name: "integration",
-            include: ["test/integration/**/*.test.ts"]
+            include: ["test/integration/**/*.test.ts"],
+            setupFiles: opts?.integrationSetupFiles ?? [],
+            fileParallelism: false
           }
         }
       ]

@@ -1,5 +1,6 @@
 import type { TableIndexes, TableNames } from "@mm/clients";
-import { Stack } from "aws-cdk-lib";
+import { CfnOutput, Stack } from "aws-cdk-lib";
+import type { StackProps } from "aws-cdk-lib";
 import { AttributeType, BillingMode, Table } from "aws-cdk-lib/aws-dynamodb";
 import type { Construct } from "constructs";
 
@@ -10,8 +11,8 @@ export const INDEXES: TableIndexes = {
 export class DbStack extends Stack {
   readonly tables: Record<keyof TableNames, Table>;
 
-  constructor(scope: Construct, id: string) {
-    super(scope, id);
+  constructor(scope: Construct, id: string, props?: StackProps) {
+    super(scope, id, props);
 
     const productsTable = new Table(this, "ProductsTable", {
       partitionKey: { name: "id", type: AttributeType.STRING },
@@ -26,5 +27,10 @@ export class DbStack extends Stack {
     this.tables = {
       products: productsTable
     };
+
+    new CfnOutput(this, "TableNames", {
+      value: this.toJsonString(Object.fromEntries(Object.entries(this.tables).map(([key, table]) => [key, table.tableName])))
+    });
+    new CfnOutput(this, "TableIndexes", { value: JSON.stringify(INDEXES) });
   }
 }

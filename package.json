@@ -10,7 +10,10 @@
     "lint:fix": "turbo run lint:fix",
     "test": "turbo run test",
     "format": "prettier . --write",
-    "spec": "pnpm --filter api spec"
+    "spec": "pnpm --filter api spec",
+    "local:up": "docker compose up -d --wait",
+    "local:down": "docker compose down",
+    "local:deploy": "pnpm --filter @mm/infra cdk:local deploy \"MaloMartLocal/*\" --require-approval never --outputs-file ../local/cdk-outputs.json"
   },
   "devDependencies": {
     "prettier": "^3.9.6",
