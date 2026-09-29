@@ -2,9 +2,10 @@ import type { ZodType } from "zod";
 import type { ZodOpenApiResponsesObject, ZodOpenApiOperationObject, ZodOpenApiPathItemObject, ZodOpenApiPathsObject, ZodOpenApiResponseObject } from "zod-openapi";
 
 import { ErrorResponse } from "./types";
-import type { HttpMethod, StatusCode, Body, Params, Query } from "./types";
+import type { HttpMethod, Params, Query, StatusCode } from "./types";
 import type { Route } from "./Route";
-import { Endpoint } from "./Endpoint";
+import type { AnyEndpoint } from "./Endpoint";
+import { collectEndpoints } from "./walk";
 
 export const requestBody = (schema: ZodType) => ({
   required: true,
@@ -24,6 +25,7 @@ export const response = (description?: string, schema?: ZodType): ZodOpenApiResp
 export const error = (description: string) => response(description, ErrorResponse);
 
 export const commonErrors = {
+  429: error("Too many requests. The API is throttling this client."),
   500: error("Something unexpected happened while handling the request."),
   503: error("Downstream service is busy or unavailable.")
 };
@@ -40,22 +42,14 @@ export const commonAdminErrors = {
 
 export const routeToPaths = (route: Route) => {
   const paths: ZodOpenApiPathsObject = {};
-  for (const r of route.children) {
-    if (r instanceof Endpoint) {
-      const item: ZodOpenApiPathItemObject = (paths[r.fullPath] ??= {});
-      item[r.method.toLowerCase() as Lowercase<HttpMethod>] = toOperation(r);
-    } else if (r.children.size > 0) {
-      const nestedPaths = routeToPaths(r);
-      for (const [path, item] of Object.entries(nestedPaths)) {
-        paths[path] = item;
-      }
-    }
+  for (const endpoint of collectEndpoints(route)) {
+    const item: ZodOpenApiPathItemObject = (paths[endpoint.fullPath] ??= {});
+    item[endpoint.method.toLowerCase() as Lowercase<HttpMethod>] = toOperation(endpoint);
   }
-
   return paths;
 }
 
-const toOperation = (endpoint: Endpoint<Body, Params, Query, Body>) => {
+const toOperation = (endpoint: AnyEndpoint) => {
   const op: ZodOpenApiOperationObject = {
     operationId: endpoint.id,
     summary: endpoint.summary,

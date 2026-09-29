@@ -1,3 +1,4 @@
+import { ErrorCode } from "@mm/lib";
 import type { Request, Response } from "express";
 import type { MockInstance } from "vitest";
 import { number, strictObject } from "zod";
@@ -31,6 +32,12 @@ beforeEach(() => {
 });
 
 describe("error", () => {
+  it("includes the error code when there is one", () => {
+    const { res } = handle(new ApiError(400, "The code is incorrect.", { code: ErrorCode.InvalidCode }));
+
+    expect(res.json).toHaveBeenCalledWith({ message: "The code is incorrect.", code: ErrorCode.InvalidCode, details: undefined });
+  });
+
   it("responds with the status, message, and details of an ApiError", () => {
     const { res, next } = handle(new ApiError(400, "Bad cursor", { details: { cursor: "abc" } }));
 

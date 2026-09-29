@@ -5,12 +5,14 @@ const ADMIN_SCOPE = process.env.ADMIN_SCOPE!;
 
 export const handler: PreTokenGenerationV2TriggerHandler = event => {
   const groups = event.request.groupConfiguration.groupsToOverride ?? [];
+  const { email, name } = event.request.userAttributes;
 
-  if (groups.includes(ADMIN_GROUP)) {
-    event.response.claimsAndScopeOverrideDetails = {
-      accessTokenGeneration: { scopesToAdd: [ADMIN_SCOPE] }
-    };
-  }
+  event.response.claimsAndScopeOverrideDetails = {
+    accessTokenGeneration: {
+      claimsToAddOrOverride: { email, name },
+      ...(groups.includes(ADMIN_GROUP) ? { scopesToAdd: [ADMIN_SCOPE] } : {})
+    }
+  };
 
   return Promise.resolve(event);
 };

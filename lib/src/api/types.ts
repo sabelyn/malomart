@@ -1,7 +1,8 @@
 import type { input, output, ZodObject, ZodType } from "zod";
-import { strictObject, string, unknown } from "zod";
+import { enum as zenum, strictObject, string, unknown } from "zod";
 
 export const Tags = {
+  Auth: "Endpoints for handling signup, signin, and other authentication-related stuff.",
   Products: "The shop's catalog."
 } as const;
 export type Tag = keyof typeof Tags;
@@ -51,7 +52,20 @@ export type ValidIncomingRequest<
   body: Output<TBody>;
 }
 
+export const ErrorCode = {
+  AccountExists: "ACCOUNT_EXISTS",
+  CrossSiteRequest: "CROSS_SITE_REQUEST",
+  ExpiredCode: "EXPIRED_CODE",
+  InvalidCode: "INVALID_CODE",
+  NoPendingSignIn: "NO_PENDING_SIGN_IN",
+  RateLimited: "RATE_LIMITED"
+} as const;
+export const ErrorCodeSchema = zenum(ErrorCode)
+  .meta({ id: "ErrorCode", description: "A machine-readable code for errors a client may want to handle." });
+export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
+
 export const ErrorResponse = strictObject({
+  code: ErrorCodeSchema.optional(),
   message: string(),
   details: unknown().optional()
 });

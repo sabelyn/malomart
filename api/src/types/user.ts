@@ -1,4 +1,3 @@
-export type User = {
-  id: string;
-  isAdmin: boolean;
-};
+import type { CurrentUser } from "@mm/lib";
+
+export type User = CurrentUser;

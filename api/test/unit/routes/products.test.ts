@@ -47,9 +47,9 @@ beforeEach(() => {
   container.registerInstance(PRODUCT_SERVICE, service);
 });
 
-describe("GET /products", () => {
+describe("GET /api/products", () => {
   it("lists products with default pagination", async () => {
-    const res = await request(app).get("/products");
+    const res = await request(app).get("/api/products");
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual(listResult);
@@ -57,7 +57,7 @@ describe("GET /products", () => {
   });
 
   it("parses query parameters", async () => {
-    await request(app).get("/products").query({ limit: "50", category: "Weapons", inStock: "true", cursor: "abc" });
+    await request(app).get("/api/products").query({ limit: "50", category: "Weapons", inStock: "true", cursor: "abc" });
 
     expect(service.listProducts).toHaveBeenCalledWith({ limit: 50, category: "Weapons", inStock: true, cursor: "abc" });
   });
@@ -68,7 +68,7 @@ describe("GET /products", () => {
     ["an unknown category", { category: "Rupees" }],
     ["a non-boolean inStock", { inStock: "maybe" }]
   ])("rejects %s with a 400", async (_, query) => {
-    const res = await request(app).get("/products").query(query);
+    const res = await request(app).get("/api/products").query(query);
 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("Request validation failed.");
@@ -79,16 +79,16 @@ describe("GET /products", () => {
   it("passes through service errors", async () => {
     service.listProducts.mockRejectedValue(new ApiError(400, "Invalid cursor."));
 
-    const res = await request(app).get("/products").query({ cursor: "bad" });
+    const res = await request(app).get("/api/products").query({ cursor: "bad" });
 
     expect(res.status).toBe(400);
     expect(res.body).toEqual({ message: "Invalid cursor." });
   });
 });
 
-describe("GET /products/:id", () => {
+describe("GET /api/products/:id", () => {
   it("returns the product without requiring auth", async () => {
-    const res = await request(app).get(`/products/${ID}`);
+    const res = await request(app).get(`/api/products/${ID}`);
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual(product);
@@ -96,7 +96,7 @@ describe("GET /products/:id", () => {
   });
 
   it("rejects an invalid id with a 400", async () => {
-    const res = await request(app).get("/products/not-a-uuid");
+    const res = await request(app).get("/api/products/not-a-uuid");
 
     expect(res.status).toBe(400);
     expect(service.getProduct).not.toHaveBeenCalled();
@@ -105,7 +105,7 @@ describe("GET /products/:id", () => {
   it("returns a 404 when the product does not exist", async () => {
     service.getProduct.mockRejectedValue(new ApiError(404, "Product could not be found."));
 
-    const res = await request(app).get(`/products/${ID}`);
+    const res = await request(app).get(`/api/products/${ID}`);
 
     expect(res.status).toBe(404);
     expect(res.body).toEqual({ message: "Product could not be found." });
@@ -115,7 +115,7 @@ describe("GET /products/:id", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     service.getProduct.mockRejectedValue(new Error("boom"));
 
-    const res = await request(app).get(`/products/${ID}`);
+    const res = await request(app).get(`/api/products/${ID}`);
 
     expect(res.status).toBe(500);
   });
@@ -124,30 +124,30 @@ describe("GET /products/:id", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     service.getProduct.mockResolvedValue({ ...product, price: -1 });
 
-    const res = await request(app).get(`/products/${ID}`);
+    const res = await request(app).get(`/api/products/${ID}`);
 
     expect(res.status).toBe(500);
     expect(res.body).toEqual({ message: "Something went wrong handling this request.", details: { endpoint: "getProduct" } });
   });
 });
 
-describe("POST /products", () => {
+describe("POST /api/products", () => {
   it("requires a user", async () => {
-    const res = await request(app).post("/products").send(productData);
+    const res = await request(app).post("/api/products").send(productData);
 
     expect(res.status).toBe(401);
     expect(service.createProduct).not.toHaveBeenCalled();
   });
 
   it("requires an admin", async () => {
-    const res = await request(app).post("/products").set(asRegularUser).send(productData);
+    const res = await request(app).post("/api/products").set(asRegularUser).send(productData);
 
     expect(res.status).toBe(403);
     expect(service.createProduct).not.toHaveBeenCalled();
   });
 
   it("creates the product and responds with a 201", async () => {
-    const res = await request(app).post("/products").set(asAdmin).send(productData);
+    const res = await request(app).post("/api/products").set(asAdmin).send(productData);
 
     expect(res.status).toBe(201);
     expect(res.body).toEqual(product);
@@ -161,31 +161,31 @@ describe("POST /products", () => {
     ["an unknown category", { ...productData, category: "Rupees" }],
     ["an unknown field", { ...productData, id: ID }]
   ])("rejects %s with a 400", async (_, body) => {
-    const res = await request(app).post("/products").set(asAdmin).send(body);
+    const res = await request(app).post("/api/products").set(asAdmin).send(body);
 
     expect(res.status).toBe(400);
     expect(service.createProduct).not.toHaveBeenCalled();
   });
 });
 
-describe("PUT /products/:id", () => {
+describe("PUT /api/products/:id", () => {
   const update = { price: 100 };
 
   it("requires a user", async () => {
-    const res = await request(app).put(`/products/${ID}`).send(update);
+    const res = await request(app).put(`/api/products/${ID}`).send(update);
 
     expect(res.status).toBe(401);
   });
 
   it("requires an admin", async () => {
-    const res = await request(app).put(`/products/${ID}`).set(asRegularUser).send(update);
+    const res = await request(app).put(`/api/products/${ID}`).set(asRegularUser).send(update);
 
     expect(res.status).toBe(403);
     expect(service.updateProduct).not.toHaveBeenCalled();
   });
 
   it("updates the product", async () => {
-    const res = await request(app).put(`/products/${ID}`).set(asAdmin).send(update);
+    const res = await request(app).put(`/api/products/${ID}`).set(asAdmin).send(update);
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual(product);
@@ -193,14 +193,14 @@ describe("PUT /products/:id", () => {
   });
 
   it("rejects an empty update with a 400", async () => {
-    const res = await request(app).put(`/products/${ID}`).set(asAdmin).send({});
+    const res = await request(app).put(`/api/products/${ID}`).set(asAdmin).send({});
 
     expect(res.status).toBe(400);
     expect(service.updateProduct).not.toHaveBeenCalled();
   });
 
   it("rejects an invalid id with a 400", async () => {
-    const res = await request(app).put("/products/not-a-uuid").set(asAdmin).send(update);
+    const res = await request(app).put("/api/products/not-a-uuid").set(asAdmin).send(update);
 
     expect(res.status).toBe(400);
     expect(service.updateProduct).not.toHaveBeenCalled();
@@ -209,28 +209,28 @@ describe("PUT /products/:id", () => {
   it("returns a 404 when the product does not exist", async () => {
     service.updateProduct.mockRejectedValue(new ApiError(404, "Product could not be found."));
 
-    const res = await request(app).put(`/products/${ID}`).set(asAdmin).send(update);
+    const res = await request(app).put(`/api/products/${ID}`).set(asAdmin).send(update);
 
     expect(res.status).toBe(404);
   });
 });
 
-describe("DELETE /products/:id", () => {
+describe("DELETE /api/products/:id", () => {
   it("requires a user", async () => {
-    const res = await request(app).delete(`/products/${ID}`);
+    const res = await request(app).delete(`/api/products/${ID}`);
 
     expect(res.status).toBe(401);
   });
 
   it("requires an admin", async () => {
-    const res = await request(app).delete(`/products/${ID}`).set(asRegularUser);
+    const res = await request(app).delete(`/api/products/${ID}`).set(asRegularUser);
 
     expect(res.status).toBe(403);
     expect(service.deleteProduct).not.toHaveBeenCalled();
   });
 
   it("deletes the product and responds with an empty 204", async () => {
-    const res = await request(app).delete(`/products/${ID}`).set(asAdmin);
+    const res = await request(app).delete(`/api/products/${ID}`).set(asAdmin);
 
     expect(res.status).toBe(204);
     expect(res.text).toBe("");
@@ -238,7 +238,7 @@ describe("DELETE /products/:id", () => {
   });
 
   it("rejects an invalid id with a 400", async () => {
-    const res = await request(app).delete("/products/not-a-uuid").set(asAdmin);
+    const res = await request(app).delete("/api/products/not-a-uuid").set(asAdmin);
 
     expect(res.status).toBe(400);
     expect(service.deleteProduct).not.toHaveBeenCalled();

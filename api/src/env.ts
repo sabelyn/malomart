@@ -16,7 +16,7 @@ const fromJson = <T extends ZodSchema>(schema: T) =>
 
 const EnvSchema = object({
   ADMIN_SCOPE: string().nonempty(),
-  FRONTEND_URL: url().optional().default("http://localhost:3000"),
+  APP_ORIGIN: url().optional().default("http://localhost:5173"),
   NODE_ENV: zenum(["development", "production"]).optional().default("development"),
   PORT: coerce.number().int().positive().optional().default(4000),
   TABLE_INDEXES: fromJson(TableIndexes),

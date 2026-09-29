@@ -1,10 +1,14 @@
 import { Router } from "express";
-import { products } from "@mm/lib";
+import { apiRoot, auth, products } from "@mm/lib";
 
+import authRouter from "./auth";
 import productsRouter from "./products";
 
-const api = Router();
+const routes = Router();
+routes.use(auth.expressPath, authRouter);
+routes.use(products.expressPath, productsRouter);
 
-api.use(products.expressPath, productsRouter);
+const api = Router();
+api.use(apiRoot.expressPath, routes);
 
 export default api;

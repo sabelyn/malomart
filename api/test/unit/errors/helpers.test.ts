@@ -1,13 +1,23 @@
+import { CognitoIdentityProviderServiceException } from "@aws-sdk/client-cognito-identity-provider";
 import { ConditionalCheckFailedException, DynamoDBServiceException } from "@aws-sdk/client-dynamodb";
+import { ErrorCode } from "@mm/lib";
 import { number, strictObject, ZodError } from "zod";
 
 import { ApiError } from "@/errors/ApiError";
-import { badRequest, describeError, forbidden, internal, notFound, toApiError, unauthorized } from "@/errors/helpers";
+import { badRequest, describeError, forbidden, internal, notFound, toApiError, tooManyRequests, unauthorized } from "@/errors/helpers";
 
 const metadata = { requestId: "req-123", httpStatusCode: 400, attempts: 2 };
 
 const dynamoError = (name: string, retryable = false) => {
   const err = new DynamoDBServiceException({ name, $fault: "client", $metadata: metadata, message: `${name} happened` });
+  if (retryable) {
+    err.$retryable = { throttling: false };
+  }
+  return err;
+};
+
+const cognitoError = (name: string, retryable = false) => {
+  const err = new CognitoIdentityProviderServiceException({ name, $fault: "client", $metadata: metadata, message: `${name} happened` });
   if (retryable) {
     err.$retryable = { throttling: false };
   }
@@ -32,6 +42,16 @@ describe("factories", () => {
     const cause = new Error("bad cursor");
 
     expect(badRequest("Bad", { cause, details: { cursor: "x" } })).toMatchObject({ cause, details: { cursor: "x" } });
+  });
+
+  it("tooManyRequests creates a non-retryable 429 with a code", () => {
+    expect(tooManyRequests()).toMatchObject({ statusCode: 429, code: ErrorCode.RateLimited, retryable: false });
+  });
+
+  it("unauthorized keeps the cause and code", () => {
+    const cause = new Error("expired");
+
+    expect(unauthorized(cause, ErrorCode.NoPendingSignIn)).toMatchObject({ cause, code: ErrorCode.NoPendingSignIn });
   });
 
   it("unauthorized keeps the cause", () => {
@@ -89,6 +109,29 @@ describe("toApiError", () => {
     expect(toApiError(cause)).toMatchObject({ statusCode: 409, cause });
   });
 
+  it.each([
+    ["CodeMismatchException", 400, ErrorCode.InvalidCode, false],
+    ["ExpiredCodeException", 400, ErrorCode.ExpiredCode, false],
+    ["InvalidParameterException", 400, undefined, false],
+    ["UsernameExistsException", 409, ErrorCode.AccountExists, false],
+    ["NotAuthorizedException", 401, undefined, false],
+    ["UserNotFoundException", 401, undefined, false],
+    ["LimitExceededException", 429, ErrorCode.RateLimited, true],
+    ["TooManyFailedAttemptsException", 429, ErrorCode.RateLimited, true],
+    ["TooManyRequestsException", 429, ErrorCode.RateLimited, true],
+    ["InternalErrorException", 500, undefined, false]
+  ])("maps Cognito %s to a %i", (name, statusCode, code, retryable) => {
+    const cause = cognitoError(name);
+
+    expect(toApiError(cause)).toMatchObject({ statusCode, code, retryable, cause });
+  });
+
+  it("maps unknown retryable Cognito errors to a retryable 503", () => {
+    const cause = cognitoError("SomethingNew", true);
+
+    expect(toApiError(cause)).toMatchObject({ statusCode: 503, retryable: true, cause });
+  });
+
   it("maps unknown retryable DynamoDB errors to a retryable 503", () => {
     const cause = dynamoError("SomethingNew", true);
 
@@ -132,6 +175,12 @@ describe("describeError", () => {
       httpStatusCode: 400,
       attempts: 2
     });
+  });
+
+  it("includes the code and request metadata for a Cognito cause", () => {
+    const described = describeError(toApiError(cognitoError("CodeMismatchException")));
+
+    expect(described).toMatchObject({ code: ErrorCode.InvalidCode, cause: { name: "CodeMismatchException", requestId: "req-123" } });
   });
 
   it("passes through a non-Error cause", () => {

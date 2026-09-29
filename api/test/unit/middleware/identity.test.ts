@@ -1,3 +1,4 @@
+import { SessionCookie } from "@mm/lib";
 import type { CognitoJwtVerifier } from "aws-jwt-verify";
 import type { Request, Response } from "express";
 import { generateKeyPairSync, sign } from "node:crypto";
@@ -5,7 +6,6 @@ import type { KeyObject } from "node:crypto";
 import { container } from "tsyringe";
 
 import { USER } from "@/contracts/tokens";
-import { ApiError } from "@/errors/ApiError";
 import { identity } from "@/middleware/identity";
 
 const captured = vi.hoisted(() => ({ verifiers: [] as unknown[] }));
@@ -42,6 +42,8 @@ const signJwt = (claims: Record<string, unknown> = {}, key: KeyObject = privateK
     client_id: "test-client-id",
     token_use: "access",
     scope: "openid email",
+    email: "user@example.com",
+    name: "Regular User",
     iat: now,
     exp: now + 300,
     ...claims
@@ -50,12 +52,14 @@ const signJwt = (claims: Record<string, unknown> = {}, key: KeyObject = privateK
   return `${header}.${payload}.${signature}`;
 };
 
-const mockRequest = (authorization?: string) =>
+const mockRequest = (token?: string) =>
   ({
-    get: vi.fn((name: string) => (name.toLowerCase() === "authorization" ? authorization : undefined))
+    cookies: token === undefined ? {} : { [SessionCookie.Access]: token }
   }) as unknown as Request;
 
 const res = {} as Response;
+
+const regularUser = { id: "user-123", email: "user@example.com", name: "Regular User", isAdmin: false };
 
 beforeAll(() => {
   const verifier = captured.verifiers[0] as ReturnType<typeof CognitoJwtVerifier.create>;
@@ -68,11 +72,10 @@ describe("identity", () => {
   });
 
   it.each([
-    ["no authorization header", undefined],
-    ["a non-bearer scheme", `Basic ${signJwt()}`],
-    ["a bearer scheme without a token", "Bearer"]
-  ])("passes through anonymously with %s", async (_, authorization) => {
-    const req = mockRequest(authorization);
+    ["no access cookie", undefined],
+    ["an empty access cookie", ""]
+  ])("passes through anonymously with %s", async (_, token) => {
+    const req = mockRequest(token);
     const next = vi.fn();
 
     await identity(req, res, next);
@@ -82,34 +85,26 @@ describe("identity", () => {
     expect(req.user).toBeUndefined();
   });
 
-  it("sets the user from a valid token", async () => {
-    const req = mockRequest(`Bearer ${signJwt()}`);
+  it("sets the user from a valid access cookie", async () => {
+    const req = mockRequest(signJwt());
     const next = vi.fn();
 
     await identity(req, res, next);
 
     expect(next).toHaveBeenCalledOnce();
-    expect(req.user).toEqual({ id: "user-123", isAdmin: false });
-  });
-
-  it("accepts the bearer scheme case-insensitively", async () => {
-    const req = mockRequest(`bearer ${signJwt()}`);
-
-    await identity(req, res, vi.fn());
-
-    expect(req.user).toEqual({ id: "user-123", isAdmin: false });
+    expect(req.user).toEqual(regularUser);
   });
 
   it("marks the user as admin when the token has the admin scope", async () => {
-    const req = mockRequest(`Bearer ${signJwt({ scope: "openid test/admin" })}`);
+    const req = mockRequest(signJwt({ scope: "openid test/admin" }));
 
     await identity(req, res, vi.fn());
 
-    expect(req.user).toEqual({ id: "user-123", isAdmin: true });
+    expect(req.user).toEqual({ ...regularUser, isAdmin: true });
   });
 
   it("registers the user in a child container scoped to the request", async () => {
-    const req = mockRequest(`Bearer ${signJwt()}`);
+    const req = mockRequest(signJwt());
 
     await identity(req, res, vi.fn());
 
@@ -125,15 +120,14 @@ describe("identity", () => {
     ["the wrong issuer", () => signJwt({ iss: "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_Other" })],
     ["an id token", () => signJwt({ token_use: "id" })],
     ["a malformed token", () => "not.a.jwt"]
-  ])("rejects %s with a 401", async (_, makeToken) => {
-    const req = mockRequest(`Bearer ${makeToken()}`);
+  ])("treats %s as anonymous", async (_, makeToken) => {
+    const req = mockRequest(makeToken());
     const next = vi.fn();
 
-    const result = identity(req, res, next);
+    await identity(req, res, next);
 
-    await expect(result).rejects.toBeInstanceOf(ApiError);
-    await expect(result).rejects.toMatchObject({ statusCode: 401, message: "Unauthorized" });
-    expect(next).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledOnce();
+    expect(req.container).toBe(container);
     expect(req.user).toBeUndefined();
   });
 });

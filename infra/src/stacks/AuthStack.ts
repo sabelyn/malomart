@@ -1,5 +1,6 @@
-import { Stack } from "aws-cdk-lib";
+import { Duration, Stack } from "aws-cdk-lib";
 import {
+  AccountRecovery,
   FeaturePlan,
   LambdaVersion,
   ResourceServerScope,
@@ -29,6 +30,11 @@ export class AuthStack extends Stack {
       featurePlan: FeaturePlan.ESSENTIALS,
       selfSignUpEnabled: true,
       signInAliases: { email: true, username: false },
+      signInCaseSensitive: false,
+      signInPolicy: {
+        allowedFirstAuthFactors: { password: true, emailOtp: true }
+      },
+      accountRecovery: AccountRecovery.EMAIL_ONLY,
       keepOriginal: { email: true },
       standardAttributes: {
         email: { required: true },
@@ -50,8 +56,15 @@ export class AuthStack extends Stack {
     this.adminScope = `${RESOURCE_SERVER_ID}/${adminScope.scopeName}`;
 
     this.userPoolClient = this.userPool.addClient("WebClient", {
-      generateSecret: false,
-      authFlows: { user: true, userSrp: true }
+      generateSecret: true,
+      authFlows: { user: true },
+      disableOAuth: true,
+      preventUserExistenceErrors: true,
+      accessTokenValidity: Duration.minutes(15),
+      idTokenValidity: Duration.minutes(15),
+      refreshTokenValidity: Duration.days(30),
+      refreshTokenRotationGracePeriod: Duration.seconds(20),
+      authSessionValidity: Duration.minutes(10)
     });
 
     const preTokenGeneration = new NodejsFunction(this, "PreTokenGeneration", {

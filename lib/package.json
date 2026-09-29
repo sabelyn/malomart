@@ -12,6 +12,10 @@
       "types": "./src/api/index.ts",
       "default": "./dist/api/index.mjs"
     },
+    "./auth": {
+      "types": "./src/auth/index.ts",
+      "default": "./dist/auth/index.mjs"
+    },
     "./common": {
       "types": "./src/common/index.ts",
       "default": "./dist/common/index.mjs"
@@ -39,7 +43,6 @@
   "devDependencies": {
     "@mm/config": "workspace:*",
     "@types/aws-lambda": "^8.10.163",
-    "@types/express": "^5.0.6",
     "@types/node": "^24.10.1",
     "eslint": "^10.10.0",
     "typescript": "~6.0.3",

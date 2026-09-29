@@ -1,5 +1,5 @@
 import { createDocument } from "zod-openapi";
-import { products, routeToPaths, Tags } from "@mm/lib";
+import { apiRoot, routeToPaths, Tags } from "@mm/lib";
 
 export const buildSpec = (serverUrl?: string): ReturnType<typeof createDocument> =>
   createDocument({
@@ -12,6 +12,6 @@ export const buildSpec = (serverUrl?: string): ReturnType<typeof createDocument>
     ...(serverUrl ? { servers: [{ url: serverUrl.replace(/\/+$/, ""), description: "Deployed stage" }] } : {}),
     tags: Object.entries(Tags).map(([name, description]) => ({ name, description })),
     paths: {
-      ...routeToPaths(products)
+      ...routeToPaths(apiRoot)
     }
   });

@@ -1,9 +1,9 @@
-import { Route, Endpoint } from "../api";
+import { apiRoot, Endpoint, Route } from "../api";
 import { IdParams } from "../common";
 import { CreateProductBody, ListProductsQuery, UpdateProductBody } from "./requests";
 import { ListProductsResponse, ProductDto } from "./responses";
 
-export const products = new Route("/products", "public", ["Products"]);
+export const products = new Route("/products", "public", ["Products"], apiRoot);
 
 export const getProduct = new Endpoint(products, {
   description: "Retrieves a single product by its ID.",

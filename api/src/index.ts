@@ -1,23 +1,17 @@
 import "reflect-metadata";
 
-import cors from "cors";
+import cookieParser from "cookie-parser";
 import express from "express";
 import type { Server } from "http";
 import swaggerUi from "swagger-ui-express";
 
 import { registerDependencies } from "@/container";
-import { error, identity } from "@/middleware";
+import { error, fetchMetadata, identity } from "@/middleware";
 import api from "@/routes";
 import env from "./env";
 import { buildSpec } from "./swagger";
 
 const app = express();
-app.use(
-  cors({
-    origin: env.FRONTEND_URL,
-    allowedHeaders: "Content-Type, Authorization"
-  })
-);
 
 app.get("/health", (_req, res) => res.sendStatus(200));
 
@@ -42,6 +36,8 @@ if (env.NODE_ENV === "development") {
 }
 
 app.use(express.json());
+app.use(cookieParser());
+app.use(fetchMetadata);
 app.use(identity);
 app.use(api);
 app.use(error);

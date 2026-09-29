@@ -1,22 +1,9 @@
 import * as lib from "../../src";
-import { Endpoint, Route } from "../../src/api";
-import type { Body, Params, Query } from "../../src/api";
+import { apiRoot, collectEndpoints, Endpoint } from "../../src/api";
 
-type AnyEndpoint = Endpoint<Body, Params, Query, Body>;
+const endpoints = collectEndpoints(apiRoot);
 
-const collectEndpoints = (route: Route, found: Set<AnyEndpoint>) => {
-  if (route instanceof Endpoint) {
-    found.add(route);
-  }
-  route.children.forEach(child => collectEndpoints(child, found));
-};
-
-const endpoints = new Set<AnyEndpoint>();
-for (const value of Object.values(lib)) {
-  if (value instanceof Route) {
-    collectEndpoints(value, endpoints);
-  }
-}
+const exportedEndpoints = Object.values(lib).filter(value => value instanceof Endpoint);
 
 const placeholders = (path: string) => [...path.matchAll(/\{([^}]+)\}/g)].map(([, name]) => name);
 
@@ -24,18 +11,26 @@ const duplicates = (values: string[]) => [...new Set(values.filter((value, i) =>
 
 describe("lib routes", () => {
   it("finds endpoints to validate", () => {
-    expect(endpoints.size).toBeGreaterThan(0);
+    expect(endpoints.length).toBeGreaterThan(0);
+  });
+
+  it("reaches every exported endpoint from the api root", () => {
+    expect(exportedEndpoints.filter(endpoint => !endpoints.includes(endpoint)).map(e => e.id)).toEqual([]);
   });
 
   it("has unique operation ids", () => {
-    expect(duplicates([...endpoints].map(e => e.id))).toEqual([]);
+    expect(duplicates(endpoints.map(e => e.id))).toEqual([]);
   });
 
   it("has only one endpoint per method and path", () => {
-    expect(duplicates([...endpoints].map(e => `${e.method} ${e.fullPath.replace(/\{[^}]+\}/g, "{}")}`))).toEqual([]);
+    expect(duplicates(endpoints.map(e => `${e.method} ${e.fullPath.replace(/\{[^}]+\}/g, "{}")}`))).toEqual([]);
   });
 
-  describe.each([...endpoints].map(e => [`${e.method} ${e.fullPath} (${e.id})`, e] as const))("%s", (_, endpoint) => {
+  it("puts every endpoint under /api", () => {
+    expect(endpoints.filter(e => !e.fullPath.startsWith("/api/")).map(e => e.id)).toEqual([]);
+  });
+
+  describe.each(endpoints.map(e => [`${e.method} ${e.fullPath} (${e.id})`, e] as const))("%s", (_, endpoint) => {
     const pathKeys = placeholders(endpoint.fullPath);
     const schemaKeys = Object.keys(endpoint.paramsSchema?.shape ?? {});
 

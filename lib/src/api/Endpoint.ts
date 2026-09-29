@@ -1,13 +1,36 @@
-import type { Request, Response } from "express";
+import type { input, ZodType } from "zod";
 
 import { Route } from "./Route";
-import type { Body, EndpointConfig, HttpMethod, Input, Output, Params, Query, StatusCode, ValidIncomingRequest } from "./types";
+import type { Body, EndpointConfig, HttpMethod, Output, Params, Query, StatusCode, ValidIncomingRequest } from "./types";
+
+type RequestPart<K extends string, T extends ZodType | undefined> = T extends ZodType
+  ? undefined extends input<T>
+    ? { [P in K]?: input<T> }
+    : object extends input<T>
+      ? { [P in K]?: input<T> }
+      : { [P in K]: input<T> }
+  : { [P in K]?: never };
+
+export type RequestInput<TBody extends Body, TParams extends Params, TQuery extends Query> = RequestPart<"body", TBody> &
+  RequestPart<"params", TParams> &
+  RequestPart<"query", TQuery>;
+
+type RequestArgs<TInput> = object extends TInput ? [input?: TInput] : [input: TInput];
+
+export type OutgoingRequest = {
+  url: string;
+  init: {
+    method: HttpMethod;
+    headers: Record<string, string>;
+    body?: string;
+  };
+};
 
 export class Endpoint<
-  TBody extends Body,
-  TParams extends Params,
-  TQuery extends Query,
-  TResponse extends Body | undefined
+  TBody extends Body = undefined,
+  TParams extends Params = undefined,
+  TQuery extends Query = undefined,
+  TResponse extends Body = undefined
 > extends Route {
   readonly bodySchema: TBody | undefined;
   readonly description: string;
@@ -37,52 +60,46 @@ export class Endpoint<
     this.summary = config.summary;
   }
 
-  request = (bodyInput?: Input<TBody>, paramsInput?: Input<TParams>, queryInput?: Input<TQuery>, token?: string) => {
-    const body = this.bodySchema ? this.bodySchema.parse(bodyInput) : undefined;
-    const params = this.paramsSchema ? this.paramsSchema.parse(paramsInput) : undefined;
-    const query = this.querySchema ? this.querySchema.parse(queryInput) : undefined;
+  request(...[input]: RequestArgs<RequestInput<TBody, TParams, TQuery>>): OutgoingRequest {
+    const parts = (input ?? {}) as { body?: unknown; params?: unknown; query?: unknown };
+    const body = this.bodySchema ? this.bodySchema.parse(parts.body) : undefined;
+    const params = this.paramsSchema ? this.paramsSchema.parse(parts.params ?? {}) : undefined;
+    const query = this.querySchema ? this.querySchema.parse(parts.query ?? {}) : undefined;
 
-    let path = this.fullPath;
+    let url = this.fullPath;
     if (params) {
       for (const [key, value] of Object.entries(params)) {
-        path = path.replace(`{${key}}`, String(value));
+        url = url.replace(`{${key}}`, encodeURIComponent(String(value)));
       }
     }
     if (query) {
-      const parts: string[] = [];
+      const search = new URLSearchParams();
       for (const [key, value] of Object.entries(query)) {
-        if (value === undefined || value === null) {
-          continue;
+        if (value !== undefined && value !== null) {
+          search.append(key, String(value));
         }
-        parts.push(`${key}=${encodeURIComponent(String(value))}`);
       }
-      if (parts.length > 0) {
-        path = `${path}?${parts.join("&")}`;
+      const queryString = search.toString();
+      if (queryString) {
+        url = `${url}?${queryString}`;
       }
     }
 
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    } else if (this.access !== "public") {
-      throw new Error(`Non-public endpoint ${this.fullPath} requires a bearer token.`);
+    const headers: Record<string, string> = { Accept: "application/json" };
+    if (body === undefined) {
+      return { url, init: { method: this.method, headers } };
     }
-
-    return { path, method: this.method, body, headers };
+    headers["Content-Type"] = "application/json";
+    return { url, init: { method: this.method, headers, body: JSON.stringify(body) } };
   }
-
-  response = (res: Response, body?: Input<TResponse>) => {
-    const status = parseInt(this.successStatus);
-    if (this.responseSchema) {
-      const resBody = this.responseSchema.parse(body);
-      return res.status(status).json(resBody);
-    }
-    return res.sendStatus(status);
-  }
-
-  validateRequest = (req: Request): ValidIncomingRequest<TBody, TParams, TQuery> => ({
-    body: (this.bodySchema ? this.bodySchema.parse(req.body) : undefined) as Output<TBody>,
-    params: (this.paramsSchema ? this.paramsSchema.parse(req.params) : undefined) as Output<TParams>,
-    query: (this.querySchema ? this.querySchema.parse(req.query) : undefined) as Output<TQuery>
-  });
 }
+
+export type AnyEndpoint = Endpoint<Body, Params, Query, Body>;
+
+export type EndpointInput<E extends AnyEndpoint> =
+  E extends Endpoint<infer TBody, infer TParams, infer TQuery, Body> ? RequestInput<TBody, TParams, TQuery> : never;
+
+export type EndpointOutput<E extends AnyEndpoint> = E extends Endpoint<Body, Params, Query, infer TResponse> ? Output<TResponse> : never;
+
+export type EndpointRequest<E extends AnyEndpoint> =
+  E extends Endpoint<infer TBody, infer TParams, infer TQuery, Body> ? ValidIncomingRequest<TBody, TParams, TQuery> : never;

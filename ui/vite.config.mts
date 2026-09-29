@@ -9,5 +9,10 @@ export default defineConfig(async () => ({
       "@": path.resolve(__dirname, "./src")
     }
   },
-  plugins: [react(), babel({ presets: [reactCompilerPreset()] })]
+  plugins: [react(), babel({ presets: [reactCompilerPreset()] })],
+  server: {
+    proxy: {
+      "/api": "http://localhost:4000"
+    }
+  }
 }));

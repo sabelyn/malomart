@@ -2,13 +2,13 @@ import { createProduct, deleteProduct, getProduct, listProducts, updateProduct }
 import { Router } from "express";
 
 import { PRODUCT_SERVICE } from "@/contracts/tokens";
-import { pathAndMiddleware, respond } from "./helpers";
+import { pathAndMiddleware, respond, validateRequest } from "./helpers";
 
 const router = Router();
 
 router.get(...pathAndMiddleware(listProducts), async (req, res, next) => {
   try {
-    const { query } = listProducts.validateRequest(req);
+    const { query } = validateRequest(listProducts, req);
 
     const service = req.container.resolve(PRODUCT_SERVICE);
     const result = await service.listProducts(query);
@@ -20,7 +20,7 @@ router.get(...pathAndMiddleware(listProducts), async (req, res, next) => {
 
 router.get(...pathAndMiddleware(getProduct), async (req, res, next) => {
   try {
-    const { params: { id } } = getProduct.validateRequest(req);
+    const { params: { id } } = validateRequest(getProduct, req);
 
     const service = req.container.resolve(PRODUCT_SERVICE);
     const product = await service.getProduct(id);
@@ -32,7 +32,7 @@ router.get(...pathAndMiddleware(getProduct), async (req, res, next) => {
 
 router.post(...pathAndMiddleware(createProduct), async (req, res, next) => {
   try {
-    const { body } = createProduct.validateRequest(req);
+    const { body } = validateRequest(createProduct, req);
 
     const service = req.container.resolve(PRODUCT_SERVICE);
     const product = await service.createProduct(body);
@@ -45,7 +45,7 @@ router.post(...pathAndMiddleware(createProduct), async (req, res, next) => {
 router.put(...pathAndMiddleware(updateProduct), async (req, res, next) => {
   try {
     const { body, params: { id }
-    } = updateProduct.validateRequest(req);
+    } = validateRequest(updateProduct, req);
 
     const service = req.container.resolve(PRODUCT_SERVICE);
     const product = await service.updateProduct(id, body);
@@ -57,7 +57,7 @@ router.put(...pathAndMiddleware(updateProduct), async (req, res, next) => {
 
 router.delete(...pathAndMiddleware(deleteProduct), async (req, res, next) => {
   try {
-    const { params: { id } } = deleteProduct.validateRequest(req);
+    const { params: { id } } = validateRequest(deleteProduct, req);
 
     const service = req.container.resolve(PRODUCT_SERVICE);
     await service.deleteProduct(id);

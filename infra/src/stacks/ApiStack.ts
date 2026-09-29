@@ -1,7 +1,9 @@
-import { CfnOutput, Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
-import { CorsHttpMethod, HttpApi, HttpMethod, HttpNoneAuthorizer, VpcLink } from "aws-cdk-lib/aws-apigatewayv2";
+import { apiRoot, collectEndpoints } from "@mm/lib";
+import type { RouteAccess } from "@mm/lib";
+import { Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
+import { HttpApi, HttpMethod, HttpRoute, HttpRouteKey, VpcLink } from "aws-cdk-lib/aws-apigatewayv2";
 import type { IHttpRouteAuthorizer } from "aws-cdk-lib/aws-apigatewayv2";
-import { HttpUserPoolAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
+import { HttpLambdaAuthorizer, HttpLambdaResponseType } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import { HttpServiceDiscoveryIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { Port, SecurityGroup, SubnetType, Vpc } from "aws-cdk-lib/aws-ec2";
 import { Platform } from "aws-cdk-lib/aws-ecr-assets";
@@ -14,6 +16,8 @@ import {
   LogDriver,
   OperatingSystemFamily
 } from "aws-cdk-lib/aws-ecs";
+import { Architecture, Runtime } from "aws-cdk-lib/aws-lambda";
+import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { DnsRecordType, PrivateDnsNamespace } from "aws-cdk-lib/aws-servicediscovery";
 import type { Construct } from "constructs";
@@ -22,32 +26,17 @@ import path from "node:path";
 import type { AuthStack } from "./AuthStack";
 import type { DbStack } from "./DbStack";
 import { INDEXES } from "./DbStack";
+import type { FrontendStack } from "./FrontendStack";
+import type { GatewayStack } from "./GatewayStack";
 
 type Props = {
   authStack: AuthStack;
   dbStack: DbStack;
+  frontendStack: FrontendStack;
+  gatewayStack: GatewayStack;
 };
-
-type RouteAccess = "public" | "user" | "admin";
-
-type RouteConfig = {
-  path: string;
-  methods: HttpMethod[];
-  access: RouteAccess;
-};
-
-const routes: RouteConfig[] = [
-  { path: "/products", methods: [HttpMethod.GET], access: "public" },
-  { path: "/products/{id}", methods: [HttpMethod.GET], access: "public" },
-  { path: "/products", methods: [HttpMethod.POST], access: "admin" },
-  { path: "/products/{proxy+}", methods: [HttpMethod.ANY], access: "admin" },
-  { path: "/orders", methods: [HttpMethod.GET, HttpMethod.POST], access: "user" },
-  { path: "/orders/{id}", methods: [HttpMethod.GET], access: "user" },
-  { path: "/orders/{id}/status", methods: [HttpMethod.PUT], access: "admin" }
-];
 
 const API_PORT = 4000;
-const FRONTEND_URL = "http://localhost:3000";
 const repoRoot = path.resolve(__dirname, "../../..");
 
 export class ApiStack extends Stack {
@@ -87,6 +76,7 @@ export class ApiStack extends Stack {
     });
 
     const { userPool, userPoolClient, adminScope } = props.authStack;
+    userPool.grant(taskDefinition.taskRole, "cognito-idp:DescribeUserPoolClient");
     const container = taskDefinition.addContainer("Api", {
       image: ContainerImage.fromAsset(repoRoot, {
         file: "api/Dockerfile",
@@ -94,7 +84,7 @@ export class ApiStack extends Stack {
       }),
       environment: {
         ADMIN_SCOPE: adminScope,
-        FRONTEND_URL,
+        APP_ORIGIN: props.frontendStack.appOrigin,
         PORT: String(API_PORT),
         TABLE_INDEXES: JSON.stringify(INDEXES),
         TABLE_NAMES: JSON.stringify(
@@ -149,39 +139,40 @@ export class ApiStack extends Stack {
       securityGroups: [vpcLinkSecurityGroup]
     });
 
-    const userPoolAuthorizer = new HttpUserPoolAuthorizer("UserPoolAuthorizer", userPool, {
-      userPoolClients: [userPoolClient]
-    });
-    const noneAuthorizer = new HttpNoneAuthorizer();
-
-    const httpApi = new HttpApi(this, "HttpApi", {
-      defaultAuthorizer: userPoolAuthorizer,
-      corsPreflight: {
-        allowOrigins: [FRONTEND_URL],
-        allowHeaders: ["Content-Type", "Authorization"],
-        allowMethods: [
-          CorsHttpMethod.GET,
-          CorsHttpMethod.POST,
-          CorsHttpMethod.PUT,
-          CorsHttpMethod.PATCH,
-          CorsHttpMethod.DELETE
-        ],
-        maxAge: Duration.hours(1)
+    const cookieAuthorizerFunction = new NodejsFunction(this, "CookieAuthorizerFunction", {
+      entry: path.resolve(__dirname, "../lambdas/cookieAuthorizer.ts"),
+      runtime: Runtime.NODEJS_24_X,
+      architecture: Architecture.ARM_64,
+      environment: {
+        USER_POOL_ID: userPool.userPoolId,
+        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId
       }
+    });
+    const cookieAuthorizer = new HttpLambdaAuthorizer("CookieAuthorizer", cookieAuthorizerFunction, {
+      responseTypes: [HttpLambdaResponseType.SIMPLE],
+      identitySource: [],
+      resultsCacheTtl: Duration.seconds(0)
+    });
+
+    const httpApi = HttpApi.fromHttpApiAttributes(this, "HttpApi", {
+      httpApiId: props.gatewayStack.httpApi.apiId
     });
 
     const integration = new HttpServiceDiscoveryIntegration("ApiService", service.cloudMapService!, { vpcLink });
 
-    const accessSettings: Record<RouteAccess, { authorizer?: IHttpRouteAuthorizer; authorizationScopes?: string[] }> = {
-      public: { authorizer: noneAuthorizer },
-      user: {},
-      admin: { authorizationScopes: [adminScope] }
+    const authorizers: Record<RouteAccess, IHttpRouteAuthorizer | undefined> = {
+      public: undefined,
+      user: cookieAuthorizer,
+      admin: cookieAuthorizer
     };
 
-    for (const route of routes) {
-      httpApi.addRoutes({ path: route.path, methods: route.methods, integration, ...accessSettings[route.access] });
+    for (const endpoint of collectEndpoints(apiRoot)) {
+      new HttpRoute(this, `${endpoint.method}${endpoint.fullPath.replace(/\W+/g, "_")}`, {
+        httpApi,
+        routeKey: HttpRouteKey.with(endpoint.fullPath, endpoint.method as HttpMethod),
+        integration,
+        authorizer: authorizers[endpoint.access]
+      });
     }
-
-    new CfnOutput(this, "ApiUrl", { value: httpApi.apiEndpoint });
   }
 }

@@ -55,9 +55,9 @@ describe("error", () => {
 
 describe("common errors", () => {
   it("layers protected and admin errors on top of the base set", () => {
-    expect(Object.keys(commonErrors).sort()).toEqual(["500", "503"]);
-    expect(Object.keys(commonProtectedErrors).sort()).toEqual(["401", "500", "503"]);
-    expect(Object.keys(commonAdminErrors).sort()).toEqual(["401", "403", "500", "503"]);
+    expect(Object.keys(commonErrors).sort()).toEqual(["429", "500", "503"]);
+    expect(Object.keys(commonProtectedErrors).sort()).toEqual(["401", "429", "500", "503"]);
+    expect(Object.keys(commonAdminErrors).sort()).toEqual(["401", "403", "429", "500", "503"]);
   });
 });
 

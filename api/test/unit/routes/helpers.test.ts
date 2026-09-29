@@ -1,10 +1,10 @@
 import { Endpoint, Route } from "@mm/lib/api";
-import type { Response } from "express";
-import { strictObject, string, ZodError } from "zod";
+import type { Request, Response } from "express";
+import { coerce, number, object, strictObject, string, uuid, ZodError } from "zod";
 
 import { ApiError } from "@/errors/ApiError";
 import { requireAdmin, requireUser } from "@/middleware";
-import { pathAndMiddleware, respond } from "@/routes/helpers";
+import { pathAndMiddleware, respond, validateRequest } from "@/routes/helpers";
 
 const baseConfig = {
   description: "desc",
@@ -95,5 +95,41 @@ describe("respond", () => {
     });
 
     expect(() => respond(res as unknown as Response, withBody, { name: "Sword" })).toThrow(err);
+  });
+});
+
+describe("validateRequest", () => {
+  const ID = "3f2a9c1e-7b4d-4e8a-9f6b-2c1d0e5a7b3c";
+  const root = new Route("/things", "public");
+  const endpoint = new Endpoint(root, {
+    ...baseConfig,
+    method: "PUT",
+    path: "/{id}",
+    bodySchema: strictObject({ name: string(), price: number() }),
+    paramsSchema: strictObject({ id: uuid() }),
+    querySchema: object({ limit: coerce.number().optional() })
+  });
+
+  it("parses body, params, and query", () => {
+    const req = { body: { name: "Sword", price: 10 }, params: { id: ID }, query: { limit: "5" } } as unknown as Request;
+
+    expect(validateRequest(endpoint, req)).toEqual({
+      body: { name: "Sword", price: 10 },
+      params: { id: ID },
+      query: { limit: 5 }
+    });
+  });
+
+  it("returns undefined for parts without schemas", () => {
+    const bare = new Endpoint(root, { ...baseConfig, method: "GET", path: "/" });
+    const req = { body: { a: 1 }, params: { b: 2 }, query: { c: 3 } } as unknown as Request;
+
+    expect(validateRequest(bare, req)).toEqual({ body: undefined, params: undefined, query: undefined });
+  });
+
+  it("throws when any part is invalid", () => {
+    const req = { body: { name: "Sword", price: 10 }, params: { id: "nope" }, query: {} } as unknown as Request;
+
+    expect(() => validateRequest(endpoint, req)).toThrow(ZodError);
   });
 });

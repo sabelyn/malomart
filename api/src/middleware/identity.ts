@@ -2,9 +2,10 @@ import { CognitoJwtVerifier } from "aws-jwt-verify";
 import type { Request, Response, NextFunction } from "express";
 import { container } from "tsyringe";
 
+import { userFromClaims } from "@/auth/claims";
+import { readAccessToken } from "@/auth/cookies";
 import { USER } from "@/contracts/tokens";
 import env from "@/env";
-import { unauthorized } from "@/errors/helpers";
 
 const verifier = CognitoJwtVerifier.create({
   clientId: env.USER_POOL_CLIENT_ID,
@@ -15,25 +16,21 @@ const verifier = CognitoJwtVerifier.create({
 export const identity = async (req: Request, res: Response, next: NextFunction) => {
   req.container = container;
 
-  const [scheme, token] = req.get("Authorization")?.split(" ") ?? [];
-  if (scheme?.toLowerCase() !== "bearer" || !token) {
+  const token = readAccessToken(req);
+  if (!token) {
     return next();
   }
 
   try {
-    const { sub, scope } = await verifier.verify(token);
-    const user = {
-      id: sub,
-      isAdmin: scope.split(" ").includes(env.ADMIN_SCOPE)
-    };
+    const user = userFromClaims(await verifier.verify(token));
 
     const scopedContainer = container.createChildContainer();
     scopedContainer.registerInstance(USER, user);
 
     req.container = scopedContainer;
     req.user = user;
-  } catch (err) {
-    throw unauthorized(err);
+  } catch {
+    return next();
   }
 
   return next();

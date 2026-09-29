@@ -6,7 +6,7 @@ import { container } from "tsyringe";
 Object.assign(process.env, {
   ADMIN_SCOPE: "test/admin",
   AWS_REGION: "us-east-1",
-  FRONTEND_URL: "http://localhost:3000",
+  APP_ORIGIN: "http://localhost:5173",
   NODE_ENV: "development",
   PORT: "4000",
   TABLE_INDEXES: JSON.stringify({ productsByCategory: "products-by-category" }),
