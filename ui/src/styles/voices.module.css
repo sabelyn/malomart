@@ -1,0 +1,22 @@
+.hype {
+  font-family: var(--mm-font-sign);
+  font-weight: 400;
+  font-size: clamp(2rem, 6vw, 3.75rem);
+  line-height: 1.05;
+  color: var(--mantine-color-discount-5);
+  text-shadow: 4px 4px 0 var(--mantine-color-dark-9);
+  max-width: 18ch;
+  transform: rotate(-2deg);
+}
+
+.malo {
+  margin-top: var(--mantine-spacing-xl);
+  color: var(--mantine-color-dark-1);
+}
+
+.malo cite {
+  display: block;
+  font-style: normal;
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-dark-2);
+}

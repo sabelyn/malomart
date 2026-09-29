@@ -20,6 +20,7 @@ const Body = strictObject({ name: string() });
 
 const baseConfig = {
   description: "desc",
+  schemas: {},
   successDescription: "ok",
   summary: "sum"
 };
@@ -69,8 +70,8 @@ describe("routeToPaths", () => {
   it("groups endpoints by full path and method", () => {
     const root = new Route("/things", "public");
     new Endpoint(root, { ...baseConfig, id: "list", method: "GET", path: "/" });
-    new Endpoint(root, { ...baseConfig, id: "create", access: "admin", method: "POST", path: "/", bodySchema: Body });
-    new Endpoint(root, { ...baseConfig, id: "get", method: "GET", path: "/{id}", paramsSchema: Params });
+    new Endpoint(root, { ...baseConfig, id: "create", access: "admin", method: "POST", path: "/", schemas: { body: Body } });
+    new Endpoint(root, { ...baseConfig, id: "get", method: "GET", path: "/{id}", schemas: { params: Params } });
 
     const paths = routeToPaths(root);
 
@@ -84,7 +85,7 @@ describe("routeToPaths", () => {
   it("includes endpoints from nested routes", () => {
     const root = new Route("/things", "public");
     const nested = new Route("/{id}/reviews", "public", [], root);
-    new Endpoint(nested, { ...baseConfig, id: "listReviews", method: "GET", path: "/", paramsSchema: Params });
+    new Endpoint(nested, { ...baseConfig, id: "listReviews", method: "GET", path: "/", schemas: { params: Params } });
 
     const paths = routeToPaths(root);
 
@@ -99,9 +100,7 @@ describe("routeToPaths", () => {
       access: "admin",
       method: "PUT",
       path: "/{id}",
-      bodySchema: Body,
-      paramsSchema: Params,
-      querySchema: Query
+      schemas: { body: Body, params: Params, query: Query }
     });
 
     const op = routeToPaths(root)["/things/{id}"]!.put!;
@@ -123,7 +122,7 @@ describe("routeToPaths", () => {
 
   it("includes the success response with its schema and status", () => {
     const root = new Route("/things", "public");
-    new Endpoint(root, { ...baseConfig, id: "create", method: "POST", path: "/", responseSchema: Body, successStatus: "201" });
+    new Endpoint(root, { ...baseConfig, id: "create", method: "POST", path: "/", schemas: { response: Body }, successStatus: "201" });
 
     const op = routeToPaths(root)["/things"]!.post!;
 

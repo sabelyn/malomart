@@ -1,8 +1,8 @@
-import type { ZodType } from "zod";
+import type { ZodObject, ZodType } from "zod";
 import type { ZodOpenApiResponsesObject, ZodOpenApiOperationObject, ZodOpenApiPathItemObject, ZodOpenApiPathsObject, ZodOpenApiResponseObject } from "zod-openapi";
 
 import { ErrorResponse } from "./types";
-import type { HttpMethod, Params, Query, StatusCode } from "./types";
+import type { HttpMethod, StatusCode } from "./types";
 import type { Route } from "./Route";
 import type { AnyEndpoint } from "./Endpoint";
 import { collectEndpoints } from "./walk";
@@ -12,7 +12,7 @@ export const requestBody = (schema: ZodType) => ({
   content: { "application/json": { schema } }
 });
 
-export const requestParams = (path?: Params, query?: Query) => ({
+export const requestParams = (path?: ZodObject, query?: ZodObject) => ({
   ...(path ? { path } : {}),
   ...(query ? { query } : {})
 });
@@ -58,15 +58,16 @@ const toOperation = (endpoint: AnyEndpoint) => {
     responses: {}
   };
 
-  if (endpoint.paramsSchema || endpoint.querySchema) {
-    op.requestParams = requestParams(endpoint.paramsSchema, endpoint.querySchema);
+  const { body, params, query } = endpoint.schemas;
+  if (params || query) {
+    op.requestParams = requestParams(params, query);
   }
-  if (endpoint.bodySchema) {
-    op.requestBody = requestBody(endpoint.bodySchema);
+  if (body) {
+    op.requestBody = requestBody(body);
   }
 
   let responses: ZodOpenApiResponsesObject = {
-    [endpoint.successStatus]: response(endpoint.successDescription, endpoint.responseSchema)
+    [endpoint.successStatus]: response(endpoint.successDescription, endpoint.schemas.response)
   };
   for (const [status, message] of Object.entries(endpoint.errors)) {
     responses[status as StatusCode] = error(message);

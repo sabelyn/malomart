@@ -14,7 +14,7 @@ import {
 import { AUTH_SERVICE } from "@/contracts/tokens";
 import { toApiError, unauthorized } from "@/errors/helpers";
 import { sendCodeLimit, verifyCodeLimit } from "@/middleware";
-import { pathAndMiddleware, respond, validateRequest } from "./helpers";
+import { pathAndMiddleware, respond, respondEmpty, validateRequest } from "./helpers";
 
 const router = Router();
 
@@ -27,7 +27,7 @@ router.post(...pathAndMiddleware(signUp, sendCodeLimit), async (req, res, next) 
     if (pending) {
       setPendingAuth(res, pending);
     }
-    return respond(res, signUp);
+    return respondEmpty(res, signUp);
   } catch (err) {
     return next(err);
   }
@@ -59,7 +59,7 @@ router.post(...pathAndMiddleware(signIn, sendCodeLimit), async (req, res, next) 
 
     const service = req.container.resolve(AUTH_SERVICE);
     setPendingAuth(res, await service.startSignIn(email));
-    return respond(res, signIn);
+    return respondEmpty(res, signIn);
   } catch (err) {
     return next(err);
   }
@@ -95,7 +95,7 @@ router.post(...pathAndMiddleware(refreshSession), async (req, res, next) => {
 
     const service = req.container.resolve(AUTH_SERVICE);
     setSessionCookies(res, await service.refresh(refreshToken));
-    return respond(res, refreshSession);
+    return respondEmpty(res, refreshSession);
   } catch (err) {
     if (toApiError(err).statusCode === 401) {
       clearSessionCookies(res);
@@ -113,7 +113,7 @@ router.post(...pathAndMiddleware(signOut), async (req, res, next) => {
     }
 
     clearSessionCookies(res);
-    return respond(res, signOut);
+    return respondEmpty(res, signOut);
   } catch (err) {
     return next(err);
   }
@@ -121,6 +121,9 @@ router.post(...pathAndMiddleware(signOut), async (req, res, next) => {
 
 router.get(...pathAndMiddleware(getCurrentUser), (req, res, next) => {
   try {
+    if (!req.user) {
+      throw unauthorized();
+    }
     return respond(res, getCurrentUser, req.user);
   } catch (err) {
     return next(err);

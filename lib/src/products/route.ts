@@ -13,9 +13,8 @@ export const getProduct = new Endpoint(products, {
   },
   id: "getProduct",
   method: "GET",
-  paramsSchema: IdParams,
   path: "/{id}",
-  responseSchema: ProductDto,
+  schemas: { params: IdParams, response: ProductDto },
   successDescription: "Full product information.",
   summary: "Get a Product"
 });
@@ -28,15 +27,13 @@ export const listProducts = new Endpoint(products, {
   id: "listProducts",
   method: "GET",
   path: "/",
-  querySchema: ListProductsQuery,
-  responseSchema: ListProductsResponse,
+  schemas: { query: ListProductsQuery, response: ListProductsResponse },
   successDescription: "A list of product overviews matching the query and pagination information.",
   summary: "List Products"
 });
 
 export const createProduct = new Endpoint(products, {
   access: "admin",
-  bodySchema: CreateProductBody,
   description: "Add a new product to the catalog.",
   errors: {
     400: "Product data was invalid.",
@@ -45,7 +42,7 @@ export const createProduct = new Endpoint(products, {
   id: "createProduct",
   method: "POST",
   path: "/",
-  responseSchema: ProductDto,
+  schemas: { body: CreateProductBody, response: ProductDto },
   successDescription: "The newly created product.",
   successStatus: "201",
   summary: "Create a Product"
@@ -53,7 +50,6 @@ export const createProduct = new Endpoint(products, {
 
 export const updateProduct = new Endpoint(products, {
   access: "admin",
-  bodySchema: UpdateProductBody,
   description: "Update the title, description, and/or price of a product.",
   errors: {
     400: "Product ID or data was invalid.",
@@ -62,9 +58,8 @@ export const updateProduct = new Endpoint(products, {
   },
   id: "updateProduct",
   method: "PUT",
-  paramsSchema: IdParams,
   path: "/{id}",
-  responseSchema: ProductDto,
+  schemas: { body: UpdateProductBody, params: IdParams, response: ProductDto },
   successDescription: "The product after updating.",
   summary: "Update a Product"
 });
@@ -77,8 +72,8 @@ export const deleteProduct = new Endpoint(products, {
   },
   id: "deleteProduct",
   method: "DELETE",
-  paramsSchema: IdParams,
   path: "/{id}",
+  schemas: { params: IdParams },
   successDescription: "the product was successfully deleted.",
   successStatus: "204",
   summary: "Delete a Product"

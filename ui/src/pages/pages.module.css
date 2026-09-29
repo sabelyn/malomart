@@ -1,0 +1,16 @@
+.page {
+  padding-block: calc(var(--mantine-spacing-xl) * 2.5) calc(var(--mantine-spacing-xl) * 2);
+}
+
+.shelfHeading {
+  border-bottom: var(--mm-gilt-rule);
+  padding-bottom: var(--mantine-spacing-xs);
+  margin-bottom: var(--mantine-spacing-xl);
+  color: var(--mantine-color-gilt-3);
+}
+
+.backLink {
+  display: inline-block;
+  margin-top: var(--mantine-spacing-xl);
+  color: var(--mantine-color-gilt-3);
+}

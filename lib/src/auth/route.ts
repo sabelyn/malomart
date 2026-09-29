@@ -5,7 +5,6 @@ import { ConfirmSignUpResponse, CurrentUser } from "./responses";
 export const auth = new Route("/auth", "public", ["Auth"], apiRoot);
 
 export const signUp = new Endpoint(auth, {
-  bodySchema: SignUpBody,
   description: "Registers a new account without a password and emails the user a confirmation code.",
   errors: {
     400: "The email or name was invalid.",
@@ -15,13 +14,13 @@ export const signUp = new Endpoint(auth, {
   id: "signUp",
   method: "POST",
   path: "/sign-up",
+  schemas: { body: SignUpBody },
   successDescription: "The account was created and a confirmation code was sent.",
   successStatus: "202",
   summary: "Sign Up"
 });
 
 export const confirmSignUp = new Endpoint(auth, {
-  bodySchema: ConfirmSignUpBody,
   description:
     "Confirms a new account with the emailed code. When the sign-up session is still valid, the user is signed in and session cookies are set.",
   errors: {
@@ -31,13 +30,12 @@ export const confirmSignUp = new Endpoint(auth, {
   id: "confirmSignUp",
   method: "POST",
   path: "/sign-up/confirm",
-  responseSchema: ConfirmSignUpResponse,
+  schemas: { body: ConfirmSignUpBody, response: ConfirmSignUpResponse },
   successDescription: "The account was confirmed.",
   summary: "Confirm Sign Up"
 });
 
 export const signIn = new Endpoint(auth, {
-  bodySchema: SignInBody,
   description:
     "Starts a passwordless sign-in by emailing the user a one-time code. Responds the same way whether or not the account exists.",
   errors: {
@@ -47,13 +45,13 @@ export const signIn = new Endpoint(auth, {
   id: "signIn",
   method: "POST",
   path: "/sign-in",
+  schemas: { body: SignInBody },
   successDescription: "A sign-in code was sent if the account exists.",
   successStatus: "202",
   summary: "Sign In"
 });
 
 export const verifySignIn = new Endpoint(auth, {
-  bodySchema: VerifySignInBody,
   description: "Completes a passwordless sign-in with the emailed code and sets session cookies.",
   errors: {
     400: "The code was invalid or expired.",
@@ -63,7 +61,7 @@ export const verifySignIn = new Endpoint(auth, {
   id: "verifySignIn",
   method: "POST",
   path: "/sign-in/verify",
-  responseSchema: CurrentUser,
+  schemas: { body: VerifySignInBody, response: CurrentUser },
   successDescription: "The signed-in user.",
   summary: "Verify Sign In"
 });
@@ -76,6 +74,7 @@ export const refreshSession = new Endpoint(auth, {
   id: "refreshSession",
   method: "POST",
   path: "/refresh",
+  schemas: {},
   successDescription: "The session cookies were renewed.",
   successStatus: "204",
   summary: "Refresh Session"
@@ -86,6 +85,7 @@ export const signOut = new Endpoint(auth, {
   id: "signOut",
   method: "POST",
   path: "/sign-out",
+  schemas: {},
   successDescription: "The user was signed out.",
   successStatus: "204",
   summary: "Sign Out"
@@ -97,7 +97,7 @@ export const getCurrentUser = new Endpoint(auth, {
   id: "getCurrentUser",
   method: "GET",
   path: "/me",
-  responseSchema: CurrentUser,
+  schemas: { response: CurrentUser },
   successDescription: "The signed-in user.",
   summary: "Get Current User"
 });

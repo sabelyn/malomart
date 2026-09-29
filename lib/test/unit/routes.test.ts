@@ -32,7 +32,7 @@ describe("lib routes", () => {
 
   describe.each(endpoints.map(e => [`${e.method} ${e.fullPath} (${e.id})`, e] as const))("%s", (_, endpoint) => {
     const pathKeys = placeholders(endpoint.fullPath);
-    const schemaKeys = Object.keys(endpoint.paramsSchema?.shape ?? {});
+    const schemaKeys = Object.keys(endpoint.schemas.params?.shape ?? {});
 
     it("has a placeholder for every params property", () => {
       expect(schemaKeys.filter(key => !pathKeys.includes(key))).toEqual([]);

@@ -2,6 +2,7 @@ import { collectEndpoints, Endpoint, Route } from "../../../src/api";
 
 const baseConfig = {
   description: "desc",
+  schemas: {},
   successDescription: "ok",
   summary: "sum"
 };

@@ -1,11 +1,10 @@
-import type { AnyEndpoint, Body, Endpoint, EndpointRequest, Input, Params, Query } from "@mm/lib/api";
+import type { AnyEndpoint, Endpoint, RequestData, Schemas } from "@mm/lib/api";
 import type { Request, RequestHandler, Response } from "express";
+import type { input, ZodType } from "zod";
 import { ZodError } from "zod";
 
 import { internal } from "@/errors/helpers";
 import { requireAdmin, requireUser } from "@/middleware";
-
-type ResponseInput<E extends AnyEndpoint> = E extends Endpoint<Body, Params, Query, infer TResponse> ? Input<TResponse> : never;
 
 export const pathAndMiddleware = (endpoint: AnyEndpoint, ...extra: RequestHandler[]): [string, ...RequestHandler[]] => {
   const middleware: RequestHandler[] = [...extra];
@@ -15,27 +14,27 @@ export const pathAndMiddleware = (endpoint: AnyEndpoint, ...extra: RequestHandle
   return [endpoint.expressPath, ...middleware];
 };
 
-export const validateRequest = <E extends AnyEndpoint>(endpoint: E, req: Request) =>
-  ({
-    body: endpoint.bodySchema ? endpoint.bodySchema.parse(req.body) : undefined,
-    params: endpoint.paramsSchema ? endpoint.paramsSchema.parse(req.params) : undefined,
-    query: endpoint.querySchema ? endpoint.querySchema.parse(req.query) : undefined
-  }) as EndpointRequest<E>;
+export const validateRequest = <S extends Schemas>(endpoint: Endpoint<S>, req: Request) => {
+  const { body, params, query } = endpoint.schemas;
+  return {
+    body: body?.parse(req.body),
+    params: params?.parse(req.params),
+    query: query?.parse(req.query)
+  } as RequestData<S>;
+};
 
-export const respond = <E extends AnyEndpoint>(res: Response, endpoint: E, body?: ResponseInput<E>) => {
-  const status = parseInt(endpoint.successStatus);
-  if (!endpoint.responseSchema) {
-    return res.sendStatus(status);
-  }
-
+export const respond = <S extends Schemas & { response: ZodType }>(res: Response, endpoint: Endpoint<S>, body: input<S["response"]>) => {
   let parsed: unknown;
   try {
-    parsed = endpoint.responseSchema.parse(body);
+    parsed = endpoint.schemas.response.parse(body);
   } catch (err) {
     if (err instanceof ZodError) {
       throw internal(err, { endpoint: endpoint.id });
     }
     throw err;
   }
-  return res.status(status).json(parsed);
+  return res.status(parseInt(endpoint.successStatus)).json(parsed);
 };
+
+export const respondEmpty = <S extends Schemas & { response?: never }>(res: Response, endpoint: Endpoint<S>) =>
+  res.sendStatus(parseInt(endpoint.successStatus));

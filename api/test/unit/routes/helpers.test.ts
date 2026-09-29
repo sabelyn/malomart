@@ -4,11 +4,12 @@ import { coerce, number, object, strictObject, string, uuid, ZodError } from "zo
 
 import { ApiError } from "@/errors/ApiError";
 import { requireAdmin, requireUser } from "@/middleware";
-import { pathAndMiddleware, respond, validateRequest } from "@/routes/helpers";
+import { pathAndMiddleware, respond, respondEmpty, validateRequest } from "@/routes/helpers";
 
 const baseConfig = {
   description: "desc",
   id: "op",
+  schemas: {},
   successDescription: "ok",
   summary: "sum"
 };
@@ -51,9 +52,7 @@ describe("pathAndMiddleware", () => {
 
 describe("respond", () => {
   const root = new Route("/things", "public");
-  const withBody = new Endpoint(root, { ...baseConfig, method: "GET", path: "/", responseSchema: Result });
-  const withoutBody = new Endpoint(root, { ...baseConfig, method: "DELETE", path: "/", successStatus: "204" });
-
+  const withBody = new Endpoint(root, { ...baseConfig, method: "GET", path: "/", schemas: { response: Result } });
   it("sends a valid body with the success status", () => {
     const res = mockResponse();
 
@@ -61,14 +60,6 @@ describe("respond", () => {
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ name: "Sword" });
-  });
-
-  it("sends only the status for endpoints without a response schema", () => {
-    const res = mockResponse();
-
-    respond(res as unknown as Response, withoutBody);
-
-    expect(res.sendStatus).toHaveBeenCalledWith(204);
   });
 
   it("converts response validation failures to a 500", () => {
@@ -98,6 +89,18 @@ describe("respond", () => {
   });
 });
 
+describe("respondEmpty", () => {
+  it("sends only the success status", () => {
+    const root = new Route("/things", "public");
+    const endpoint = new Endpoint(root, { ...baseConfig, method: "DELETE", path: "/", successStatus: "204" });
+    const res = mockResponse();
+
+    respondEmpty(res as unknown as Response, endpoint);
+
+    expect(res.sendStatus).toHaveBeenCalledWith(204);
+  });
+});
+
 describe("validateRequest", () => {
   const ID = "3f2a9c1e-7b4d-4e8a-9f6b-2c1d0e5a7b3c";
   const root = new Route("/things", "public");
@@ -105,9 +108,11 @@ describe("validateRequest", () => {
     ...baseConfig,
     method: "PUT",
     path: "/{id}",
-    bodySchema: strictObject({ name: string(), price: number() }),
-    paramsSchema: strictObject({ id: uuid() }),
-    querySchema: object({ limit: coerce.number().optional() })
+    schemas: {
+      body: strictObject({ name: string(), price: number() }),
+      params: strictObject({ id: uuid() }),
+      query: object({ limit: coerce.number().optional() })
+    }
   });
 
   it("parses body, params, and query", () => {

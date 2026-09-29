@@ -1,5 +1,5 @@
-import type { AnyEndpoint, EndpointInput, EndpointOutput } from "./Endpoint";
-import type { ErrorCode } from "./types";
+import type { Endpoint } from "./Endpoint";
+import type { ErrorCode, RequestInput, ResponseOutput, Schemas } from "./types";
 import { ErrorResponse } from "./types";
 
 export class ApiRequestError extends Error {
@@ -16,6 +16,14 @@ export class ApiRequestError extends Error {
   }
 }
 
+export class NetworkError extends Error {
+  override readonly name = "NetworkError";
+
+  constructor(cause: unknown) {
+    super("The request could not reach the server.", { cause });
+  }
+}
+
 export type CallOptions = {
   baseUrl?: string;
   fetch?: typeof fetch;
@@ -23,24 +31,8 @@ export type CallOptions = {
   validateResponse?: boolean;
 };
 
-type CallArgs<E extends AnyEndpoint> = object extends EndpointInput<E>
-  ? [input?: EndpointInput<E>, options?: CallOptions]
-  : [input: EndpointInput<E>, options?: CallOptions];
-
-const readJson = async (response: Response): Promise<unknown> => {
-  const text = await response.text();
-  if (!text) {
-    return undefined;
-  }
-  try {
-    return JSON.parse(text);
-  } catch {
-    return undefined;
-  }
-};
-
 const toRequestError = async (response: Response) => {
-  const parsed = ErrorResponse.safeParse(await readJson(response));
+  const parsed = ErrorResponse.safeParse(await response.json().catch(() => undefined));
   if (!parsed.success) {
     return new ApiRequestError(response.status, response.statusText || `Request failed with status ${response.status}.`);
   }
@@ -48,17 +40,30 @@ const toRequestError = async (response: Response) => {
   return new ApiRequestError(response.status, message, { code, details });
 };
 
-export const call = async <E extends AnyEndpoint>(endpoint: E, ...[input, options = {}]: CallArgs<E>): Promise<EndpointOutput<E>> => {
-  const { url, init } = endpoint.request(input as never);
-  const response = await (options.fetch ?? fetch)(`${options.baseUrl ?? ""}${url}`, { ...init, signal: options.signal });
+export const call = async <S extends Schemas>(
+  endpoint: Endpoint<S>,
+  input: RequestInput<S>,
+  options: CallOptions = {}
+): Promise<ResponseOutput<S>> => {
+  const { url, init } = endpoint.request(input);
+  let response: Response;
+  try {
+    response = await (options.fetch ?? fetch)(`${options.baseUrl ?? ""}${url}`, { ...init, signal: options.signal });
+  } catch (err) {
+    if (options.signal?.aborted) {
+      throw err;
+    }
+    throw new NetworkError(err);
+  }
 
   if (!response.ok) {
     throw await toRequestError(response);
   }
-  if (!endpoint.responseSchema) {
-    return undefined as EndpointOutput<E>;
-  }
 
-  const body = await readJson(response);
-  return (options.validateResponse ? endpoint.responseSchema.parse(body) : body) as EndpointOutput<E>;
+  const schema = endpoint.schemas.response;
+  if (!schema) {
+    return undefined as ResponseOutput<S>;
+  }
+  const body: unknown = await response.json();
+  return (options.validateResponse ? schema.parse(body) : body) as ResponseOutput<S>;
 };

@@ -2,7 +2,7 @@ import { createProduct, deleteProduct, getProduct, listProducts, updateProduct }
 import { Router } from "express";
 
 import { PRODUCT_SERVICE } from "@/contracts/tokens";
-import { pathAndMiddleware, respond, validateRequest } from "./helpers";
+import { pathAndMiddleware, respond, respondEmpty, validateRequest } from "./helpers";
 
 const router = Router();
 
@@ -61,7 +61,7 @@ router.delete(...pathAndMiddleware(deleteProduct), async (req, res, next) => {
 
     const service = req.container.resolve(PRODUCT_SERVICE);
     await service.deleteProduct(id);
-    return respond(res, deleteProduct);
+    return respondEmpty(res, deleteProduct);
   } catch (err) {
     return next(err);
   }

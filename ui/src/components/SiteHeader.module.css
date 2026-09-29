@@ -34,15 +34,32 @@
   margin-top: 0.25rem;
 }
 
-.nav a {
+.nav a,
+.navButton {
   color: var(--mantine-color-dark-0);
   text-decoration: none;
   font-weight: 500;
 }
 
-.nav a:hover {
+.navButton:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.navError {
+  color: var(--mantine-color-discount-3);
+  font-size: var(--mantine-font-size-sm);
+}
+
+.navButton:hover:not(:disabled),
+.nav a:hover,
+.nav a[aria-current="page"] {
   text-decoration: underline;
   text-decoration-color: var(--mantine-color-gilt-5);
+}
+
+.nav a[aria-current="page"] {
+  color: var(--mantine-color-gilt-3);
 }
 
 @keyframes slap-on {

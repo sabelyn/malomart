@@ -1,21 +1,5 @@
-import type { input, ZodType } from "zod";
-
 import { Route } from "./Route";
-import type { Body, EndpointConfig, HttpMethod, Output, Params, Query, StatusCode, ValidIncomingRequest } from "./types";
-
-type RequestPart<K extends string, T extends ZodType | undefined> = T extends ZodType
-  ? undefined extends input<T>
-    ? { [P in K]?: input<T> }
-    : object extends input<T>
-      ? { [P in K]?: input<T> }
-      : { [P in K]: input<T> }
-  : { [P in K]?: never };
-
-export type RequestInput<TBody extends Body, TParams extends Params, TQuery extends Query> = RequestPart<"body", TBody> &
-  RequestPart<"params", TParams> &
-  RequestPart<"query", TQuery>;
-
-type RequestArgs<TInput> = object extends TInput ? [input?: TInput] : [input: TInput];
+import type { EndpointConfig, HttpMethod, RequestInput, Schemas, StatusCode } from "./types";
 
 export type OutgoingRequest = {
   url: string;
@@ -26,63 +10,48 @@ export type OutgoingRequest = {
   };
 };
 
-export class Endpoint<
-  TBody extends Body = undefined,
-  TParams extends Params = undefined,
-  TQuery extends Query = undefined,
-  TResponse extends Body = undefined
-> extends Route {
-  readonly bodySchema: TBody | undefined;
+export class Endpoint<S extends Schemas> extends Route {
   readonly description: string;
   readonly errors: Record<number, string>;
   readonly id: string;
   readonly method: HttpMethod;
-  readonly paramsSchema: TParams | undefined;
-  readonly querySchema: TQuery | undefined;
-  readonly responseSchema: TResponse | undefined;
+  readonly schemas: S;
   readonly successDescription: string;
   readonly successStatus: StatusCode;
   readonly summary: string;
 
-  constructor(parent: Route, config: EndpointConfig<TBody, TParams, TQuery, TResponse>) {
+  constructor(parent: Route, config: EndpointConfig<S>) {
     super(config.path, config.access ?? parent.access, config.tags, parent);
 
-    this.bodySchema = config.bodySchema;
     this.description = config.description;
     this.errors = config.errors ?? {};
     this.id = config.id;
     this.method = config.method;
-    this.paramsSchema = config.paramsSchema;
-    this.querySchema = config.querySchema;
-    this.responseSchema = config.responseSchema;
+    this.schemas = config.schemas;
     this.successDescription = config.successDescription;
     this.successStatus = config.successStatus ?? "200";
     this.summary = config.summary;
   }
 
-  request(...[input]: RequestArgs<RequestInput<TBody, TParams, TQuery>>): OutgoingRequest {
-    const parts = (input ?? {}) as { body?: unknown; params?: unknown; query?: unknown };
-    const body = this.bodySchema ? this.bodySchema.parse(parts.body) : undefined;
-    const params = this.paramsSchema ? this.paramsSchema.parse(parts.params ?? {}) : undefined;
-    const query = this.querySchema ? this.querySchema.parse(parts.query ?? {}) : undefined;
+  request(input: RequestInput<S>): OutgoingRequest {
+    const parts: { body?: unknown; params?: unknown; query?: unknown } = input;
+    const body = this.schemas.body?.parse(parts.body);
+    const params = this.schemas.params?.parse(parts.params);
+    const query = this.schemas.query?.parse(parts.query);
 
     let url = this.fullPath;
-    if (params) {
-      for (const [key, value] of Object.entries(params)) {
-        url = url.replace(`{${key}}`, encodeURIComponent(String(value)));
+    for (const [key, value] of Object.entries(params ?? {})) {
+      url = url.replace(`{${key}}`, encodeURIComponent(String(value)));
+    }
+
+    const search = new URLSearchParams();
+    for (const [key, value] of Object.entries(query ?? {})) {
+      if (value !== undefined && value !== null) {
+        search.append(key, String(value));
       }
     }
-    if (query) {
-      const search = new URLSearchParams();
-      for (const [key, value] of Object.entries(query)) {
-        if (value !== undefined && value !== null) {
-          search.append(key, String(value));
-        }
-      }
-      const queryString = search.toString();
-      if (queryString) {
-        url = `${url}?${queryString}`;
-      }
+    if (search.size > 0) {
+      url = `${url}?${search}`;
     }
 
     const headers: Record<string, string> = { Accept: "application/json" };
@@ -94,12 +63,4 @@ export class Endpoint<
   }
 }
 
-export type AnyEndpoint = Endpoint<Body, Params, Query, Body>;
-
-export type EndpointInput<E extends AnyEndpoint> =
-  E extends Endpoint<infer TBody, infer TParams, infer TQuery, Body> ? RequestInput<TBody, TParams, TQuery> : never;
-
-export type EndpointOutput<E extends AnyEndpoint> = E extends Endpoint<Body, Params, Query, infer TResponse> ? Output<TResponse> : never;
-
-export type EndpointRequest<E extends AnyEndpoint> =
-  E extends Endpoint<infer TBody, infer TParams, infer TQuery, Body> ? ValidIncomingRequest<TBody, TParams, TQuery> : never;
+export type AnyEndpoint = Endpoint<Schemas>;

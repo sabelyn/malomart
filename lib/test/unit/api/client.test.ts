@@ -1,6 +1,6 @@
 import { number, strictObject, string, uuid } from "zod";
 
-import { ApiRequestError, call, Endpoint, ErrorCode, Route } from "../../../src/api";
+import { ApiRequestError, call, Endpoint, ErrorCode, NetworkError, Route } from "../../../src/api";
 
 const ID = "3f2a9c1e-7b4d-4e8a-9f6b-2c1d0e5a7b3c";
 
@@ -18,25 +18,23 @@ const getThing = new Endpoint(things, {
   ...baseConfig,
   method: "GET",
   path: "/{id}",
-  paramsSchema: strictObject({ id: uuid() }),
-  responseSchema: Thing
+  schemas: { params: strictObject({ id: uuid() }), response: Thing }
 });
 const createThing = new Endpoint(things, {
   ...baseConfig,
   method: "POST",
   path: "/",
-  bodySchema: Thing.omit({ id: true }),
-  responseSchema: Thing,
+  schemas: { body: Thing.omit({ id: true }), response: Thing },
   successStatus: "201"
 });
 const deleteThing = new Endpoint(things, {
   ...baseConfig,
   method: "DELETE",
   path: "/{id}",
-  paramsSchema: strictObject({ id: uuid() }),
+  schemas: { params: strictObject({ id: uuid() }) },
   successStatus: "204"
 });
-const pingThings = new Endpoint(things, { ...baseConfig, method: "POST", path: "/ping", successStatus: "204" });
+const pingThings = new Endpoint(things, { ...baseConfig, method: "POST", path: "/ping", schemas: {}, successStatus: "204" });
 
 const thing = { id: ID, name: "Sword", price: 10 };
 
@@ -82,7 +80,7 @@ describe("call", () => {
   it("allows calling endpoints that take no input", async () => {
     const fetch = mockFetch(new Response(null, { status: 204 }));
 
-    await expect(call(pingThings, undefined, { fetch })).resolves.toBeUndefined();
+    await expect(call(pingThings, {}, { fetch })).resolves.toBeUndefined();
     expect(fetch).toHaveBeenCalledWith("/api/things/ping", expect.objectContaining({ method: "POST" }));
   });
 
@@ -96,6 +94,34 @@ describe("call", () => {
     const fetch = mockFetch(jsonResponse(200, { unexpected: true }));
 
     await expect(call(getThing, { params: { id: ID } }, { fetch, validateResponse: true })).rejects.toThrow();
+  });
+
+  it.each([
+    ["an empty body", new Response(null, { status: 200 })],
+    ["a non-JSON body", new Response("<html>oops</html>", { status: 200 })]
+  ])("fails loudly on a successful response with %s", async (_, response) => {
+    await expect(call(getThing, { params: { id: ID } }, { fetch: mockFetch(response) })).rejects.toThrow(SyntaxError);
+  });
+
+  it("wraps fetch failures in a NetworkError that keeps the cause", async () => {
+    const cause = new TypeError("Failed to fetch");
+    const fetch = vi.fn<typeof globalThis.fetch>().mockRejectedValue(cause);
+
+    const error = await call(getThing, { params: { id: ID } }, { fetch }).catch(err => err);
+
+    expect(error).toBeInstanceOf(NetworkError);
+    expect(error.cause).toBe(cause);
+  });
+
+  it("passes aborts through untouched", async () => {
+    const controller = new AbortController();
+    const abort = new DOMException("The operation was aborted.", "AbortError");
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => {
+      controller.abort();
+      throw abort;
+    });
+
+    await expect(call(getThing, { params: { id: ID } }, { fetch, signal: controller.signal })).rejects.toBe(abort);
   });
 
   it("rejects invalid input before sending anything", async () => {

@@ -19,47 +19,44 @@ describe("Endpoint", () => {
   describe("constructor", () => {
     it("applies defaults for optional config", () => {
       const parent = new Route("/things", "public");
-      const endpoint = new Endpoint(parent, { ...baseConfig, method: "GET", path: "/" });
+      const endpoint = new Endpoint(parent, { ...baseConfig, method: "GET", path: "/", schemas: {} });
 
       expect(endpoint.successStatus).toBe("200");
       expect(endpoint.errors).toEqual({});
-      expect(endpoint.bodySchema).toBeUndefined();
-      expect(endpoint.paramsSchema).toBeUndefined();
-      expect(endpoint.querySchema).toBeUndefined();
-      expect(endpoint.responseSchema).toBeUndefined();
+      expect(endpoint.schemas).toEqual({});
     });
 
     it("inherits access from its parent", () => {
       const parent = new Route("/things", "admin");
-      const endpoint = new Endpoint(parent, { ...baseConfig, method: "GET", path: "/" });
+      const endpoint = new Endpoint(parent, { ...baseConfig, method: "GET", path: "/", schemas: {} });
 
       expect(endpoint.access).toBe("admin");
     });
 
     it("overrides parent access when configured", () => {
       const parent = new Route("/things", "public");
-      const endpoint = new Endpoint(parent, { ...baseConfig, access: "admin", method: "GET", path: "/" });
+      const endpoint = new Endpoint(parent, { ...baseConfig, access: "admin", method: "GET", path: "/", schemas: {} });
 
       expect(endpoint.access).toBe("admin");
     });
 
     it("combines its own tags with the parent's", () => {
       const parent = new Route("/things", "public", ["Products"]);
-      const endpoint = new Endpoint(parent, { ...baseConfig, method: "GET", path: "/", tags: ["Products"] });
+      const endpoint = new Endpoint(parent, { ...baseConfig, method: "GET", path: "/", schemas: {}, tags: ["Products"] });
 
       expect([...endpoint.tags]).toEqual(["Products"]);
     });
 
     it("registers itself with the parent once", () => {
       const parent = new Route("/things", "public");
-      const endpoint = new Endpoint(parent, { ...baseConfig, method: "GET", path: "/" });
+      const endpoint = new Endpoint(parent, { ...baseConfig, method: "GET", path: "/", schemas: {} });
 
       expect([...parent.children]).toEqual([endpoint]);
     });
 
     it("computes full and express paths", () => {
       const parent = new Route("/things", "public");
-      const endpoint = new Endpoint(parent, { ...baseConfig, method: "GET", path: "/{id}", paramsSchema: Params });
+      const endpoint = new Endpoint(parent, { ...baseConfig, method: "GET", path: "/{id}", schemas: { params: Params } });
 
       expect(endpoint.fullPath).toBe("/things/{id}");
       expect(endpoint.expressPath).toBe("/:id");
@@ -68,10 +65,10 @@ describe("Endpoint", () => {
 
   describe("request", () => {
     const parent = new Route("/things", "public");
-    const getThing = new Endpoint(parent, { ...baseConfig, method: "GET", path: "/{id}", paramsSchema: Params });
-    const listThings = new Endpoint(parent, { ...baseConfig, method: "GET", path: "/", querySchema: Query });
-    const createThing = new Endpoint(parent, { ...baseConfig, access: "admin", method: "POST", path: "/", bodySchema: Body });
-    const pingThings = new Endpoint(parent, { ...baseConfig, access: "user", method: "POST", path: "/ping" });
+    const getThing = new Endpoint(parent, { ...baseConfig, method: "GET", path: "/{id}", schemas: { params: Params } });
+    const listThings = new Endpoint(parent, { ...baseConfig, method: "GET", path: "/", schemas: { query: Query } });
+    const createThing = new Endpoint(parent, { ...baseConfig, access: "admin", method: "POST", path: "/", schemas: { body: Body } });
+    const pingThings = new Endpoint(parent, { ...baseConfig, access: "user", method: "POST", path: "/ping", schemas: {} });
 
     it("substitutes path params", () => {
       const { url, init } = getThing.request({ params: { id: ID } });
@@ -82,7 +79,12 @@ describe("Endpoint", () => {
 
     it("encodes path params", () => {
       const parentWithSlug = new Route("/slugs", "public");
-      const getSlug = new Endpoint(parentWithSlug, { ...baseConfig, method: "GET", path: "/{slug}", paramsSchema: strictObject({ slug: string() }) });
+      const getSlug = new Endpoint(parentWithSlug, {
+        ...baseConfig,
+        method: "GET",
+        path: "/{slug}",
+        schemas: { params: strictObject({ slug: string() }) }
+      });
 
       expect(getSlug.request({ params: { slug: "a/b c" } }).url).toBe("/slugs/a%2Fb%20c");
     });
@@ -95,11 +97,11 @@ describe("Endpoint", () => {
 
     it("skips undefined query values and omits an empty query string", () => {
       expect(listThings.request({ query: { name: undefined } }).url).toBe("/things");
+      expect(listThings.request({ query: {} }).url).toBe("/things");
     });
 
-    it("allows omitting input when every part is optional", () => {
-      expect(listThings.request().url).toBe("/things");
-      expect(pingThings.request().url).toBe("/things/ping");
+    it("takes an empty input for endpoints without request schemas", () => {
+      expect(pingThings.request({}).url).toBe("/things/ping");
     });
 
     it("serializes a validated body as JSON", () => {
@@ -113,7 +115,7 @@ describe("Endpoint", () => {
     });
 
     it("never adds an authorization header, even for protected endpoints", () => {
-      expect(pingThings.request().init.headers).toEqual({ Accept: "application/json" });
+      expect(pingThings.request({}).init.headers).toEqual({ Accept: "application/json" });
     });
 
     it("throws on invalid params", () => {

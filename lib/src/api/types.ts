@@ -8,49 +8,44 @@ export const Tags = {
 export type Tag = keyof typeof Tags;
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-export type Input<T extends ZodType | undefined> = T extends undefined ? undefined : input<T>;
-export type Output<T extends ZodType | undefined> = T extends undefined ? undefined : output<T>;
 export type Path = `/${string}`;
 export type RouteAccess = "public" | "user" | "admin";
 export type StatusCode = `${2 | 3 | 4 | 5}${string}`;
 
-export type Body = ZodType | undefined;
-export type Params = ZodObject | undefined;
-export type Query = ZodObject | undefined;
+export type Schemas = {
+  body?: ZodType;
+  params?: ZodObject;
+  query?: ZodObject;
+  response?: ZodType;
+};
 
-export type EndpointConfig<
-  TBody extends Body = undefined,
-  TParams extends Params = undefined,
-  TQuery extends Query = undefined,
-  TResponse extends Body = undefined
-> = {
+type RequestPart = "body" | "params" | "query";
+
+export type RequestInput<S extends Schemas> = {
+  [K in RequestPart & keyof S]: input<S[K]>;
+};
+
+export type RequestData<S extends Schemas> = {
+  [K in RequestPart & keyof S]: output<S[K]>;
+};
+
+export type ResponseOutput<S extends Schemas> = S extends { response: ZodType } ? output<S["response"]> : undefined;
+
+export type EndpointConfig<S extends Schemas> = {
   access?: RouteAccess;
-  bodySchema?: TBody;
   description: string;
   errors?: {
     [key: StatusCode]: string;
   };
   id: string;
   method: HttpMethod;
-  paramsSchema?: TParams;
   path: Path;
-  querySchema?: TQuery;
-  responseSchema?: TResponse;
+  schemas: S;
   successDescription: string;
   successStatus?: StatusCode;
   summary: string;
   tags?: Tag[];
-}
-
-export type ValidIncomingRequest<
-  TBody extends ZodType | undefined = undefined,
-  TParams extends ZodObject | undefined = undefined,
-  TQuery extends ZodObject | undefined = undefined
-> = {
-  params: Output<TParams>;
-  query: Output<TQuery>;
-  body: Output<TBody>;
-}
+};
 
 export const ErrorCode = {
   AccountExists: "ACCOUNT_EXISTS",
