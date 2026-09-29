@@ -1,6 +1,4 @@
 import "@fontsource-variable/inter/index.css";
-import "@fontsource/im-fell-english/400.css";
-import "@fontsource/im-fell-english/400-italic.css";
 import "@fontsource/shrikhand/400.css";
 import "@mantine/core/styles.css";
 import "@/styles/global.css";

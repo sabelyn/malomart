@@ -3,7 +3,7 @@
   font-weight: 400;
   font-size: clamp(2rem, 6vw, 3.75rem);
   line-height: 1.05;
-  color: var(--mantine-color-discount-5);
+  color: var(--mm-malo);
   text-shadow: 4px 4px 0 var(--mantine-color-dark-9);
   max-width: 18ch;
   transform: rotate(-2deg);

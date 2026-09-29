@@ -40,17 +40,30 @@ const gilt: MantineColorsTuple = [
   "#3f3215"
 ];
 
-const discount: MantineColorsTuple = [
-  "#ffe6f0",
-  "#ffc2da",
-  "#ff9cc2",
-  "#ff76aa",
-  "#ff5f9b",
-  "#ff4f8b",
-  "#e63d78",
-  "#c22e63",
-  "#9c224f",
-  "#73173a"
+const gold: MantineColorsTuple = [
+  "#fdf7e3",
+  "#faedc2",
+  "#f6e09c",
+  "#f2d377",
+  "#efc860",
+  "#edc04e",
+  "#d4a93c",
+  "#b38c2f",
+  "#8f6f24",
+  "#6b521a"
+];
+
+const rose: MantineColorsTuple = [
+  "#fdecf2",
+  "#f9d0de",
+  "#f4b3c9",
+  "#ef96b4",
+  "#eb80a5",
+  "#e86c98",
+  "#cf5782",
+  "#ad466b",
+  "#8a3755",
+  "#67293f"
 ];
 
 const twili: MantineColorsTuple = [
@@ -67,8 +80,8 @@ const twili: MantineColorsTuple = [
 ];
 
 export default createTheme({
-  colors: { dark, velvet, gilt, discount, twili },
-  primaryColor: "discount",
+  colors: { dark, velvet, gilt, gold, rose, twili },
+  primaryColor: "gold",
   primaryShade: 5,
   black: "#16131c",
   white: "#ece2cc",
@@ -76,8 +89,8 @@ export default createTheme({
   luminanceThreshold: 0.25,
   fontFamily: "'Inter Variable', system-ui, sans-serif",
   headings: {
-    fontFamily: "'IM Fell English', Georgia, serif",
-    fontWeight: "400",
+    fontFamily: "'Inter Variable', system-ui, sans-serif",
+    fontWeight: "700",
     sizes: {
       h1: { fontSize: "3rem", lineHeight: "1.1" },
       h2: { fontSize: "2.25rem", lineHeight: "1.15" },

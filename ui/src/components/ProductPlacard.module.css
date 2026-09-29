@@ -26,9 +26,11 @@
 }
 
 .category {
-  font-family: 'IM Fell English', Georgia, serif;
-  font-style: italic;
-  color: var(--mantine-color-gilt-4);
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mantine-color-gilt-2);
 }
 
 .title {
@@ -51,7 +53,7 @@
   line-height: 1.1;
   text-align: center;
   color: var(--mantine-color-dark-8);
-  background: var(--mantine-color-discount-4);
+  background: var(--mm-malo);
   border-radius: 999px;
   transform: rotate(6deg);
   box-shadow: 2px 3px 0 var(--mantine-color-dark-9);

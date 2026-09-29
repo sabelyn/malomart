@@ -1,5 +1,5 @@
 .header {
-  border-bottom: var(--mm-gilt-rule);
+  border-bottom: var(--mm-rule);
   padding-block: var(--mantine-spacing-md);
 }
 
@@ -11,17 +11,16 @@
 }
 
 .formerly {
-  font-family: 'IM Fell English', Georgia, serif;
   font-style: italic;
   font-size: var(--mantine-font-size-sm);
-  color: var(--mantine-color-gilt-5);
+  color: var(--mantine-color-dark-2);
 }
 
 .logo {
   font-family: var(--mm-font-sign);
   font-size: 2.25rem;
   line-height: 1;
-  color: var(--mantine-color-discount-5);
+  color: var(--mm-malo);
   text-shadow: 3px 3px 0 var(--mantine-color-dark-9);
   transform: rotate(-4deg);
   margin-top: -0.25rem;
@@ -47,7 +46,7 @@
 }
 
 .navError {
-  color: var(--mantine-color-discount-3);
+  color: var(--mantine-color-red-4);
   font-size: var(--mantine-font-size-sm);
 }
 

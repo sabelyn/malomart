@@ -15,7 +15,7 @@ const PageError = ({ onRetry }: PageErrorProps) => {
     <Container size="lg" className={classes.page}>
       <Title order={1}>Something broke.</Title>
       <MaloSays>Not my fault. Try again.</MaloSays>
-      <Button mt="xl" color="gilt" variant="outline" onClick={onRetry}>
+      <Button mt="xl" variant="outline" onClick={onRetry}>
         Try again
       </Button>
     </Container>

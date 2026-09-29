@@ -5,7 +5,6 @@
 }
 
 .was {
-  font-family: 'IM Fell English', Georgia, serif;
   font-style: italic;
   color: var(--mantine-color-dark-2);
   font-size: var(--mantine-font-size-md);
@@ -18,7 +17,7 @@
   font-family: var(--mm-font-sign);
   font-size: 2rem;
   line-height: 1;
-  color: var(--mantine-color-discount-5);
+  color: var(--mantine-color-gold-5);
 }
 
 .rupee {

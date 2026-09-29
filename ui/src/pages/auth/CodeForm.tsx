@@ -25,12 +25,12 @@ const CodeForm = ({ email, submitLabel, pending, error, notice, onSubmit, childr
     <form className={classes.form} onSubmit={form.onSubmit(({ code }) => onSubmit(code.trim()))} noValidate>
       <Stack>
         {error && (
-          <Alert color="discount" variant="light">
+          <Alert color="red" variant="light">
             {error}
           </Alert>
         )}
         {notice && (
-          <Alert color="gilt" variant="light" role="status">
+          <Alert variant="light" role="status">
             {notice}
           </Alert>
         )}
@@ -43,7 +43,7 @@ const CodeForm = ({ email, submitLabel, pending, error, notice, onSubmit, childr
           required
           {...form.getInputProps("code")}
         />
-        <Button type="submit" color="gilt" loading={pending}>
+        <Button type="submit" loading={pending}>
           {submitLabel}
         </Button>
         {children}

@@ -74,7 +74,7 @@ const SignUpPage = () => {
             <Link to={signInLocation} state={{ email: pendingEmail } satisfies SignInState}>
               Didn't get a code? Sign in instead
             </Link>
-            <Button variant="subtle" color="gilt" onClick={startOver}>
+            <Button variant="subtle" onClick={startOver}>
               Use a different email
             </Button>
           </Group>
@@ -87,7 +87,7 @@ const SignUpPage = () => {
         >
           <Stack>
             {register.error && (
-              <Alert color="discount" variant="light">
+              <Alert color="red" variant="light">
                 {authErrorMessage(register.error)}
                 {isAccountExists(register.error) && (
                   <>
@@ -101,7 +101,7 @@ const SignUpPage = () => {
             )}
             <TextInput label="Name" autoComplete="name" required {...form.getInputProps("name")} />
             <TextInput label="Email" type="email" autoComplete="email" required {...form.getInputProps("email")} />
-            <Button type="submit" color="gilt" loading={register.isPending}>
+            <Button type="submit" loading={register.isPending}>
               Email me a code
             </Button>
           </Stack>

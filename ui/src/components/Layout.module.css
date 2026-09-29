@@ -20,7 +20,7 @@
 .footer {
   margin-top: calc(var(--mantine-spacing-xl) * 3);
   padding-block: var(--mantine-spacing-xl);
-  border-top: var(--mm-gilt-rule);
+  border-top: var(--mm-rule);
   color: var(--mantine-color-dark-2);
   font-size: var(--mantine-font-size-sm);
 }

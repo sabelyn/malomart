@@ -3,7 +3,7 @@
 }
 
 .shelfHeading {
-  border-bottom: var(--mm-gilt-rule);
+  border-bottom: var(--mm-rule);
   padding-bottom: var(--mantine-spacing-xs);
   margin-bottom: var(--mantine-spacing-xl);
   color: var(--mantine-color-gilt-3);

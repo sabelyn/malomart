@@ -1,7 +1,8 @@
 :root {
   --mm-font-sign: 'Shrikhand', 'Arial Black', sans-serif;
+  --mm-malo: var(--mantine-color-rose-5);
   --mm-focus: var(--mantine-color-twili-4);
-  --mm-gilt-rule: 1px solid var(--mantine-color-gilt-7);
+  --mm-rule: 1px solid var(--mantine-color-gilt-7);
 }
 
 body {

@@ -71,10 +71,10 @@ const SignInPage = () => {
           onSubmit={code => verify.mutate({ body: { code } })}
         >
           <Group justify="space-between">
-            <Button variant="subtle" color="gilt" onClick={() => resend(pendingEmail)} loading={start.isPending}>
+            <Button variant="subtle" onClick={() => resend(pendingEmail)} loading={start.isPending}>
               Send a new code
             </Button>
-            <Button variant="subtle" color="gilt" onClick={startOver}>
+            <Button variant="subtle" onClick={startOver}>
               Use a different email
             </Button>
           </Group>
@@ -90,17 +90,17 @@ const SignInPage = () => {
         >
           <Stack>
             {start.error && (
-              <Alert color="discount" variant="light">
+              <Alert color="red" variant="light">
                 {authErrorMessage(start.error)}
               </Alert>
             )}
             {notice && (
-              <Alert color="gilt" variant="light" role="status">
+              <Alert variant="light" role="status">
                 {notice}
               </Alert>
             )}
             <TextInput label="Email" type="email" autoComplete="email" required {...form.getInputProps("email")} />
-            <Button type="submit" color="gilt" loading={start.isPending}>
+            <Button type="submit" loading={start.isPending}>
               Email me a code
             </Button>
           </Stack>
