@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import maloImage from "@/assets/portraits/malo.webp";
 import voices from "@/styles/voices.module.css";
 
 type MaloSaysProps = {
@@ -8,10 +9,13 @@ type MaloSaysProps = {
 
 const MaloSays = ({ children }: MaloSaysProps) => (
   <figure className={voices.malo}>
-    <blockquote>{children}</blockquote>
-    <figcaption>
-      <cite>Malo, owner</cite>
-    </figcaption>
+    <img src={maloImage} alt="" className={voices.maloPortrait} />
+    <div>
+      <blockquote>{children}</blockquote>
+      <figcaption>
+        <cite>Malo, owner</cite>
+      </figcaption>
+    </div>
   </figure>
 );
 

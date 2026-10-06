@@ -1,10 +1,11 @@
-import { Alert, Button, Container, Group, Stack, Text, TextInput, Title } from "@mantine/core";
+import { Alert, Button, Container, Group, Stack, Text, TextInput } from "@mantine/core";
 import { schemaResolver, useForm } from "@mantine/form";
 import { SignInBody, signIn, verifySignIn } from "@mm/lib/auth";
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
 
 import { isUnauthorized, useEndpointMutation, useSetSession } from "@/api";
+import ChudleyHype from "@/components/ChudleyHype";
 import MaloSays from "@/components/MaloSays";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { SIGN_UP_PATH } from "@/routes/paths";
@@ -56,9 +57,9 @@ const SignInPage = () => {
 
   return (
     <Container size="xs" className={pages.page}>
-      <Title order={1} className={voices.hype}>
+      <ChudleyHype>
         Welcome back, valued customer!
-      </Title>
+      </ChudleyHype>
       <MaloSays>Email. Code. Shop.</MaloSays>
 
       {pendingEmail ? (

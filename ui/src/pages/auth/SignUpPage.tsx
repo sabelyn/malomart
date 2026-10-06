@@ -1,4 +1,4 @@
-import { Alert, Button, Container, Group, Stack, Text, TextInput, Title } from "@mantine/core";
+import { Alert, Button, Container, Group, Stack, Text, TextInput } from "@mantine/core";
 import { schemaResolver, useForm } from "@mantine/form";
 import { ApiRequestError, ErrorCode } from "@mm/lib/api";
 import { confirmSignUp, SignUpBody, signUp } from "@mm/lib/auth";
@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 
 import { useEndpointMutation, useSetSession } from "@/api";
+import ChudleyHype from "@/components/ChudleyHype";
 import MaloSays from "@/components/MaloSays";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { SIGN_IN_PATH } from "@/routes/paths";
@@ -57,9 +58,9 @@ const SignUpPage = () => {
 
   return (
     <Container size="xs" className={pages.page}>
-      <Title order={1} className={voices.hype}>
+      <ChudleyHype>
         Join the Malo Mart family! Membership is free!
-      </Title>
+      </ChudleyHype>
       <MaloSays>No passwords. I don't trust you with one.</MaloSays>
 
       {pendingEmail ? (

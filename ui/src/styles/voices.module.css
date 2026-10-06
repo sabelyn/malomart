@@ -1,3 +1,22 @@
+.hypeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-xl);
+}
+
+.chudley {
+  flex-shrink: 0;
+  width: 112px;
+  height: 128px;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 50%;
+  border: 3px solid var(--mantine-color-gilt-5);
+  outline: 1px solid var(--mantine-color-gilt-8);
+  outline-offset: 3px;
+  background-color: var(--mantine-color-velvet-8);
+}
+
 .hype {
   font-family: var(--mm-font-sign);
   font-weight: 400;
@@ -10,8 +29,22 @@
 }
 
 .malo {
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-md);
   margin-top: var(--mantine-spacing-xl);
   color: var(--mantine-color-dark-1);
+}
+
+.maloPortrait {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 50%;
+  border: 2px solid var(--mm-malo);
+  background-color: var(--mantine-color-dark-6);
 }
 
 .malo cite {
@@ -19,4 +52,15 @@
   font-style: normal;
   font-size: var(--mantine-font-size-sm);
   color: var(--mantine-color-dark-2);
+}
+
+@media (max-width: 36em) {
+  .hypeRow {
+    gap: var(--mantine-spacing-md);
+  }
+
+  .chudley {
+    width: 70px;
+    height: 80px;
+  }
 }

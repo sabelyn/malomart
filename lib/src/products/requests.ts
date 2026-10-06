@@ -9,7 +9,9 @@ export const CreateProductBody = Product.pick({
   description: true,
   category: true,
   price: true,
-  inStock: true
+  inStock: true,
+  originalPrice: true,
+  features: true
 }).meta({ id: "CreateProductData" });
 export type CreateProductBody = zinfer<typeof CreateProductBody>;
 
@@ -24,7 +26,8 @@ export type ListProductsQueryInput = input<typeof ListProductsQuery>;
 export const UpdateProductBody = Product.pick({
   title: true,
   description: true,
-  price: true
+  price: true,
+  features: true
 })
   .partial()
   .refine(atLeastOneKeyRefinement)

@@ -8,6 +8,7 @@ import hylianShieldImage from "@/assets/items/hylian-shield.png";
 import magicArmorImage from "@/assets/items/magic-armor.png";
 import redPotionImage from "@/assets/items/red-potion.png";
 import { useLayoutContext } from "@/components/Layout";
+import ChudleyHype from "@/components/ChudleyHype";
 import MaloSays from "@/components/MaloSays";
 import ProductPlacard from "@/components/ProductPlacard";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
@@ -85,9 +86,9 @@ const HomePage = () => {
   return (
     <Container size="lg">
       <section className={classes.page}>
-        <Title order={1} className={voices.hype}>
+        <ChudleyHype>
           You'll buy it now, if you're smart, at MAAAA-LOOOO MART!
-        </Title>
+        </ChudleyHype>
         <MaloSays>Buy something already.</MaloSays>
       </section>
       <section aria-labelledby="shelf-heading">
