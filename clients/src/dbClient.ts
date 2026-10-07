@@ -29,20 +29,12 @@ export const TableIndexes = strictObject({
 });
 export type TableIndexes = zinfer<typeof TableIndexes>;
 
-type AdditionalGetCondition = { ConditionExpression: string; ExpressionAttributeValues: Record<string, unknown> };
 export const getItemById = async <T = unknown>(
   client: DynamoDBDocumentClient,
   TableName: string,
-  id: string,
-  condition?: AdditionalGetCondition
+  id: string
 ): Promise<T | null> => {
-  const result = await client.send(
-    new GetCommand({
-      TableName,
-      Key: { id },
-      ...(condition ?? {})
-    })
-  );
+  const result = await client.send(new GetCommand({ TableName, Key: { id } }));
   return result.Item ? (result.Item as T) : null;
 };
 

@@ -16,7 +16,8 @@ const product: ProductDto = {
   description: "Allows you to see into the minds of others.",
   category: "Masks",
   price: 80,
-  inStock: 2
+  inStock: 2,
+  features: ["Reveals hidden truths"]
 };
 
 const productData = {
@@ -24,7 +25,8 @@ const productData = {
   description: product.description,
   category: product.category,
   price: product.price,
-  inStock: product.inStock
+  inStock: product.inStock,
+  features: product.features
 };
 
 const listResult: ListProductsResponse = {

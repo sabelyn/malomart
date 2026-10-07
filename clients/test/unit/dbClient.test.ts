@@ -1,9 +1,9 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { mockClient } from "aws-sdk-client-mock";
 
 import type { PaginatedQueryOptions } from "../../src/dbClient";
-import { getPaginatedResults, InvalidCursorError } from "../../src/dbClient";
+import { getItemById, getPaginatedResults, InvalidCursorError } from "../../src/dbClient";
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({ region: "us-east-1" }));
 const ddb = mockClient(client);
@@ -39,6 +39,13 @@ describe("dbClient", () => {
     expect(dbClient()).toBe(dbClient());
   });
 
+  it("uses the default endpoint when AWS_ENDPOINT_URL is not set", async () => {
+    vi.stubEnv("AWS_ENDPOINT_URL", undefined);
+    const { dbClient } = await import("../../src/dbClient.js");
+
+    expect(dbClient().config.endpoint).toBeUndefined();
+  });
+
   it("uses AWS_ENDPOINT_URL when set", async () => {
     vi.stubEnv("AWS_ENDPOINT_URL", "http://localhost:8000");
     const { dbClient } = await import("../../src/dbClient.js");
@@ -46,6 +53,34 @@ describe("dbClient", () => {
     const endpoint = await dbClient().config.endpoint?.();
     expect(endpoint?.hostname).toBe("localhost");
     expect(endpoint?.port).toBe(8000);
+  });
+});
+
+describe("getItemById", () => {
+  beforeEach(() => {
+    ddb.reset();
+  });
+
+  it("gets the item by id from the table", async () => {
+    const item = { id: "a", title: "Apple" };
+    ddb.on(GetCommand).resolves({ Item: item });
+
+    await expect(getItemById(client, "products", "a")).resolves.toEqual(item);
+    expect(ddb).toHaveReceivedCommandTimes(GetCommand, 1);
+    expect(ddb.commandCalls(GetCommand)[0].args[0].input).toEqual({ TableName: "products", Key: { id: "a" } });
+  });
+
+  it("returns null when the item does not exist", async () => {
+    ddb.on(GetCommand).resolves({});
+
+    await expect(getItemById(client, "products", "missing")).resolves.toBeNull();
+  });
+
+  it("propagates errors from the client", async () => {
+    const error = new Error("boom");
+    ddb.on(GetCommand).rejects(error);
+
+    await expect(getItemById(client, "products", "a")).rejects.toBe(error);
   });
 });
 
@@ -133,6 +168,25 @@ describe("getPaginatedResults", () => {
   });
 
   describe("paging", () => {
+    it("treats a response without Items as empty", async () => {
+      ddb.on(ScanCommand).resolves({});
+
+      const result = await getPaginatedResults(client, baseOptions);
+
+      expect(result).toEqual({ items: [], hasNext: false, cursor: undefined });
+    });
+
+    it("encodes numeric key values in the cursor", async () => {
+      ddb.on(ScanCommand).resolves({
+        Items: [{ id: "a", rank: 1 }, { id: "b", rank: 2 }],
+        LastEvaluatedKey: { id: "b", rank: 2 }
+      });
+
+      const result = await getPaginatedResults(client, { ...baseOptions, keys: ["id", "rank"] });
+
+      expect(decode(result.cursor)).toEqual({ id: "b", rank: 2 });
+    });
+
     it("returns a final page without a cursor", async () => {
       ddb.on(ScanCommand).resolves({ Items: [{ id: "a" }] });
 

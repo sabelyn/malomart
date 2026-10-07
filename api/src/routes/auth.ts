@@ -134,7 +134,8 @@ router.get(...pathAndMiddleware(getCurrentUser), (req, res, next) => {
     if (!req.user) {
       throw unauthorized();
     }
-    return respond(res, getCurrentUser, req.user);
+    const { customerData: _, ...user } = req.user;
+    return respond(res, getCurrentUser, user);
   } catch (err) {
     return next(err);
   }

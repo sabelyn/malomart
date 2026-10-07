@@ -17,7 +17,8 @@ const productData: CreateProductBody = {
   description: "Allows you to see into the minds of others.",
   category: Category.Masks,
   price: 80,
-  inStock: 2
+  inStock: 2,
+  features: ["Reveals hidden truths"]
 };
 
 const makeProduct = (overrides: Partial<Product> = {}): Product => ({

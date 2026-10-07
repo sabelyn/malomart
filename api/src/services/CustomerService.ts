@@ -1,3 +1,4 @@
+import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
 import type { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { DeleteCommand, PutCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { getItemById } from "@mm/clients";
@@ -44,27 +45,21 @@ export class CustomerService implements ICustomerService {
   };
 
   deleteAddress = async (id: string) => {
-    await this.db.send(
-      new DeleteCommand({
-        TableName: addresses,
-        Key: { id },
-        ConditionExpression: "customerId = :customerId",
-        ExpressionAttributeValues: { ":customerId": this.user.id }
-      })
-    );
-  };
-
-  getAddress = async (id: string) => {
-    const item = await getItemById(this.db, addresses, id, {
-      ConditionExpression: "customerId = :customerId",
-      ExpressionAttributeValues: { ":customerId": this.user.id }
-    });
-    if (item) {
-      return this.toAddressDto(item);
-    } else {
-      throw notFound("Address could not be found.");
+    try {
+      await this.db.send(
+        new DeleteCommand({
+          TableName: addresses,
+          Key: { id },
+          ConditionExpression: "customerId = :customerId",
+          ExpressionAttributeValues: { ":customerId": this.user.id }
+        })
+      );
+    } catch (err) {
+      throw this.mapConditionFailure(err);
     }
   };
+
+  getAddress = async (id: string) => this.toAddressDto(await this.getOwnedAddress(id));
 
   getCustomer = async () => {
     const customer: CustomerDto = { id: this.user.id, defaultAddress: null, defaultPaymentMethod: null };
@@ -90,43 +85,40 @@ export class CustomerService implements ICustomerService {
   };
 
   updateAddress = async (id: string, body: UpdateAddressBody) => {
-    const { setAsDefault, street, city, region, postalCode } = body;
+    const { setAsDefault, ...fields } = body;
     const customerId = this.user.id;
 
     const expParts: string[] = [];
+    const names: Record<string, string> = {};
     const values: Record<string, string> = { ":customerId": customerId };
-    if (street) {
-      expParts.push("street = :str");
-      values[":str"] = street;
-    }
-    if (city) {
-      expParts.push("city = :city");
-      values[":city"] = city;
-    }
-    if (region) {
-      expParts.push("region = :reg");
-      values[":reg"] = region;
-    }
-    if (postalCode) {
-      expParts.push("postalCode - :pc");
-      values[":pc"] = postalCode;
+    for (const [key, value] of Object.entries(fields)) {
+      if (value) {
+        expParts.push(`#${key} = :${key}`);
+        names[`#${key}`] = key;
+        values[`:${key}`] = value;
+      }
     }
 
     let address: unknown;
     if (expParts.length > 0) {
-      const result = await this.db.send(
-        new UpdateCommand({
-          TableName: addresses,
-          Key: { id },
-          ConditionExpression: "attribute_exists(id) AND customerId = :customerId",
-          UpdateExpression: `SET ${expParts.join(", ")}`,
-          ExpressionAttributeValues: values,
-          ReturnValues: "ALL_NEW"
-        })
-      );
-      address = result.Attributes;
+      try {
+        const result = await this.db.send(
+          new UpdateCommand({
+            TableName: addresses,
+            Key: { id },
+            ConditionExpression: "attribute_exists(id) AND customerId = :customerId",
+            UpdateExpression: `SET ${expParts.join(", ")}`,
+            ExpressionAttributeNames: names,
+            ExpressionAttributeValues: values,
+            ReturnValues: "ALL_NEW"
+          })
+        );
+        address = result.Attributes;
+      } catch (err) {
+        throw this.mapConditionFailure(err);
+      }
     } else {
-      address = await this.getAddress(id);
+      address = await this.getOwnedAddress(id);
     }
 
     if (setAsDefault && this.user.customerData.defaultAddressId !== id) {
@@ -146,7 +138,19 @@ export class CustomerService implements ICustomerService {
         ExpressionAttributeValues: { ":addressId": id }
       })
     );
+    this.user.customerData.defaultAddressId = id;
   };
+
+  private getOwnedAddress = async (id: string) => {
+    const item = await getItemById<{ customerId?: unknown }>(this.db, addresses, id);
+    if (item?.customerId !== this.user.id) {
+      throw notFound("Address could not be found.");
+    }
+    return parseStored(item, Address);
+  };
+
+  private mapConditionFailure = (err: unknown) =>
+    err instanceof ConditionalCheckFailedException ? notFound("Address could not be found.") : err;
 
   private toAddressDto = (data: unknown) => {
     const { street, city, region, postalCode, id } = parseStored(data, Address);

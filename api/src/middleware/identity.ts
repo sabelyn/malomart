@@ -29,8 +29,9 @@ export const identity = async (req: Request, res: Response, next: NextFunction) 
 
     let user: User = { ...tokenUser, customerData: {} };
     try {
-      const customerData = await getItemById<Customer>(container.resolve(DB), env.TABLE_NAMES.customers, tokenUser.id);
-      if (customerData) {
+      const customer = await getItemById<Customer>(container.resolve(DB), env.TABLE_NAMES.customers, tokenUser.id);
+      if (customer) {
+        const { id: _, ...customerData } = customer;
         user = { ...tokenUser, customerData };
       }
     } catch (err) {

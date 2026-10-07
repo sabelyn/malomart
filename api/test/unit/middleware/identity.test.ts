@@ -1,12 +1,11 @@
 import { SessionCookie } from "@mm/lib";
 import type { CognitoJwtVerifier } from "aws-jwt-verify";
 import type { Request, Response } from "express";
-import { generateKeyPairSync, sign } from "node:crypto";
-import type { KeyObject } from "node:crypto";
 import { container } from "tsyringe";
 
 import { USER } from "@/contracts/tokens";
 import { identity } from "@/middleware/identity";
+import { cacheTestJwks, otherPrivateKey, signJwt } from "../../helpers/jwt";
 
 const captured = vi.hoisted(() => ({ verifiers: [] as unknown[] }));
 
@@ -24,34 +23,6 @@ vi.mock("aws-jwt-verify", async importOriginal => {
   };
 });
 
-const KID = "test-key";
-const USER_POOL_ID = "us-east-1_TestPool";
-const ISSUER = `https://cognito-idp.us-east-1.amazonaws.com/${USER_POOL_ID}`;
-
-const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
-const { privateKey: otherPrivateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
-
-const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString("base64url");
-
-const signJwt = (claims: Record<string, unknown> = {}, key: KeyObject = privateKey) => {
-  const now = Math.floor(Date.now() / 1000);
-  const header = encode({ alg: "RS256", kid: KID, typ: "JWT" });
-  const payload = encode({
-    sub: "user-123",
-    iss: ISSUER,
-    client_id: "test-client-id",
-    token_use: "access",
-    scope: "openid email",
-    email: "user@example.com",
-    name: "Regular User",
-    iat: now,
-    exp: now + 300,
-    ...claims
-  });
-  const signature = sign("sha256", Buffer.from(`${header}.${payload}`), key).toString("base64url");
-  return `${header}.${payload}.${signature}`;
-};
-
 const mockRequest = (token?: string) =>
   ({
     cookies: token === undefined ? {} : { [SessionCookie.Access]: token }
@@ -59,14 +30,16 @@ const mockRequest = (token?: string) =>
 
 const res = {} as Response;
 
-const regularUser = { id: "user-123", email: "user@example.com", name: "Regular User", isAdmin: false };
+const regularUser = {
+  id: "user-123",
+  email: "user@example.com",
+  name: "Regular User",
+  isAdmin: false,
+  customerData: {}
+};
 
 beforeAll(() => {
-  const verifier = captured.verifiers[0] as ReturnType<typeof CognitoJwtVerifier.create>;
-  verifier.cacheJwks(
-    { keys: [{ ...publicKey.export({ format: "jwk" }), kid: KID, alg: "RS256", use: "sig" }] } as never,
-    USER_POOL_ID
-  );
+  cacheTestJwks(captured.verifiers[0] as ReturnType<typeof CognitoJwtVerifier.create>);
 });
 
 describe("identity", () => {
