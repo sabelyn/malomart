@@ -10,7 +10,7 @@ export const OrderDto = strictObject({
     id: true,
     customerId: true,
     items: true,
-    status: true,
+    statusUpdates: true,
     orderDate: true
   }).shape,
   shippingAddress: Address

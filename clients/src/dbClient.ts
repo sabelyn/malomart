@@ -23,6 +23,7 @@ export type TableNames = zinfer<typeof TableNames>;
 export const TableIndexes = strictObject({
   addressesByCustomer: string().nonempty(),
   ordersByCustomer: string().nonempty(),
+  ordersByCustomerStatus: string().nonempty(),
   ordersByStatus: string().nonempty(),
   paymentMethodsByCustomer: string().nonempty(),
   productsByCategory: string().nonempty()
@@ -101,9 +102,9 @@ export const getPaginatedResults = async (client: DynamoDBDocumentClient, option
     ...(attributeValues ? { ExpressionAttributeValues: attributeValues } : {}),
     ...(projected
       ? {
-          ProjectionExpression: projected.map((_, i) => `#sel${i}`).join(", "),
-          ExpressionAttributeNames: Object.fromEntries(projected.map((name, i) => [`#sel${i}`, name]))
-        }
+        ProjectionExpression: projected.map((_, i) => `#sel${i}`).join(", "),
+        ExpressionAttributeNames: Object.fromEntries(projected.map((name, i) => [`#sel${i}`, name]))
+      }
       : {})
   };
 

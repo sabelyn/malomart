@@ -41,6 +41,7 @@ export type Address = zinfer<typeof Address>;
 export const PaymentMethod = strictObject({
   id: Id,
   customerId: Id,
+  brand: string().nonempty(),
   expirationMonth: number().int().min(0).max(11),
   expirationYear: PositiveInt,
   lastFour: string().regex(/^\d{4}$/),

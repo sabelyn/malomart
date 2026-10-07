@@ -10,11 +10,9 @@ export const CreateAddressBody = strictObject({
 export type CreateAddressBody = zinfer<typeof CreateAddressBody>;
 
 export const CreatePaymentMethodBody = strictObject({
-  ...PaymentMethod.pick({
-    expirationMonth: true,
-    expirationYear: true
+  ...PaymentMethod.omit({
+    id: true
   }).shape,
-  cardNumber: string().regex(/^\d{16}$/),
   setAsDefault: boolean().optional()
 });
 export type CreatePaymentMethodBody = zinfer<typeof CreatePaymentMethodBody>;
@@ -22,5 +20,9 @@ export type CreatePaymentMethodBody = zinfer<typeof CreatePaymentMethodBody>;
 export const UpdateAddressBody = CreateAddressBody.partial().refine(atLeastOneKeyRefinement);
 export type UpdateAddressBody = zinfer<typeof UpdateAddressBody>;
 
-export const UpdatePaymentMethodBody = CreatePaymentMethodBody.partial().refine(atLeastOneKeyRefinement);
+export const UpdatePaymentMethodBody = CreatePaymentMethodBody.pick({
+  expirationMonth: true,
+  expirationYear: true,
+  setAsDefault: true
+}).refine(atLeastOneKeyRefinement);
 export type UpdatePaymentMethodBody = zinfer<typeof UpdatePaymentMethodBody>;

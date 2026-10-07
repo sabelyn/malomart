@@ -1,4 +1,5 @@
 import { Duration, Stack } from "aws-cdk-lib";
+import type { StackProps } from "aws-cdk-lib";
 import {
   AccountRecovery,
   FeaturePlan,
@@ -14,6 +15,12 @@ import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import type { Construct } from "constructs";
 import path from "node:path";
 
+import type { DbStack } from "./DbStack";
+
+type Props = StackProps & {
+  dbStack: DbStack;
+};
+
 const ADMIN_GROUP = "admin";
 const CUSTOMER_GROUP = "customer";
 const RESOURCE_SERVER_ID = "malomart";
@@ -23,7 +30,7 @@ export class AuthStack extends Stack {
   public readonly userPoolClient: UserPoolClient;
   public readonly adminScope: string;
 
-  constructor(scope: Construct, id: string) {
+  constructor(scope: Construct, id: string, props: Props) {
     super(scope, id);
 
     this.userPool = new UserPool(this, "UserPool", {
@@ -78,14 +85,17 @@ export class AuthStack extends Stack {
     });
     this.userPool.addTrigger(UserPoolOperation.PRE_TOKEN_GENERATION_CONFIG, preTokenGeneration, LambdaVersion.V2_0);
 
+    const { customers } = props.dbStack.tables;
     const postConfirmation = new NodejsFunction(this, "PostConfirmation", {
       entry: path.resolve(__dirname, "../lambdas/postConfirmation.ts"),
       runtime: Runtime.NODEJS_24_X,
       architecture: Architecture.ARM_64,
       environment: {
-        CUSTOMER_GROUP
+        CUSTOMER_GROUP,
+        CUSTOMER_TABLE_NAME: customers.tableName
       }
     });
+    customers.grants.writeData(postConfirmation);
     postConfirmation.addToRolePolicy(
       new PolicyStatement({
         actions: ["cognito-idp:AdminAddUserToGroup"],

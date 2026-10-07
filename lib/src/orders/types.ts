@@ -26,7 +26,8 @@ export const Order = strictObject({
   address: Address.omit({ id: true, customerId: true }),
   paymentMethod: PaymentMethod.omit({ id: true, customerId: true }),
   orderDate: iso.datetime(),
-  status: partialRecord(OrderStatusSchema, iso.datetime()),
+  status: OrderStatusSchema,
+  statusUpdates: partialRecord(OrderStatusSchema, iso.datetime()),
   items: record(Id, OrderItemEntry)
 });
 export type Order = zinfer<typeof Order>;

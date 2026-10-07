@@ -6,7 +6,8 @@ import type { Construct } from "constructs";
 
 export const INDEXES: TableIndexes = {
   addressesByCustomer: "IDX_ADDRESSES_CUSTOMER",
-  ordersByCustomer: "ORDERS_BY_CUSTOMER",
+  ordersByCustomer: "IDX_ORDERS_CUSTOMER",
+  ordersByCustomerStatus: "IDX_ORDERS_CUSTOMER_STATUS",
   ordersByStatus: "IDX_ORDERS_STATUS",
   paymentMethodsByCustomer: "IDX_PAYMENT_METHODS_CUSTOMER",
   productsByCategory: "IDX_PRODUCTS_CATEGORY"
@@ -40,12 +41,29 @@ export class DbStack extends Stack {
     ordersTable.addGlobalSecondaryIndex({
       indexName: INDEXES.ordersByCustomer,
       partitionKey: { name: "customerId", type: AttributeType.STRING },
-      sortKey: { name: "id", type: AttributeType.STRING }
+      sortKeys: [
+        { name: "orderDate", type: AttributeType.STRING },
+        { name: "id", type: AttributeType.STRING }
+      ]
     });
     ordersTable.addGlobalSecondaryIndex({
       indexName: INDEXES.ordersByStatus,
       partitionKey: { name: "status", type: AttributeType.STRING },
-      sortKey: { name: "id", type: AttributeType.STRING }
+      sortKeys: [
+        { name: "orderDate", type: AttributeType.STRING },
+        { name: "id", type: AttributeType.STRING }
+      ]
+    });
+    ordersTable.addGlobalSecondaryIndex({
+      indexName: INDEXES.ordersByCustomerStatus,
+      partitionKeys: [
+        { name: "customerId", type: AttributeType.STRING },
+        { name: "status", type: AttributeType.STRING }
+      ],
+      sortKeys: [
+        { name: "orderDate", type: AttributeType.STRING },
+        { name: "id", type: AttributeType.STRING }
+      ]
     });
 
     const paymentMethodsTable = new Table(this, "PaymentMethodsTable", {

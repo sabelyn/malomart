@@ -11,7 +11,7 @@ export const configureStacks = (stage: Stage) => {
   const dbStack = new DbStack(stage, "MaloMartDbStack");
   const gatewayStack = new GatewayStack(stage, "MaloMartGatewayStack");
   const frontendStack = new FrontendStack(stage, "MaloMartFrontendStack", { gatewayStack });
-  const authStack = new AuthStack(stage, "MaloMartAuthStack");
+  const authStack = new AuthStack(stage, "MaloMartAuthStack", { dbStack });
   new ApiStack(stage, "MaloMartApiStack", { authStack, dbStack, frontendStack, gatewayStack });
 };
 
