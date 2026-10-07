@@ -55,7 +55,10 @@ describe("RequireUser", () => {
 
   it("hands session errors to the error boundary", async () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
-    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ message: "boom" }), { status: 500 })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(new Response(JSON.stringify({ message: "boom" }), { status: 500 })))
+    );
     renderWithProviders(routes, { route: "/orders" });
 
     expect(await screen.findByText("boundary caught")).toBeTruthy();
@@ -92,7 +95,10 @@ describe("GuestOnly", () => {
   });
 
   it("sends a signed-in user to the return path", () => {
-    renderWithProviders(routes, { route: `/auth/sign-in?${new URLSearchParams({ returnTo: "/orders" })}`, session: customer });
+    renderWithProviders(routes, {
+      route: `/auth/sign-in?${new URLSearchParams({ returnTo: "/orders" })}`,
+      session: customer
+    });
 
     expect(location()).toBe("/orders");
   });

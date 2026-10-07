@@ -47,11 +47,11 @@ export class Endpoint<S extends Schemas> extends Route {
     const search = new URLSearchParams();
     for (const [key, value] of Object.entries(query ?? {})) {
       if (value !== undefined && value !== null) {
-        search.append(key, String(value));
+        search.append(key, typeof value === "object" ? JSON.stringify(value) : String(value));
       }
     }
     if (search.size > 0) {
-      url = `${url}?${search}`;
+      url = `${url}?${search.toString()}`;
     }
 
     const headers: Record<string, string> = { Accept: "application/json" };

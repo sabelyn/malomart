@@ -186,7 +186,10 @@ describe("POST /api/auth/sign-in", () => {
 
 describe("POST /api/auth/sign-in/verify", () => {
   it("verifies the code, sets session cookies, and returns the user", async () => {
-    const res = await request(app).post("/api/auth/sign-in/verify").set("Cookie", pendingCookie()).send({ code: "12345678" });
+    const res = await request(app)
+      .post("/api/auth/sign-in/verify")
+      .set("Cookie", pendingCookie())
+      .send({ code: "12345678" });
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual(signedInUser);
@@ -200,7 +203,10 @@ describe("POST /api/auth/sign-in/verify", () => {
   it("marks admins from the token scope", async () => {
     service.verifySignIn.mockResolvedValue(tokens({ accessToken: accessToken({ scope: "openid test/admin" }) }));
 
-    const res = await request(app).post("/api/auth/sign-in/verify").set("Cookie", pendingCookie()).send({ code: "12345678" });
+    const res = await request(app)
+      .post("/api/auth/sign-in/verify")
+      .set("Cookie", pendingCookie())
+      .send({ code: "12345678" });
 
     expect(res.body.isAdmin).toBe(true);
   });
@@ -216,7 +222,10 @@ describe("POST /api/auth/sign-in/verify", () => {
   it("keeps the pending session after a wrong code", async () => {
     service.verifySignIn.mockRejectedValue(cognitoError("CodeMismatchException"));
 
-    const res = await request(app).post("/api/auth/sign-in/verify").set("Cookie", pendingCookie()).send({ code: "12345678" });
+    const res = await request(app)
+      .post("/api/auth/sign-in/verify")
+      .set("Cookie", pendingCookie())
+      .send({ code: "12345678" });
 
     expect(res.status).toBe(400);
     expect(res.body.code).toBe(ErrorCode.InvalidCode);
@@ -226,7 +235,10 @@ describe("POST /api/auth/sign-in/verify", () => {
   it("clears the pending session when Cognito rejects it", async () => {
     service.verifySignIn.mockRejectedValue(cognitoError("NotAuthorizedException"));
 
-    const res = await request(app).post("/api/auth/sign-in/verify").set("Cookie", pendingCookie()).send({ code: "12345678" });
+    const res = await request(app)
+      .post("/api/auth/sign-in/verify")
+      .set("Cookie", pendingCookie())
+      .send({ code: "12345678" });
 
     expect(res.status).toBe(401);
     expect(isCleared(setCookies(res)[SessionCookie.Pending])).toBe(true);

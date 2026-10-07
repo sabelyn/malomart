@@ -1,11 +1,10 @@
-import { infer as zinfer } from "zod";
-import { boolean, strictObject, string } from "zod";
+import { boolean, strictObject, string, infer as zinfer } from "zod";
 
 import { atLeastOneKeyRefinement } from "../common";
-import { Customer, Address, PaymentMethod } from "./types";
+import { Address, PaymentMethod } from "./types";
 
 export const CreateAddressBody = strictObject({
-  ...Address.omit({ id: true }),
+  ...Address.omit({ id: true, customerId: true }).shape,
   setAsDefault: boolean().optional()
 });
 export type CreateAddressBody = zinfer<typeof CreateAddressBody>;

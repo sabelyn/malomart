@@ -1,4 +1,7 @@
-import type { AuthenticationResultType, CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";
+import type {
+  AuthenticationResultType,
+  CognitoIdentityProviderClient
+} from "@aws-sdk/client-cognito-identity-provider";
 import {
   ConfirmSignUpCommand,
   DescribeUserPoolClientCommand,
@@ -33,7 +36,7 @@ const toTokens = (result: AuthenticationResultType | undefined): AuthTokens => {
 export class AuthService implements IAuthService {
   private clientSecret?: Promise<string>;
 
-  constructor(@inject(COGNITO) private readonly cognito: CognitoIdentityProviderClient) { }
+  constructor(@inject(COGNITO) private readonly cognito: CognitoIdentityProviderClient) {}
 
   signUp = async (email: string, name: string) => {
     const { Session } = await this.cognito.send(

@@ -3,22 +3,22 @@ import type { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { DeleteCommand, GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import type { PaginatedQueryOptions } from "@mm/clients";
 import { getPaginatedResults, InvalidCursorError } from "@mm/clients";
-import type { CreateProductBody, ListProductsQuery, Product, UpdateProductBody } from "@mm/lib";
-import { isDefined, ProductDto, ProductOverview } from "@mm/lib";
+import type { CreateProductBody, ListProductsQuery, UpdateProductBody } from "@mm/lib";
+import { isDefined, Product, ProductOverview } from "@mm/lib";
 import { inject, injectable } from "tsyringe";
-import { ZodError } from "zod";
 
 import type { IProductService } from "@/contracts";
 import { DB } from "@/contracts/tokens";
 import env from "@/env";
-import { badRequest, internal, notFound } from "@/errors/helpers";
+import { badRequest, notFound } from "@/errors/helpers";
+import { parseStored } from "@/utils/parsing";
 
 const TableName = env.TABLE_NAMES.products;
 const categoryIndex = env.TABLE_INDEXES.productsByCategory;
 
 @injectable()
 export class ProductService implements IProductService {
-  constructor(@inject(DB) private readonly db: DynamoDBDocumentClient) { }
+  constructor(@inject(DB) private readonly db: DynamoDBDocumentClient) {}
 
   createProduct = async (data: CreateProductBody) => {
     const Item: Product = {
@@ -138,18 +138,7 @@ export class ProductService implements IProductService {
     }
   };
 
-  private toProductDto = (data: unknown) => this.parseStored(() => ProductDto.parse(data));
+  private toProductDto = (data: unknown) => parseStored(data, Product);
 
-  private toProductsList = (data: unknown[]) => this.parseStored(() => ProductOverview.array().parse(data));
-
-  private parseStored = <T>(parse: () => T): T => {
-    try {
-      return parse();
-    } catch (err) {
-      if (err instanceof ZodError) {
-        throw internal(err);
-      }
-      throw err;
-    }
-  };
+  private toProductsList = (data: unknown[]) => parseStored(data, ProductOverview.array());
 }

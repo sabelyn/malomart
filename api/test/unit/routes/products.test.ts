@@ -127,7 +127,10 @@ describe("GET /api/products/:id", () => {
     const res = await request(app).get(`/api/products/${ID}`);
 
     expect(res.status).toBe(500);
-    expect(res.body).toEqual({ message: "Something went wrong handling this request.", details: { endpoint: "getProduct" } });
+    expect(res.body).toEqual({
+      message: "Something went wrong handling this request.",
+      details: { endpoint: "getProduct" }
+    });
   });
 });
 

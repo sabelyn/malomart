@@ -10,9 +10,7 @@ type FileUploadOptions = {
 };
 
 export class ImageService {
-  constructor(
-    @inject(S3) private readonly client: S3Client
-  ) { }
+  constructor(@inject(S3) private readonly client: S3Client) {}
 
   getSignedUploadUrls = async (bucket: string, files: FileUploadOptions[]) => {
     const results = await Promise.allSettled(
@@ -21,7 +19,7 @@ export class ImageService {
 
     const urls: Record<string, string> = {};
     for (let i = 0; i < results.length; i++) {
-      const key = files[i]!.key;
+      const key = files[i].key;
       const result = results[i];
       if ("value" in result) {
         urls[key] = result.value;
@@ -31,7 +29,7 @@ export class ImageService {
     }
 
     return urls;
-  }
+  };
 
   getSignedDownloadUrls = async (bucket: string, keys: string[], contentDisposition: "inline" | "attachment") => {
     const results = await Promise.allSettled(
@@ -40,7 +38,7 @@ export class ImageService {
 
     const urls: Record<string, string> = {};
     for (let i = 0; i < results.length; i++) {
-      const key = keys[i]!;
+      const key = keys[i];
       const result = results[i];
       if ("value" in result) {
         urls[key] = result.value;
@@ -50,5 +48,5 @@ export class ImageService {
     }
 
     return urls;
-  }
+  };
 }

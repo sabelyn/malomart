@@ -4,7 +4,6 @@ import { Link } from "react-router";
 import ChudleyHype from "@/components/ChudleyHype";
 import MaloSays from "@/components/MaloSays";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import voices from "@/styles/voices.module.css";
 import classes from "./pages.module.css";
 
 const NotFoundPage = () => {
@@ -12,9 +11,7 @@ const NotFoundPage = () => {
 
   return (
     <Container size="lg" className={classes.page}>
-      <ChudleyHype>
-        Nothing on this shelf! Not even dust!
-      </ChudleyHype>
+      <ChudleyHype>Nothing on this shelf! Not even dust!</ChudleyHype>
       <MaloSays>Wrong aisle.</MaloSays>
       <Link to="/" className={classes.backLink}>
         Back to the shop

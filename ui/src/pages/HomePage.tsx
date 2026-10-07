@@ -7,12 +7,11 @@ import bombsImage from "@/assets/items/bombs.png";
 import hylianShieldImage from "@/assets/items/hylian-shield.png";
 import magicArmorImage from "@/assets/items/magic-armor.png";
 import redPotionImage from "@/assets/items/red-potion.png";
-import { useLayoutContext } from "@/components/Layout";
 import ChudleyHype from "@/components/ChudleyHype";
+import { useLayoutContext } from "@/components/Layout";
 import MaloSays from "@/components/MaloSays";
 import ProductPlacard from "@/components/ProductPlacard";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import voices from "@/styles/voices.module.css";
 import classes from "./pages.module.css";
 
 type ShelfItem = { product: Product; image?: string; chudleyPrice?: number };
@@ -25,7 +24,8 @@ const sampleShelf: ShelfItem[] = [
       description: "Take no damage. Your rupees take it instead. Keep your wallet full.",
       category: Category.Armor,
       price: 598,
-      inStock: 1
+      inStock: 1,
+      features: ["Damage drains rupees instead of hearts", "Stops working when your wallet hits zero"]
     },
     image: magicArmorImage,
     chudleyPrice: 1000000
@@ -37,7 +37,8 @@ const sampleShelf: ShelfItem[] = [
       description: "Sturdy, fireproof, and no longer priced like a castle.",
       category: Category.Shields,
       price: 200,
-      inStock: 2
+      inStock: 2,
+      features: ["Fireproof", "Blocks Guardian lasers with good timing"]
     },
     image: hylianShieldImage,
     chudleyPrice: 20000
@@ -49,7 +50,8 @@ const sampleShelf: ShelfItem[] = [
       description: "Restores eight hearts. Tastes like it.",
       category: Category.Potions,
       price: 30,
-      inStock: 14
+      inStock: 14,
+      features: ["Restores eight hearts", "Bottle not included"]
     },
     image: redPotionImage,
     chudleyPrice: 300
@@ -61,7 +63,8 @@ const sampleShelf: ShelfItem[] = [
       description: "Thirty arrows. Pointy end goes toward the Bulblin.",
       category: Category.Arrows,
       price: 40,
-      inStock: 0
+      inStock: 0,
+      features: ["Bundle of thirty", "Fits any standard quiver"]
     },
     image: arrowsImage
   },
@@ -72,7 +75,8 @@ const sampleShelf: ShelfItem[] = [
       description: "Handle with care. No refunds on detonated goods.",
       category: Category.Bombs,
       price: 50,
-      inStock: 6
+      inStock: 6,
+      features: ["Bundle of ten", "Lit fuse not included"]
     },
     image: bombsImage,
     chudleyPrice: 1000
@@ -86,9 +90,7 @@ const HomePage = () => {
   return (
     <Container size="lg">
       <section className={classes.page}>
-        <ChudleyHype>
-          You'll buy it now, if you're smart, at MAAAA-LOOOO MART!
-        </ChudleyHype>
+        <ChudleyHype>You'll buy it now, if you're smart, at MAAAA-LOOOO MART!</ChudleyHype>
         <MaloSays>Buy something already.</MaloSays>
       </section>
       <section aria-labelledby="shelf-heading">

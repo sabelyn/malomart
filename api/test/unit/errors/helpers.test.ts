@@ -4,12 +4,26 @@ import { ErrorCode } from "@mm/lib";
 import { number, strictObject, ZodError } from "zod";
 
 import { ApiError } from "@/errors/ApiError";
-import { badRequest, describeError, forbidden, internal, notFound, toApiError, tooManyRequests, unauthorized } from "@/errors/helpers";
+import {
+  badRequest,
+  describeError,
+  forbidden,
+  internal,
+  notFound,
+  toApiError,
+  tooManyRequests,
+  unauthorized
+} from "@/errors/helpers";
 
 const metadata = { requestId: "req-123", httpStatusCode: 400, attempts: 2 };
 
 const dynamoError = (name: string, retryable = false) => {
-  const err = new DynamoDBServiceException({ name, $fault: "client", $metadata: metadata, message: `${name} happened` });
+  const err = new DynamoDBServiceException({
+    name,
+    $fault: "client",
+    $metadata: metadata,
+    message: `${name} happened`
+  });
   if (retryable) {
     err.$retryable = { throttling: false };
   }
@@ -17,7 +31,12 @@ const dynamoError = (name: string, retryable = false) => {
 };
 
 const cognitoError = (name: string, retryable = false) => {
-  const err = new CognitoIdentityProviderServiceException({ name, $fault: "client", $metadata: metadata, message: `${name} happened` });
+  const err = new CognitoIdentityProviderServiceException({
+    name,
+    $fault: "client",
+    $metadata: metadata,
+    message: `${name} happened`
+  });
   if (retryable) {
     err.$retryable = { throttling: false };
   }
@@ -180,7 +199,10 @@ describe("describeError", () => {
   it("includes the code and request metadata for a Cognito cause", () => {
     const described = describeError(toApiError(cognitoError("CodeMismatchException")));
 
-    expect(described).toMatchObject({ code: ErrorCode.InvalidCode, cause: { name: "CodeMismatchException", requestId: "req-123" } });
+    expect(described).toMatchObject({
+      code: ErrorCode.InvalidCode,
+      cause: { name: "CodeMismatchException", requestId: "req-123" }
+    });
   });
 
   it("passes through a non-Error cause", () => {

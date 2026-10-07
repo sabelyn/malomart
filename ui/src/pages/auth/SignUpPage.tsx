@@ -11,7 +11,6 @@ import MaloSays from "@/components/MaloSays";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { SIGN_IN_PATH } from "@/routes/paths";
 import type { SignInState } from "@/routes/paths";
-import voices from "@/styles/voices.module.css";
 import pages from "../pages.module.css";
 import classes from "./auth.module.css";
 import { authErrorMessage } from "./authErrors";
@@ -44,7 +43,7 @@ const SignUpPage = () => {
         return;
       }
       const state: SignInState = { email: body.email, notice: "Account confirmed. Sign in to finish." };
-      navigate(signInLocation, { state });
+      void navigate(signInLocation, { state });
     }
   });
 
@@ -58,9 +57,7 @@ const SignUpPage = () => {
 
   return (
     <Container size="xs" className={pages.page}>
-      <ChudleyHype>
-        Join the Malo Mart family! Membership is free!
-      </ChudleyHype>
+      <ChudleyHype>Join the Malo Mart family! Membership is free!</ChudleyHype>
       <MaloSays>No passwords. I don't trust you with one.</MaloSays>
 
       {pendingEmail ? (
@@ -83,7 +80,9 @@ const SignUpPage = () => {
       ) : (
         <form
           className={classes.form}
-          onSubmit={form.onSubmit(({ name, email }) => register.mutate({ body: { name: name.trim(), email: email.trim() } }))}
+          onSubmit={form.onSubmit(({ name, email }) =>
+            register.mutate({ body: { name: name.trim(), email: email.trim() } })
+          )}
           noValidate
         >
           <Stack>

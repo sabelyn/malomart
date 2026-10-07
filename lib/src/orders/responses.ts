@@ -2,8 +2,8 @@ import type { infer as zinfer } from "zod";
 import { strictObject } from "zod";
 
 import { PositiveInt, PaginationData } from "../common";
-import { Order, OrderStatusSchema } from "./types";
 import { Address } from "../customers/types";
+import { Order, OrderStatusSchema } from "./types";
 
 export const OrderDto = strictObject({
   ...Order.pick({

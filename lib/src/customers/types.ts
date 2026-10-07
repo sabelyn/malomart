@@ -1,5 +1,5 @@
 import type { infer as zinfer } from "zod";
-import { number, strictObject, string, uuid, enum as zenum } from "zod";
+import { number, strictObject, string, enum as zenum } from "zod";
 
 import { Id, PositiveInt } from "../common";
 
@@ -30,6 +30,7 @@ export type Customer = zinfer<typeof Customer>;
 
 export const Address = strictObject({
   id: Id,
+  customerId: Id,
   street: string().nonempty(),
   city: string().nonempty(),
   region: Region,
@@ -39,9 +40,10 @@ export type Address = zinfer<typeof Address>;
 
 export const PaymentMethod = strictObject({
   id: Id,
+  customerId: Id,
   expirationMonth: number().int().min(0).max(11),
   expirationYear: PositiveInt,
   lastFour: string().regex(/^\d{4}$/),
-  token: string().nonempty(),
+  token: string().nonempty()
 });
 export type PaymentMethod = zinfer<typeof PaymentMethod>;

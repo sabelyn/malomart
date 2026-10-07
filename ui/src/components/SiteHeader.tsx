@@ -13,7 +13,7 @@ const SignOutButton = () => {
   const navigate = useNavigate();
   const signOut = useSignOut({
     onSignedOut: () => {
-      navigate("/");
+      void navigate("/");
       document.getElementById("main")?.focus();
     }
   });

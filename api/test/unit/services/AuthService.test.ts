@@ -18,7 +18,10 @@ const CLIENT_ID = "test-client-id";
 const CLIENT_SECRET = "test-client-secret";
 const EMAIL = "link@hyrule.com";
 
-const secretHash = (username: string) => createHmac("sha256", CLIENT_SECRET).update(username + CLIENT_ID).digest("base64");
+const secretHash = (username: string) =>
+  createHmac("sha256", CLIENT_SECRET)
+    .update(username + CLIENT_ID)
+    .digest("base64");
 
 const authResult = { AccessToken: "access", ExpiresIn: 900, RefreshToken: "refresh" };
 const tokens = { accessToken: "access", expiresIn: 900, refreshToken: "refresh" };
@@ -47,7 +50,10 @@ describe("client secret", () => {
   });
 
   it("is fetched again after a failure", async () => {
-    cognito.on(DescribeUserPoolClientCommand).rejectsOnce(new Error("throttled")).resolves({ UserPoolClient: { ClientSecret: CLIENT_SECRET } });
+    cognito
+      .on(DescribeUserPoolClientCommand)
+      .rejectsOnce(new Error("throttled"))
+      .resolves({ UserPoolClient: { ClientSecret: CLIENT_SECRET } });
     cognito.on(InitiateAuthCommand).resolves({ ChallengeName: "EMAIL_OTP", Session: "session" });
 
     await expect(service.startSignIn(EMAIL)).rejects.toThrow("throttled");
@@ -166,7 +172,9 @@ describe("verifySignIn", () => {
   it("fails when Cognito returns no tokens", async () => {
     cognito.on(RespondToAuthChallengeCommand).resolves({ ChallengeName: "EMAIL_OTP", Session: "again" });
 
-    await expect(service.verifySignIn({ email: EMAIL, session: "session" }, "12345678")).rejects.toMatchObject({ statusCode: 500 });
+    await expect(service.verifySignIn({ email: EMAIL, session: "session" }, "12345678")).rejects.toMatchObject({
+      statusCode: 500
+    });
   });
 });
 

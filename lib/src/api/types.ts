@@ -57,8 +57,10 @@ export const ErrorCode = {
   NoPendingSignIn: "NO_PENDING_SIGN_IN",
   RateLimited: "RATE_LIMITED"
 } as const;
-export const ErrorCodeSchema = zenum(ErrorCode)
-  .meta({ id: "ErrorCode", description: "A machine-readable code for errors a client may want to handle." });
+export const ErrorCodeSchema = zenum(ErrorCode).meta({
+  id: "ErrorCode",
+  description: "A machine-readable code for errors a client may want to handle."
+});
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
 
 export const ErrorResponse = strictObject({

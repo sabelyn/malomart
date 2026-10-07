@@ -1,5 +1,5 @@
-import { enum as zenum, strictObject, string, number, uuid } from "zod";
 import type { infer as zinfer } from "zod";
+import { strictObject, string, enum as zenum } from "zod";
 
 import { Id, NonnegativeInt, PositiveInt } from "../common";
 
@@ -15,8 +15,7 @@ export const Category = {
   Shields: "Shields",
   Weapons: "Weapons"
 } as const;
-export const CategorySchema = zenum(Category)
-  .meta({ id: "ProductCategory" });
+export const CategorySchema = zenum(Category).meta({ id: "ProductCategory" });
 export type Category = (typeof Category)[keyof typeof Category];
 
 export const Product = strictObject({

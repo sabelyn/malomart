@@ -10,7 +10,9 @@ const batchWrite = async (db: DynamoDBDocumentClient, tableName: string, request
   for (const batch of chunk(requests, BATCH_SIZE)) {
     let unprocessed: Record<string, unknown>[] | undefined = batch;
     while (unprocessed?.length) {
-      const result: BatchWriteCommandOutput = await db.send(new BatchWriteCommand({ RequestItems: { [tableName]: unprocessed } }));
+      const result: BatchWriteCommandOutput = await db.send(
+        new BatchWriteCommand({ RequestItems: { [tableName]: unprocessed } })
+      );
       unprocessed = result.UnprocessedItems?.[tableName];
     }
   }

@@ -70,16 +70,23 @@ describe("routeToPaths", () => {
   it("groups endpoints by full path and method", () => {
     const root = new Route("/things", "public");
     new Endpoint(root, { ...baseConfig, id: "list", method: "GET", path: "/" });
-    new Endpoint(root, { ...baseConfig, id: "create", access: "admin", method: "POST", path: "/", schemas: { body: Body } });
+    new Endpoint(root, {
+      ...baseConfig,
+      id: "create",
+      access: "admin",
+      method: "POST",
+      path: "/",
+      schemas: { body: Body }
+    });
     new Endpoint(root, { ...baseConfig, id: "get", method: "GET", path: "/{id}", schemas: { params: Params } });
 
     const paths = routeToPaths(root);
 
     expect(Object.keys(paths)).toEqual(["/things", "/things/{id}"]);
-    expect(Object.keys(paths["/things"]!)).toEqual(["get", "post"]);
-    expect(paths["/things"]!.get!.operationId).toBe("list");
-    expect(paths["/things"]!.post!.operationId).toBe("create");
-    expect(paths["/things/{id}"]!.get!.operationId).toBe("get");
+    expect(Object.keys(paths["/things"])).toEqual(["get", "post"]);
+    expect(paths["/things"].get!.operationId).toBe("list");
+    expect(paths["/things"].post!.operationId).toBe("create");
+    expect(paths["/things/{id}"].get!.operationId).toBe("get");
   });
 
   it("includes endpoints from nested routes", () => {
@@ -89,7 +96,7 @@ describe("routeToPaths", () => {
 
     const paths = routeToPaths(root);
 
-    expect(paths["/things/{id}/reviews"]!.get!.operationId).toBe("listReviews");
+    expect(paths["/things/{id}/reviews"].get!.operationId).toBe("listReviews");
   });
 
   it("builds an operation with metadata, params, and body", () => {
@@ -103,7 +110,7 @@ describe("routeToPaths", () => {
       schemas: { body: Body, params: Params, query: Query }
     });
 
-    const op = routeToPaths(root)["/things/{id}"]!.put!;
+    const op = routeToPaths(root)["/things/{id}"].put!;
 
     expect(op).toMatchObject({ operationId: "update", summary: "sum", description: "desc", tags: ["Products"] });
     expect(op.requestParams).toEqual({ path: Params, query: Query });
@@ -114,7 +121,7 @@ describe("routeToPaths", () => {
     const root = new Route("/things", "public");
     new Endpoint(root, { ...baseConfig, id: "list", method: "GET", path: "/" });
 
-    const op = routeToPaths(root)["/things"]!.get!;
+    const op = routeToPaths(root)["/things"].get!;
 
     expect(op.requestParams).toBeUndefined();
     expect(op.requestBody).toBeUndefined();
@@ -122,9 +129,16 @@ describe("routeToPaths", () => {
 
   it("includes the success response with its schema and status", () => {
     const root = new Route("/things", "public");
-    new Endpoint(root, { ...baseConfig, id: "create", method: "POST", path: "/", schemas: { response: Body }, successStatus: "201" });
+    new Endpoint(root, {
+      ...baseConfig,
+      id: "create",
+      method: "POST",
+      path: "/",
+      schemas: { response: Body },
+      successStatus: "201"
+    });
 
-    const op = routeToPaths(root)["/things"]!.post!;
+    const op = routeToPaths(root)["/things"].post!;
 
     expect(op.responses["201"]).toEqual(response("ok", Body));
   });
@@ -137,7 +151,7 @@ describe("routeToPaths", () => {
     const root = new Route("/things", access);
     new Endpoint(root, { ...baseConfig, id: "op", method: "GET", path: "/", errors: { 404: "missing" } });
 
-    const op = routeToPaths(root)["/things"]!.get!;
+    const op = routeToPaths(root)["/things"].get!;
 
     expect(Object.keys(op.responses).sort()).toEqual(["200", "404", ...Object.keys(common)].sort());
     expect(op.responses["200"]).toEqual(response("ok"));
@@ -148,7 +162,7 @@ describe("routeToPaths", () => {
     const root = new Route("/things", "user");
     new Endpoint(root, { ...baseConfig, id: "op", method: "GET", path: "/", errors: { 401: "custom" } });
 
-    const op = routeToPaths(root)["/things"]!.get!;
+    const op = routeToPaths(root)["/things"].get!;
 
     expect(op.responses["401"]).toEqual(error("custom"));
   });

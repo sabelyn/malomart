@@ -35,7 +35,11 @@ describe("error", () => {
   it("includes the error code when there is one", () => {
     const { res } = handle(new ApiError(400, "The code is incorrect.", { code: ErrorCode.InvalidCode }));
 
-    expect(res.json).toHaveBeenCalledWith({ message: "The code is incorrect.", code: ErrorCode.InvalidCode, details: undefined });
+    expect(res.json).toHaveBeenCalledWith({
+      message: "The code is incorrect.",
+      code: ErrorCode.InvalidCode,
+      details: undefined
+    });
   });
 
   it("responds with the status, message, and details of an ApiError", () => {
@@ -87,7 +91,10 @@ describe("error", () => {
     const { res } = handle(err);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ message: "Something went wrong handling this request.", details: undefined });
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Something went wrong handling this request.",
+      details: undefined
+    });
     expect(log).toHaveBeenCalledWith(
       expect.objectContaining({ statusCode: 500, cause: expect.objectContaining({ message: "database exploded" }) })
     );

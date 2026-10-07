@@ -4,5 +4,5 @@
     "noEmit": true,
     "types": ["node", "vitest/globals"]
   },
-  "include": ["src", "test", "eslint.config.mjs", "vite.config.mts"]
+  "include": ["src", "test", "eslint.config.mjs", "vite.config.mts", "vitest.config.mts"]
 }

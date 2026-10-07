@@ -1,3 +1,5 @@
-import type { CurrentUser } from "@mm/lib";
+import type { CurrentUser, Customer } from "@mm/lib";
 
-export type User = CurrentUser;
+export type User = CurrentUser & {
+  customerData: Omit<Customer, "id">;
+};

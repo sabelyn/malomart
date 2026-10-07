@@ -1,10 +1,10 @@
+import type { CurrentUser } from "@mm/lib";
 import { decomposeUnverifiedJwt } from "aws-jwt-verify/jwt";
 import type { JwtPayload } from "aws-jwt-verify/jwt-model";
 
 import env from "@/env";
-import type { User } from "@/types/user";
 
-export const userFromClaims = (claims: JwtPayload): User => ({
+export const userFromClaims = (claims: JwtPayload): CurrentUser => ({
   id: String(claims.sub),
   email: String(claims.email ?? ""),
   name: String(claims.name ?? ""),

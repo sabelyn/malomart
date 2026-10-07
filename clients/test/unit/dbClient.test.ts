@@ -93,7 +93,7 @@ describe("getPaginatedResults", () => {
 
       await getPaginatedResults(client, baseOptions);
 
-      const input = ddb.commandCalls(ScanCommand)[0]!.args[0].input;
+      const input = ddb.commandCalls(ScanCommand)[0].args[0].input;
       expect(input).not.toHaveProperty("IndexName");
       expect(input).not.toHaveProperty("FilterExpression");
       expect(input).not.toHaveProperty("ExpressionAttributeValues");

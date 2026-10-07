@@ -10,7 +10,6 @@ import MaloSays from "@/components/MaloSays";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { SIGN_UP_PATH } from "@/routes/paths";
 import type { SignInState } from "@/routes/paths";
-import voices from "@/styles/voices.module.css";
 import pages from "../pages.module.css";
 import classes from "./auth.module.css";
 import { authErrorMessage, SESSION_TIMED_OUT } from "./authErrors";
@@ -57,9 +56,7 @@ const SignInPage = () => {
 
   return (
     <Container size="xs" className={pages.page}>
-      <ChudleyHype>
-        Welcome back, valued customer!
-      </ChudleyHype>
+      <ChudleyHype>Welcome back, valued customer!</ChudleyHype>
       <MaloSays>Email. Code. Shop.</MaloSays>
 
       {pendingEmail ? (
@@ -109,8 +106,7 @@ const SignInPage = () => {
       )}
 
       <Text className={classes.switch}>
-        New here?{" "}
-        <Link to={{ pathname: SIGN_UP_PATH, search: location.search }}>Make an account</Link>
+        New here? <Link to={{ pathname: SIGN_UP_PATH, search: location.search }}>Make an account</Link>
       </Text>
     </Container>
   );

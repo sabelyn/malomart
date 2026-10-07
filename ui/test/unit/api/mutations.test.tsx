@@ -15,7 +15,8 @@ const productData = {
   description: "Allows you to see into the minds of others.",
   category: "Masks" as const,
   price: 80,
-  inStock: 2
+  inStock: 2,
+  features: ["Reveals hidden truths"]
 };
 
 const product = { id: ID, ...productData };
@@ -27,7 +28,9 @@ const setup = () => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   queryClient.setQueryData(productKey, product);
   queryClient.setQueryData(otherKey, "untouched");
-  const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
   return { queryClient, wrapper };
 };
 
@@ -55,7 +58,9 @@ describe("useEndpointMutation", () => {
     const onSuccess = vi.fn(() => {
       invalidatedWhenCalled.push(queryClient.getQueryState(productKey)?.isInvalidated ?? false);
     });
-    const { result } = renderHook(() => useEndpointMutation(createProduct, { invalidates: [products], onSuccess }), { wrapper });
+    const { result } = renderHook(() => useEndpointMutation(createProduct, { invalidates: [products], onSuccess }), {
+      wrapper
+    });
 
     result.current.mutate({ body: productData });
 
@@ -79,9 +84,12 @@ describe("useEndpointMutation", () => {
     stubApi({ "POST /api/products": () => json(403, { message: "Forbidden" }) });
     const { queryClient, wrapper } = setup();
     const onSuccess = vi.fn();
-    const { result } = renderHook(() => useEndpointMutation(createProduct, { invalidates: [products, auth], onSuccess }), {
-      wrapper
-    });
+    const { result } = renderHook(
+      () => useEndpointMutation(createProduct, { invalidates: [products, auth], onSuccess }),
+      {
+        wrapper
+      }
+    );
 
     result.current.mutate({ body: productData });
 

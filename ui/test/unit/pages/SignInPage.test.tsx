@@ -75,7 +75,8 @@ describe("SignInPage", () => {
   it("keeps the code step open after a wrong code", async () => {
     stubApi({
       "POST /api/auth/sign-in": () => new Response(null, { status: 202 }),
-      "POST /api/auth/sign-in/verify": () => json(400, { message: "The code is incorrect.", code: ErrorCode.InvalidCode })
+      "POST /api/auth/sign-in/verify": () =>
+        json(400, { message: "The code is incorrect.", code: ErrorCode.InvalidCode })
     });
     const user = userEvent.setup();
     renderSignIn();
@@ -126,7 +127,9 @@ describe("SignInPage", () => {
   });
 
   it("explains rate limiting", async () => {
-    stubApi({ "POST /api/auth/sign-in": () => json(429, { message: "Too many requests.", code: ErrorCode.RateLimited }) });
+    stubApi({
+      "POST /api/auth/sign-in": () => json(429, { message: "Too many requests.", code: ErrorCode.RateLimited })
+    });
     const user = userEvent.setup();
     renderSignIn();
 

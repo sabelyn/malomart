@@ -42,7 +42,13 @@ describe("Endpoint", () => {
 
     it("combines its own tags with the parent's", () => {
       const parent = new Route("/things", "public", ["Products"]);
-      const endpoint = new Endpoint(parent, { ...baseConfig, method: "GET", path: "/", schemas: {}, tags: ["Products"] });
+      const endpoint = new Endpoint(parent, {
+        ...baseConfig,
+        method: "GET",
+        path: "/",
+        schemas: {},
+        tags: ["Products"]
+      });
 
       expect([...endpoint.tags]).toEqual(["Products"]);
     });
@@ -56,7 +62,12 @@ describe("Endpoint", () => {
 
     it("computes full and express paths", () => {
       const parent = new Route("/things", "public");
-      const endpoint = new Endpoint(parent, { ...baseConfig, method: "GET", path: "/{id}", schemas: { params: Params } });
+      const endpoint = new Endpoint(parent, {
+        ...baseConfig,
+        method: "GET",
+        path: "/{id}",
+        schemas: { params: Params }
+      });
 
       expect(endpoint.fullPath).toBe("/things/{id}");
       expect(endpoint.expressPath).toBe("/:id");
@@ -67,8 +78,20 @@ describe("Endpoint", () => {
     const parent = new Route("/things", "public");
     const getThing = new Endpoint(parent, { ...baseConfig, method: "GET", path: "/{id}", schemas: { params: Params } });
     const listThings = new Endpoint(parent, { ...baseConfig, method: "GET", path: "/", schemas: { query: Query } });
-    const createThing = new Endpoint(parent, { ...baseConfig, access: "admin", method: "POST", path: "/", schemas: { body: Body } });
-    const pingThings = new Endpoint(parent, { ...baseConfig, access: "user", method: "POST", path: "/ping", schemas: {} });
+    const createThing = new Endpoint(parent, {
+      ...baseConfig,
+      access: "admin",
+      method: "POST",
+      path: "/",
+      schemas: { body: Body }
+    });
+    const pingThings = new Endpoint(parent, {
+      ...baseConfig,
+      access: "user",
+      method: "POST",
+      path: "/ping",
+      schemas: {}
+    });
 
     it("substitutes path params", () => {
       const { url, init } = getThing.request({ params: { id: ID } });

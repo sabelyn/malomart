@@ -68,7 +68,9 @@ export class ApiStack extends Stack {
         operatingSystemFamily: OperatingSystemFamily.LINUX
       }
     });
-    tables.products.grants.readWriteData(taskDefinition.taskRole);
+    for (const table of Object.values(tables)) {
+      table.grants.readWriteData(taskDefinition.taskRole);
+    }
 
     const logGroup = new LogGroup(this, "ApiLogs", {
       retention: RetentionDays.ONE_WEEK,

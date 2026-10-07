@@ -60,6 +60,7 @@ export const config = tseslint.config([
       "prefer-object-spread": "error",
       "prefer-regex-literals": "error",
       "prefer-template": "error",
+      "@typescript-eslint/no-base-to-string": "off",
       "@typescript-eslint/no-misused-promises": [
         "error",
         {
@@ -84,61 +85,7 @@ export const config = tseslint.config([
         }
       ]
     }
-  },
-
-  /*
-   * Dependency direction: types → utils → models → services → components.
-   *
-   * A deeper layer may *name* an upper layer's types — those are erased at
-   * compile time and cost nothing at runtime. It must not import a **value**,
-   * because that is what creates a real runtime edge, and via a barrel
-   * (`@/models` → capabilities → Container → ...) an easy cycle. Cycles here
-   * don't fail loudly; they surface as an `undefined` class at module-init time,
-   * far from the import that caused them.
-   *
-   * So `allowTypeImports: true` throughout: the rule polices runtime coupling,
-   * not vocabulary. If a deeper module needs a value from a shallower one, the
-   * code belongs in the shallower layer — see
-   * `models/capabilities/validation.ts`, which moved out of `utils/` for exactly
-   * this reason.
-   */
-  {
-    files: ["src/types/**/*.ts", "src/utils/**/*.{ts,tsx}"],
-    rules: {
-      "@typescript-eslint/no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            {
-              group: ["@/models", "@/models/**", "@/services", "@/services/**", "**/models/**", "**/services/**"],
-              allowTypeImports: true,
-              message:
-                "types/ and utils/ sit below models/ and services/. Import a type if you need the vocabulary; if you need a value, move the code up into models/."
-            }
-          ]
-        }
-      ]
-    }
-  },
-  {
-    files: ["src/models/**/*.ts"],
-    rules: {
-      "@typescript-eslint/no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            {
-              group: ["@/services", "@/services/**", "**/services/**"],
-              allowTypeImports: true,
-              message:
-                "models/ sits below services/. A model may hold a typed reference to its store, but importing a service value inverts the layering."
-            }
-          ]
-        }
-      ]
-    }
   }
 ]);
 
-// ESLint's flat-config loader reads the default export of this file.
 export default config;

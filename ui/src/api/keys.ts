@@ -9,6 +9,11 @@ const parentKey = (endpoint: KeyedEndpoint) => (endpoint.parent ? routeKey(endpo
 
 export const endpointKey = (endpoint: KeyedEndpoint, input: object) => [...parentKey(endpoint), endpoint.id, input];
 
-export const infiniteEndpointKey = (endpoint: KeyedEndpoint, input: object) => [...parentKey(endpoint), endpoint.id, "infinite", input];
+export const infiniteEndpointKey = (endpoint: KeyedEndpoint, input: object) => [
+  ...parentKey(endpoint),
+  endpoint.id,
+  "infinite",
+  input
+];
 
 export const sessionKey = endpointKey(getCurrentUser, {});

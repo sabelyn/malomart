@@ -12,7 +12,10 @@ export const ProductOverview = strictObject({
     originalPrice: true
   }).shape,
   iconUrl: url().optional()
-}).meta({ id: "ProductOverview", description: "The information about a product needed to display in a list of products." });
+}).meta({
+  id: "ProductOverview",
+  description: "The information about a product needed to display in a list of products."
+});
 export type ProductOverview = zinfer<typeof ProductOverview>;
 
 export const ListProductsResponse = strictObject({

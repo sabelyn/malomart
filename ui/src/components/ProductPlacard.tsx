@@ -12,8 +12,12 @@ type ProductPlacardProps = {
 };
 
 const stockLine = (inStock: number) => {
-  if (inStock === 0) return "Sold out. Should've been faster.";
-  if (inStock <= 3) return `${inStock} left. Decide.`;
+  if (inStock === 0) {
+    return "Sold out. Should've been faster.";
+  }
+  if (inStock <= 3) {
+    return `${inStock} left. Decide.`;
+  }
   return `${inStock} in stock.`;
 };
 
@@ -22,9 +26,7 @@ const ProductPlacard = ({ product, image, chudleyPrice, onAddToCart }: ProductPl
 
   return (
     <article className={classes.placard} aria-labelledby={`product-${product.id}`}>
-      {percentOff > 0 && (
-        <p className={classes.sticker}>{percentOff}% off? Why not!</p>
-      )}
+      {percentOff > 0 && <p className={classes.sticker}>{percentOff}% off? Why not!</p>}
       <div className={classes.heading}>
         {image && <img src={image} alt="" className={classes.image} />}
         <div>

@@ -1,9 +1,9 @@
+import babel from "@rolldown/plugin-babel";
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import path from "path";
 import { defineConfig } from "vite";
-import react, { reactCompilerPreset } from "@vitejs/plugin-react";
-import babel from "@rolldown/plugin-babel";
 
-export default defineConfig(async () => ({
+export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src")
@@ -15,4 +15,4 @@ export default defineConfig(async () => ({
       "/api": "http://localhost:4000"
     }
   }
-}));
+});

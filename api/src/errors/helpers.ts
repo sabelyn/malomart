@@ -14,7 +14,8 @@ export const forbidden = () => new ApiError(403, "Forbidden");
 
 export const notFound = (message: string) => new ApiError(404, message);
 
-export const tooManyRequests = () => new ApiError(429, "Too many requests. Try again later.", { code: ErrorCode.RateLimited });
+export const tooManyRequests = () =>
+  new ApiError(429, "Too many requests. Try again later.", { code: ErrorCode.RateLimited });
 
 const conflict = (message: string, cause: unknown) => new ApiError(409, message, { cause });
 
@@ -51,16 +52,25 @@ const fromCognito = (err: CognitoIdentityProviderServiceException): ApiError => 
     case "InvalidParameterException":
       return badRequest("The request was rejected by the identity provider.", { cause: err });
     case "UsernameExistsException":
-      return new ApiError(409, "An account already exists for this email.", { cause: err, code: ErrorCode.AccountExists });
+      return new ApiError(409, "An account already exists for this email.", {
+        cause: err,
+        code: ErrorCode.AccountExists
+      });
     case "NotAuthorizedException":
     case "UserNotFoundException":
       return unauthorized(err);
     case "LimitExceededException":
     case "TooManyFailedAttemptsException":
     case "TooManyRequestsException":
-      return new ApiError(429, "Too many attempts. Try again later.", { cause: err, code: ErrorCode.RateLimited, retryable: true });
+      return new ApiError(429, "Too many attempts. Try again later.", {
+        cause: err,
+        code: ErrorCode.RateLimited,
+        retryable: true
+      });
     default:
-      return err.$retryable ? unavailable("The identity provider is unavailable. Please retry shortly.", err) : internal(err);
+      return err.$retryable
+        ? unavailable("The identity provider is unavailable. Please retry shortly.", err)
+        : internal(err);
   }
 };
 
@@ -82,7 +92,8 @@ export const toApiError = (err: unknown): ApiError => {
 
 export const describeError = (err: ApiError) => {
   const cause = err.cause;
-  const isService = cause instanceof DynamoDBServiceException || cause instanceof CognitoIdentityProviderServiceException;
+  const isService =
+    cause instanceof DynamoDBServiceException || cause instanceof CognitoIdentityProviderServiceException;
   return {
     statusCode: err.statusCode,
     message: err.message,
@@ -91,13 +102,13 @@ export const describeError = (err: ApiError) => {
     cause:
       cause instanceof Error
         ? {
-          name: cause.name,
-          message: cause.message,
-          stack: cause.stack,
-          requestId: isService ? cause.$metadata.requestId : undefined,
-          httpStatusCode: isService ? cause.$metadata.httpStatusCode : undefined,
-          attempts: isService ? cause.$metadata.attempts : undefined
-        }
+            name: cause.name,
+            message: cause.message,
+            stack: cause.stack,
+            requestId: isService ? cause.$metadata.requestId : undefined,
+            httpStatusCode: isService ? cause.$metadata.httpStatusCode : undefined,
+            attempts: isService ? cause.$metadata.attempts : undefined
+          }
         : cause
   };
 };

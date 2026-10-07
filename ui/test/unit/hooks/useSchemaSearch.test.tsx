@@ -14,7 +14,11 @@ const renderSearch = (route: string) =>
       const { search } = useLocation();
       return { values, update, search, navigationType: useNavigationType() };
     },
-    { wrapper: ({ children }: { children: ReactNode }) => <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter> }
+    {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
+      )
+    }
   );
 
 describe("useSchemaSearch", () => {

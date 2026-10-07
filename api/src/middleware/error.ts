@@ -10,7 +10,9 @@ export const error = (err: Error, _req: Request, res: Response, _next: NextFunct
   if (apiError.retryable) {
     res.set("Retry-After", RETRY_AFTER_SECONDS);
   }
-  return res.status(apiError.statusCode).json({ message: apiError.message, code: apiError.code, details: apiError.details });
+  return res
+    .status(apiError.statusCode)
+    .json({ message: apiError.message, code: apiError.code, details: apiError.details });
 };
 
 const RETRY_AFTER_SECONDS = "5";

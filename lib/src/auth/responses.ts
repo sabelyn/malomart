@@ -13,7 +13,8 @@ export type CurrentUser = zinfer<typeof CurrentUser>;
 
 export const ConfirmSignUpResponse = strictObject({
   user: CurrentUser.nullable().meta({
-    description: "The signed-in user, or null when the account was confirmed but the sign-up session expired and the user must sign in."
+    description:
+      "The signed-in user, or null when the account was confirmed but the sign-up session expired and the user must sign in."
   })
 }).meta({ id: "ConfirmSignUpResponse" });
 export type ConfirmSignUpResponse = zinfer<typeof ConfirmSignUpResponse>;

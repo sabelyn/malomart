@@ -34,7 +34,13 @@ const deleteThing = new Endpoint(things, {
   schemas: { params: strictObject({ id: uuid() }) },
   successStatus: "204"
 });
-const pingThings = new Endpoint(things, { ...baseConfig, method: "POST", path: "/ping", schemas: {}, successStatus: "204" });
+const pingThings = new Endpoint(things, {
+  ...baseConfig,
+  method: "POST",
+  path: "/ping",
+  schemas: {},
+  successStatus: "204"
+});
 
 const thing = { id: ID, name: "Sword", price: 10 };
 
@@ -116,7 +122,7 @@ describe("call", () => {
   it("passes aborts through untouched", async () => {
     const controller = new AbortController();
     const abort = new DOMException("The operation was aborted.", "AbortError");
-    const fetch = vi.fn<typeof globalThis.fetch>(async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(() => {
       controller.abort();
       throw abort;
     });
@@ -132,18 +138,33 @@ describe("call", () => {
   });
 
   it("throws an ApiRequestError with the error response's message, code, and details", async () => {
-    const fetch = mockFetch(jsonResponse(400, { message: "The code is incorrect.", code: ErrorCode.InvalidCode, details: { a: 1 } }));
+    const fetch = mockFetch(
+      jsonResponse(400, { message: "The code is incorrect.", code: ErrorCode.InvalidCode, details: { a: 1 } })
+    );
 
     const error = await call(getThing, { params: { id: ID } }, { fetch }).catch(err => err);
 
     expect(error).toBeInstanceOf(ApiRequestError);
-    expect(error).toMatchObject({ status: 400, message: "The code is incorrect.", code: ErrorCode.InvalidCode, details: { a: 1 } });
+    expect(error).toMatchObject({
+      status: 400,
+      message: "The code is incorrect.",
+      code: ErrorCode.InvalidCode,
+      details: { a: 1 }
+    });
   });
 
   it.each([
-    ["a non-JSON body", new Response("<html>Bad gateway</html>", { status: 502, statusText: "Bad Gateway" }), "Bad Gateway"],
+    [
+      "a non-JSON body",
+      new Response("<html>Bad gateway</html>", { status: 502, statusText: "Bad Gateway" }),
+      "Bad Gateway"
+    ],
     ["an empty body", new Response(null, { status: 503, statusText: "Service Unavailable" }), "Service Unavailable"],
-    ["an unrecognized JSON body", jsonResponse(500, { error: "nope" }, "Internal Server Error"), "Internal Server Error"],
+    [
+      "an unrecognized JSON body",
+      jsonResponse(500, { error: "nope" }, "Internal Server Error"),
+      "Internal Server Error"
+    ],
     ["no status text", new Response(null, { status: 504 }), "Request failed with status 504."]
   ])("falls back to the status text for %s", async (_, response, message) => {
     const error = await call(getThing, { params: { id: ID } }, { fetch: mockFetch(response) }).catch(err => err);

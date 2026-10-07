@@ -9,7 +9,12 @@ import type { User } from "@/types/user";
 export const USER_HEADER = "x-test-user";
 
 export const asUser = (user: User) => ({ [USER_HEADER]: JSON.stringify(user) });
-export const asRegularUser = asUser({ id: "user-123", email: "user@example.com", name: "Regular User", isAdmin: false });
+export const asRegularUser = asUser({
+  id: "user-123",
+  email: "user@example.com",
+  name: "Regular User",
+  isAdmin: false
+});
 export const asAdmin = asUser({ id: "admin-123", email: "admin@example.com", name: "Admin User", isAdmin: true });
 
 export const createTestApp = (router: Router) => {

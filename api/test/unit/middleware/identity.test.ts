@@ -63,7 +63,10 @@ const regularUser = { id: "user-123", email: "user@example.com", name: "Regular 
 
 beforeAll(() => {
   const verifier = captured.verifiers[0] as ReturnType<typeof CognitoJwtVerifier.create>;
-  verifier.cacheJwks({ keys: [{ ...publicKey.export({ format: "jwk" }), kid: KID, alg: "RS256", use: "sig" }] } as never, USER_POOL_ID);
+  verifier.cacheJwks(
+    { keys: [{ ...publicKey.export({ format: "jwk" }), kid: KID, alg: "RS256", use: "sig" }] } as never,
+    USER_POOL_ID
+  );
 });
 
 describe("identity", () => {

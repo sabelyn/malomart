@@ -12,4 +12,7 @@ export const registerDependencies = () => {
 
   container.registerSingleton(tokens.AUTH_SERVICE, services.AuthService);
   container.registerSingleton(tokens.PRODUCT_SERVICE, services.ProductService);
+
+  // Services that depend on the per-request user identity
+  container.register(tokens.CUSTOMER_SERVICE, services.CustomerService);
 };

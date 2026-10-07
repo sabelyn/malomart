@@ -2,7 +2,13 @@ import { apiRoot, Endpoint, Route } from "../api";
 import { IdParams } from "../common";
 import { ListOrdersResponse } from "../orders/responses";
 import { CreateAddressBody, CreatePaymentMethodBody, UpdateAddressBody, UpdatePaymentMethodBody } from "./requests";
-import { AddressDto, CustomerDto, ListAddressesResponse, ListPaymentMethodsResponse, PaymentMethodDto } from "./responses";
+import {
+  AddressDto,
+  CustomerDto,
+  ListAddressesResponse,
+  ListPaymentMethodsResponse,
+  PaymentMethodDto
+} from "./responses";
 
 export const customers = new Route("/customers", "user", ["Customers"], apiRoot);
 
@@ -146,7 +152,7 @@ export const deletePaymentMethod = new Endpoint(customers, {
   summary: "Delete a Payment Method"
 });
 
-export const listOrders = new Endpoint(customers, {
+export const listCustomerOrders = new Endpoint(customers, {
   description: "List all the orders for the currently logged-in customer.",
   id: "listCustomerOrders",
   method: "GET",

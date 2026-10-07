@@ -36,10 +36,17 @@ export const renderWithProviders = (ui: ReactNode, { route = "/", session }: Ren
   return { ...result, queryClient };
 };
 
-export const neverResolvingFetch = () => vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => undefined)));
+export const neverResolvingFetch = () =>
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() => new Promise<Response>(() => undefined))
+  );
 
 export const json = (status: number, body?: unknown) =>
-  new Response(body === undefined ? null : JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+  new Response(body === undefined ? null : JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" }
+  });
 
 type ApiHandler = (body: unknown) => Response | Promise<Response>;
 

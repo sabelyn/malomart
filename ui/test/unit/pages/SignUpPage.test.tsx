@@ -84,12 +84,13 @@ describe("SignUpPage", () => {
 
     expect((await screen.findByRole("status")).textContent).toBe("Account confirmed. Sign in to finish.");
     expect(screen.getByTestId("location").textContent).toBe("/auth/sign-in");
-    expect((screen.getByRole("textbox", { name: /email/i }) as HTMLInputElement).value).toBe(EMAIL);
+    expect(screen.getByRole<HTMLInputElement>("textbox", { name: /email/i }).value).toBe(EMAIL);
   });
 
   it("points existing members to sign in with their email filled in", async () => {
     stubApi({
-      "POST /api/auth/sign-up": () => json(409, { message: "An account already exists for this email.", code: ErrorCode.AccountExists })
+      "POST /api/auth/sign-up": () =>
+        json(409, { message: "An account already exists for this email.", code: ErrorCode.AccountExists })
     });
     const user = userEvent.setup();
     renderSignUp();
@@ -99,13 +100,14 @@ describe("SignUpPage", () => {
     await user.click(screen.getByRole("link", { name: "Sign in instead" }));
 
     expect(screen.getByTestId("location").textContent).toBe("/auth/sign-in");
-    expect((screen.getByRole("textbox", { name: /email/i }) as HTMLInputElement).value).toBe(EMAIL);
+    expect(screen.getByRole<HTMLInputElement>("textbox", { name: /email/i }).value).toBe(EMAIL);
   });
 
   it("shows a wrong code without leaving the code step", async () => {
     stubApi({
       "POST /api/auth/sign-up": () => new Response(null, { status: 202 }),
-      "POST /api/auth/sign-up/confirm": () => json(400, { message: "The code has expired.", code: ErrorCode.ExpiredCode })
+      "POST /api/auth/sign-up/confirm": () =>
+        json(400, { message: "The code has expired.", code: ErrorCode.ExpiredCode })
     });
     const user = userEvent.setup();
     renderSignUp();

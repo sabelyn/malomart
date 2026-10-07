@@ -53,7 +53,10 @@ const invoke = (cookies?: string[]) =>
 
 beforeAll(() => {
   const verifier = captured.verifiers[0] as ReturnType<typeof CognitoJwtVerifier.create>;
-  verifier.cacheJwks({ keys: [{ ...publicKey.export({ format: "jwk" }), kid: KID, alg: "RS256", use: "sig" }] } as never, USER_POOL_ID);
+  verifier.cacheJwks(
+    { keys: [{ ...publicKey.export({ format: "jwk" }), kid: KID, alg: "RS256", use: "sig" }] } as never,
+    USER_POOL_ID
+  );
 });
 
 describe("readCookie", () => {

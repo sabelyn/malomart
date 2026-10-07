@@ -34,7 +34,10 @@ export type CallOptions = {
 const toRequestError = async (response: Response) => {
   const parsed = ErrorResponse.safeParse(await response.json().catch(() => undefined));
   if (!parsed.success) {
-    return new ApiRequestError(response.status, response.statusText || `Request failed with status ${response.status}.`);
+    return new ApiRequestError(
+      response.status,
+      response.statusText || `Request failed with status ${response.status}.`
+    );
   }
   const { message, code, details } = parsed.data;
   return new ApiRequestError(response.status, message, { code, details });

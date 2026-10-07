@@ -23,7 +23,11 @@ export const validateRequest = <S extends Schemas>(endpoint: Endpoint<S>, req: R
   } as RequestData<S>;
 };
 
-export const respond = <S extends Schemas & { response: ZodType }>(res: Response, endpoint: Endpoint<S>, body: input<S["response"]>) => {
+export const respond = <S extends Schemas & { response: ZodType }>(
+  res: Response,
+  endpoint: Endpoint<S>,
+  body: input<S["response"]>
+) => {
   let parsed: unknown;
   try {
     parsed = endpoint.schemas.response.parse(body);

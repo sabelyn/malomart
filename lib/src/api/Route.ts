@@ -14,14 +14,17 @@ export class Route {
   ) {
     this.tags = new Set(tags);
 
-    let segments = [this.path];
+    const segments = [this.path];
     let route = parent;
     while (route) {
       segments.unshift(route.path);
       route.tags.forEach(t => this.tags.add(t));
       route = route.parent;
     }
-    this.fullPath = segments.join("").replace(/\/{2,}/g, "/").replace(/\/$/, "");
+    this.fullPath = segments
+      .join("")
+      .replace(/\/{2,}/g, "/")
+      .replace(/\/$/, "");
 
     if (this.path.includes("{")) {
       this.expressPath = this.path.replace(/\{([^}]+)\}/g, ":$1");
@@ -34,5 +37,5 @@ export class Route {
 
   addRoute = (route: Route) => {
     this.children.add(route);
-  }
+  };
 }

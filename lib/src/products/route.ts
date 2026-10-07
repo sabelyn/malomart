@@ -20,9 +20,10 @@ export const getProduct = new Endpoint(products, {
 });
 
 export const listProducts = new Endpoint(products, {
-  description: "Returns a list of products paginated by the given limit and optionally filtered by category in in-stock.",
+  description:
+    "Returns a list of products paginated by the given limit and optionally filtered by category in in-stock.",
   errors: {
-    400: "The query parameters were invalid.",
+    400: "The query parameters were invalid."
   },
   id: "listProducts",
   method: "GET",

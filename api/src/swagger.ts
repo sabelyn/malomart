@@ -1,5 +1,5 @@
-import { createDocument } from "zod-openapi";
 import { apiRoot, routeToPaths, Tags } from "@mm/lib";
+import { createDocument } from "zod-openapi";
 
 export const buildSpec = (serverUrl?: string): ReturnType<typeof createDocument> =>
   createDocument({

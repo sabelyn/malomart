@@ -51,11 +51,10 @@ const loadPixels = async (file: string): Promise<Pixels> => {
 const parseHex = (hex: string): [number, number, number] => {
   const value = hex.replace(/^#/, "");
   if (!/^[0-9a-f]{6}$/i.test(value)) throw new Error(`Invalid background color: ${hex}`);
-  return [0, 2, 4].map((i) => parseInt(value.slice(i, i + 2), 16)) as [number, number, number];
+  return [0, 2, 4].map(i => parseInt(value.slice(i, i + 2), 16)) as [number, number, number];
 };
 
-const toHex = (r: number, g: number, b: number) =>
-  `#${[r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+const toHex = (r: number, g: number, b: number) => `#${[r, g, b].map(c => c.toString(16).padStart(2, "0")).join("")}`;
 
 const resolveBackground = (pixels: Pixels, background?: string) => {
   if (!background) return undefined;
@@ -127,7 +126,10 @@ const findShapes = (filled: Uint8Array, width: number, height: number) => {
 };
 
 const near = (a: Rect, b: Rect, gap: number) =>
-  a.x - gap <= b.x + b.width && b.x - gap <= a.x + a.width && a.y - gap <= b.y + b.height && b.y - gap <= a.y + a.height;
+  a.x - gap <= b.x + b.width &&
+  b.x - gap <= a.x + a.width &&
+  a.y - gap <= b.y + b.height &&
+  b.y - gap <= a.y + a.height;
 
 const union = (a: Rect, b: Rect): Rect => {
   const x = Math.min(a.x, b.x);
@@ -166,16 +168,16 @@ const readingOrder = (rects: Rect[]) =>
   });
 
 const detectShapes = (filled: Uint8Array, width: number, height: number, gap: number, min: number) => {
-  const shapes = mergeShapes(findShapes(filled, width, height), gap).filter(
-    (r) => r.width >= min || r.height >= min
-  );
+  const shapes = mergeShapes(findShapes(filled, width, height), gap).filter(r => r.width >= min || r.height >= min);
   const ordered = readingOrder(shapes);
   const pad = String(ordered.length).length;
   return Object.fromEntries(ordered.map((rect, i) => [`sprite-${String(i + 1).padStart(pad, "0")}`, rect]));
 };
 
 const detect = async (sheet: string, options: Record<string, string | boolean | undefined>) => {
-  const manifestPath = options.manifest ? fromCwd(options.manifest as string) : sheet.replace(/\.png$/i, "") + ".sprites.json";
+  const manifestPath = options.manifest
+    ? fromCwd(options.manifest as string)
+    : sheet.replace(/\.png$/i, "") + ".sprites.json";
   if (existsSync(manifestPath) && !options.force) {
     throw new Error(`${manifestPath} already exists. Pass --force to overwrite it.`);
   }

@@ -20,7 +20,9 @@ const router = Router();
 
 router.post(...pathAndMiddleware(signUp, sendCodeLimit), async (req, res, next) => {
   try {
-    const { body: { email, name } } = validateRequest(signUp, req);
+    const {
+      body: { email, name }
+    } = validateRequest(signUp, req);
 
     const service = req.container.resolve(AUTH_SERVICE);
     const pending = await service.signUp(email, name);
@@ -35,7 +37,9 @@ router.post(...pathAndMiddleware(signUp, sendCodeLimit), async (req, res, next) 
 
 router.post(...pathAndMiddleware(confirmSignUp, verifyCodeLimit), async (req, res, next) => {
   try {
-    const { body: { email, code } } = validateRequest(confirmSignUp, req);
+    const {
+      body: { email, code }
+    } = validateRequest(confirmSignUp, req);
     const pending = readPendingAuth(req);
     const session = pending?.email === email ? pending.session : undefined;
 
@@ -55,7 +59,9 @@ router.post(...pathAndMiddleware(confirmSignUp, verifyCodeLimit), async (req, re
 
 router.post(...pathAndMiddleware(signIn, sendCodeLimit), async (req, res, next) => {
   try {
-    const { body: { email } } = validateRequest(signIn, req);
+    const {
+      body: { email }
+    } = validateRequest(signIn, req);
 
     const service = req.container.resolve(AUTH_SERVICE);
     setPendingAuth(res, await service.startSignIn(email));
@@ -67,7 +73,9 @@ router.post(...pathAndMiddleware(signIn, sendCodeLimit), async (req, res, next) 
 
 router.post(...pathAndMiddleware(verifySignIn, verifyCodeLimit), async (req, res, next) => {
   try {
-    const { body: { code } } = validateRequest(verifySignIn, req);
+    const {
+      body: { code }
+    } = validateRequest(verifySignIn, req);
     const pending = readPendingAuth(req);
     if (!pending) {
       throw unauthorized(undefined, ErrorCode.NoPendingSignIn);
@@ -109,7 +117,9 @@ router.post(...pathAndMiddleware(signOut), async (req, res, next) => {
     const refreshToken = readRefreshToken(req);
     if (refreshToken) {
       const service = req.container.resolve(AUTH_SERVICE);
-      await service.signOut(refreshToken).catch(err => console.warn("Failed to revoke refresh token on sign-out.", err));
+      await service
+        .signOut(refreshToken)
+        .catch(err => console.warn("Failed to revoke refresh token on sign-out.", err));
     }
 
     clearSessionCookies(res);

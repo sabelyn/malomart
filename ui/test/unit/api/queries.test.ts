@@ -24,16 +24,22 @@ const product = {
   description: "Allows you to see into the minds of others.",
   category: "Masks",
   price: 80,
-  inStock: 2
+  inStock: 2,
+  features: ["Reveals hidden truths"]
 };
 
 const user = { id: "user-123", email: "link@hyrule.com", name: "Link", isAdmin: false };
 
 const json = (status: number, body?: unknown) =>
-  new Response(body === undefined ? null : JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+  new Response(body === undefined ? null : JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" }
+  });
 
 const stubFetch = (handler: (url: URL, init?: RequestInit) => Response | Promise<Response>) => {
-  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => handler(new URL(String(input), "http://localhost"), init));
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) =>
+    handler(new URL(String(input), "http://localhost"), init)
+  );
   vi.stubGlobal("fetch", fetch);
   return fetch;
 };
@@ -52,7 +58,12 @@ describe("keys", () => {
   });
 
   it("nests endpoint keys under their route with the input last", () => {
-    expect(endpointKey(getProduct, { params: { id: ID } })).toEqual(["api", "products", "getProduct", { params: { id: ID } }]);
+    expect(endpointKey(getProduct, { params: { id: ID } })).toEqual([
+      "api",
+      "products",
+      "getProduct",
+      { params: { id: ID } }
+    ]);
     expect(endpointKey(listProducts, {})).toEqual(["api", "products", "listProducts", {}]);
   });
 
@@ -123,9 +134,14 @@ describe("endpointInfiniteQuery", () => {
 
   it("pages with the cursor from the previous response", async () => {
     const fetch = stubFetch(url =>
-      url.searchParams.get("cursor") === "next-page" ? json(200, page(OTHER_ID, { hasNext: false })) : json(200, page(ID, { hasNext: true, cursor: "next-page" }))
+      url.searchParams.get("cursor") === "next-page"
+        ? json(200, page(OTHER_ID, { hasNext: false }))
+        : json(200, page(ID, { hasNext: true, cursor: "next-page" }))
     );
-    const observer = new InfiniteQueryObserver(testClient(), endpointInfiniteQuery(listProducts, { query: { category: "Masks" } }));
+    const observer = new InfiniteQueryObserver(
+      testClient(),
+      endpointInfiniteQuery(listProducts, { query: { category: "Masks" } })
+    );
 
     await observer.refetch();
     const result = await observer.fetchNextPage();

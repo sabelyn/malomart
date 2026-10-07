@@ -5,13 +5,13 @@ import { Id } from "../common/types";
 import { Address, PaymentMethod } from "./types";
 
 export const AddressDto = strictObject({
-  ...Address.shape,
+  ...Address.omit({ customerId: true }).shape,
   isDefault: boolean()
 });
 export type AddressDto = zinfer<typeof AddressDto>;
 
 export const PaymentMethodDto = strictObject({
-  ...PaymentMethod.omit({ token: true }).shape,
+  ...PaymentMethod.omit({ customerId: true, token: true }).shape,
   isDefault: boolean()
 });
 export type PaymentMethodDto = zinfer<typeof PaymentMethodDto>;
@@ -24,7 +24,7 @@ export type ListPaymentMethodsResponse = zinfer<typeof ListPaymentMethodsRespons
 
 export const CustomerDto = strictObject({
   id: Id,
-  defaultAddress: Address.nullable(),
-  defaultPaymentMethod: PaymentMethod.nullable()
+  defaultAddress: AddressDto.nullable(),
+  defaultPaymentMethod: PaymentMethodDto.nullable()
 });
 export type CustomerDto = zinfer<typeof CustomerDto>;

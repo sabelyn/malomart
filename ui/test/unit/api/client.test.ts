@@ -7,7 +7,10 @@ import { createApiCaller, isUnauthorized } from "@/api/client";
 const user = { id: "user-123", email: "link@hyrule.com", name: "Link", isAdmin: false };
 
 const json = (status: number, body?: unknown) =>
-  new Response(body === undefined ? null : JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+  new Response(body === undefined ? null : JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" }
+  });
 
 const unauthorized = () => json(401, { message: "Unauthorized" });
 
@@ -15,7 +18,8 @@ const pathOf = (input: RequestInfo | URL) => String(input);
 
 const isRefresh = (input: RequestInfo | URL) => pathOf(input) === "/api/auth/refresh";
 
-const refreshCalls = (fetch: ReturnType<typeof vi.fn<typeof globalThis.fetch>>) => fetch.mock.calls.filter(([input]) => isRefresh(input)).length;
+const refreshCalls = (fetch: ReturnType<typeof vi.fn<typeof globalThis.fetch>>) =>
+  fetch.mock.calls.filter(([input]) => isRefresh(input)).length;
 
 describe("isUnauthorized", () => {
   it.each([
@@ -74,16 +78,16 @@ describe("createApiCaller", () => {
     });
     const apiCall = createApiCaller({ fetch });
 
-    await expect(Promise.all([apiCall(getCurrentUser, {}), apiCall(getCurrentUser, {}), apiCall(getCurrentUser, {})])).resolves.toEqual([
-      user,
-      user,
-      user
-    ]);
+    await expect(
+      Promise.all([apiCall(getCurrentUser, {}), apiCall(getCurrentUser, {}), apiCall(getCurrentUser, {})])
+    ).resolves.toEqual([user, user, user]);
     expect(refreshCalls(fetch)).toBe(1);
   });
 
   it("refreshes again for a later 401 once the previous refresh has finished", async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>(async input => (isRefresh(input) ? new Response(null, { status: 204 }) : unauthorized()));
+    const fetch = vi.fn<typeof globalThis.fetch>(input =>
+      Promise.resolve(isRefresh(input) ? new Response(null, { status: 204 }) : unauthorized())
+    );
     const apiCall = createApiCaller({ fetch });
 
     await expect(apiCall(getCurrentUser, {})).rejects.toThrow(ApiRequestError);
@@ -93,7 +97,7 @@ describe("createApiCaller", () => {
 
   it("reports an expired session and rethrows the 401 when the refresh fails", async () => {
     const onSessionExpired = vi.fn();
-    const fetch = vi.fn<typeof globalThis.fetch>(async () => unauthorized());
+    const fetch = vi.fn<typeof globalThis.fetch>(() => Promise.resolve(unauthorized()));
     const apiCall = createApiCaller({ fetch, onSessionExpired });
 
     const error = await apiCall(getCurrentUser, {}).catch(err => err);
@@ -105,7 +109,7 @@ describe("createApiCaller", () => {
   });
 
   it("does not refresh for the sign-in flow endpoints", async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>(async () => unauthorized());
+    const fetch = vi.fn<typeof globalThis.fetch>(() => Promise.resolve(unauthorized()));
     const apiCall = createApiCaller({ fetch });
 
     await expect(apiCall(signIn, { body: { email: "link@hyrule.com" } })).rejects.toMatchObject({ status: 401 });
@@ -113,10 +117,12 @@ describe("createApiCaller", () => {
   });
 
   it.each([403, 404, 500])("does not refresh after a %i", async status => {
-    const fetch = vi.fn<typeof globalThis.fetch>(async () => json(status, { message: "nope" }));
+    const fetch = vi.fn<typeof globalThis.fetch>(() => Promise.resolve(json(status, { message: "nope" })));
     const apiCall = createApiCaller({ fetch });
 
-    await expect(apiCall(getProduct, { params: { id: "3f2a9c1e-7b4d-4e8a-9f6b-2c1d0e5a7b3c" } })).rejects.toMatchObject({ status });
+    await expect(apiCall(getProduct, { params: { id: "3f2a9c1e-7b4d-4e8a-9f6b-2c1d0e5a7b3c" } })).rejects.toMatchObject(
+      { status }
+    );
     expect(refreshCalls(fetch)).toBe(0);
   });
 });

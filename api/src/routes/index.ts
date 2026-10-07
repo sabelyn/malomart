@@ -1,5 +1,5 @@
-import { Router } from "express";
 import { apiRoot, auth, products } from "@mm/lib";
+import { Router } from "express";
 
 import authRouter from "./auth";
 import productsRouter from "./products";

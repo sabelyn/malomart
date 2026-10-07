@@ -1,6 +1,6 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import type { ScanCommandInput } from "@aws-sdk/lib-dynamodb";
-import { DynamoDBDocumentClient, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import type { infer as zinfer } from "zod";
 import { number, record, strictObject, string, union } from "zod";
 
@@ -12,14 +12,39 @@ export const dbClient = () => {
 };
 
 export const TableNames = strictObject({
+  addresses: string().nonempty(),
+  customers: string().nonempty(),
+  orders: string().nonempty(),
+  paymentMethods: string().nonempty(),
   products: string().nonempty()
 });
 export type TableNames = zinfer<typeof TableNames>;
 
 export const TableIndexes = strictObject({
+  addressesByCustomer: string().nonempty(),
+  ordersByCustomer: string().nonempty(),
+  ordersByStatus: string().nonempty(),
+  paymentMethodsByCustomer: string().nonempty(),
   productsByCategory: string().nonempty()
 });
 export type TableIndexes = zinfer<typeof TableIndexes>;
+
+type AdditionalGetCondition = { ConditionExpression: string; ExpressionAttributeValues: Record<string, unknown> };
+export const getItemById = async <T = unknown>(
+  client: DynamoDBDocumentClient,
+  TableName: string,
+  id: string,
+  condition?: AdditionalGetCondition
+): Promise<T | null> => {
+  const result = await client.send(
+    new GetCommand({
+      TableName,
+      Key: { id },
+      ...(condition ?? {})
+    })
+  );
+  return result.Item ? (result.Item as T) : null;
+};
 
 export type PaginatedQueryOptions = {
   tableName: string;

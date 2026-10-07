@@ -8,7 +8,9 @@ export type ApiCallerOptions = Pick<CallOptions, "baseUrl" | "fetch" | "validate
 
 export type RequestOptions = Pick<CallOptions, "signal">;
 
-const NO_REFRESH = new Set([confirmSignUp, refreshSession, signIn, signOut, signUp, verifySignIn].map(endpoint => endpoint.id));
+const NO_REFRESH = new Set(
+  [confirmSignUp, refreshSession, signIn, signOut, signUp, verifySignIn].map(endpoint => endpoint.id)
+);
 
 export const isUnauthorized = (err: unknown) => err instanceof ApiRequestError && err.status === 401;
 
@@ -25,7 +27,11 @@ export const createApiCaller = ({ onSessionExpired, ...defaults }: ApiCallerOpti
         refreshing = undefined;
       }));
 
-  return async <S extends Schemas>(endpoint: Endpoint<S>, input: RequestInput<S>, options?: RequestOptions): Promise<ResponseOutput<S>> => {
+  return async <S extends Schemas>(
+    endpoint: Endpoint<S>,
+    input: RequestInput<S>,
+    options?: RequestOptions
+  ): Promise<ResponseOutput<S>> => {
     const send = () => call(endpoint, input, { ...defaults, ...options });
 
     try {

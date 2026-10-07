@@ -1,5 +1,5 @@
 import type { infer as zinfer } from "zod";
-import { iso, partialRecord, record, strictObject, uuid, enum as zenum } from "zod";
+import { iso, partialRecord, record, strictObject, enum as zenum } from "zod";
 
 import { Id, PositiveInt } from "../common/types";
 import { Address, PaymentMethod } from "../customers/types";
@@ -23,8 +23,8 @@ export type OrderItemEntry = zinfer<typeof OrderItemEntry>;
 export const Order = strictObject({
   id: Id,
   customerId: Id,
-  address: Address.omit({ id: true }),
-  paymentMethod: PaymentMethod.omit({ id: true }),
+  address: Address.omit({ id: true, customerId: true }),
+  paymentMethod: PaymentMethod.omit({ id: true, customerId: true }),
   orderDate: iso.datetime(),
   status: partialRecord(OrderStatusSchema, iso.datetime()),
   items: record(Id, OrderItemEntry)

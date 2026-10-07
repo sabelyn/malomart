@@ -1,10 +1,16 @@
 import type { ZodObject, ZodType } from "zod";
-import type { ZodOpenApiResponsesObject, ZodOpenApiOperationObject, ZodOpenApiPathItemObject, ZodOpenApiPathsObject, ZodOpenApiResponseObject } from "zod-openapi";
+import type {
+  ZodOpenApiResponsesObject,
+  ZodOpenApiOperationObject,
+  ZodOpenApiPathItemObject,
+  ZodOpenApiPathsObject,
+  ZodOpenApiResponseObject
+} from "zod-openapi";
 
+import type { AnyEndpoint } from "./Endpoint";
+import type { Route } from "./Route";
 import { ErrorResponse } from "./types";
 import type { HttpMethod, StatusCode } from "./types";
-import type { Route } from "./Route";
-import type { AnyEndpoint } from "./Endpoint";
 import { collectEndpoints } from "./walk";
 
 export const requestBody = (schema: ZodType) => ({
@@ -47,7 +53,7 @@ export const routeToPaths = (route: Route) => {
     item[endpoint.method.toLowerCase() as Lowercase<HttpMethod>] = toOperation(endpoint);
   }
   return paths;
-}
+};
 
 const toOperation = (endpoint: AnyEndpoint) => {
   const op: ZodOpenApiOperationObject = {

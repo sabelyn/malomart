@@ -7,4 +7,6 @@ export type SignInState = {
 };
 
 export const signInPath = (returnTo?: string) =>
-  returnTo && returnTo !== "/" && !returnTo.startsWith("/auth") ? `${SIGN_IN_PATH}?${new URLSearchParams({ returnTo })}` : SIGN_IN_PATH;
+  returnTo && returnTo !== "/" && !returnTo.startsWith("/auth")
+    ? `${SIGN_IN_PATH}?${new URLSearchParams({ returnTo })}`
+    : SIGN_IN_PATH;
