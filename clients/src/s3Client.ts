@@ -15,7 +15,8 @@ const DEFAULT_PRESIGNED_DOWNLOAD_EXPIRE_SECONDS = 3600;
 
 let baseClient: S3Client;
 export const s3Client = () => {
-  baseClient ??= new S3Client({});
+  const endpoint = process.env.AWS_ENDPOINT_URL;
+  baseClient ??= new S3Client(endpoint ? { endpoint } : {});
   return baseClient;
 };
 

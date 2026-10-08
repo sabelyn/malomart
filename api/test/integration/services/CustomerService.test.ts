@@ -181,7 +181,12 @@ describe("updateAddress", () => {
   it("updates every address field at once", async () => {
     const address = makeAddress();
     await putItems(db, AddressesTable, [address]);
-    const changes = { street: "1 Castle Way", city: "Castle Town", region: "Central Hyrule", postalCode: "54321" } as const;
+    const changes = {
+      street: "1 Castle Way",
+      city: "Castle Town",
+      region: "Central Hyrule",
+      postalCode: "54321"
+    } as const;
 
     const updated = await makeService().updateAddress(address.id, changes);
 

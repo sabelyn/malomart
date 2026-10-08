@@ -1,4 +1,4 @@
-import { TableIndexes, TableNames } from "@mm/clients";
+import { InvokeFunctionNames, TableIndexes, TableNames } from "@mm/clients";
 import { enum as zenum, preprocess, coerce, object, string, url, prettifyError, ZodError } from "zod";
 import type { infer as zinfer, ZodSchema } from "zod";
 
@@ -17,6 +17,7 @@ const fromJson = <T extends ZodSchema>(schema: T) =>
 const EnvSchema = object({
   ADMIN_SCOPE: string().nonempty(),
   APP_ORIGIN: url().optional().default("http://localhost:5173"),
+  INVOKE_FUNCTION_NAMES: fromJson(InvokeFunctionNames),
   NODE_ENV: zenum(["development", "production"]).optional().default("development"),
   PORT: coerce.number().int().positive().optional().default(4000),
   TABLE_INDEXES: fromJson(TableIndexes),

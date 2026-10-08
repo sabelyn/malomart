@@ -1,8 +1,8 @@
-import { apiRoot, collectEndpoints } from "@mm/lib";
 import type { RouteAccess } from "@mm/lib";
+import { apiRoot, collectEndpoints } from "@mm/lib";
 import { Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
-import { HttpMethod, HttpRoute, HttpRouteKey, VpcLink } from "aws-cdk-lib/aws-apigatewayv2";
 import type { IHttpRouteAuthorizer } from "aws-cdk-lib/aws-apigatewayv2";
+import { HttpMethod, HttpRoute, HttpRouteKey, VpcLink } from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaAuthorizer, HttpLambdaResponseType } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import { HttpServiceDiscoveryIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { Port, SecurityGroup, SubnetType, Vpc } from "aws-cdk-lib/aws-ec2";
@@ -26,12 +26,14 @@ import type { DbStack } from "./DbStack";
 import { INDEXES } from "./DbStack";
 import type { FrontendStack } from "./FrontendStack";
 import type { GatewayStack } from "./GatewayStack";
+import type { VaultStack } from "./VaultStack";
 
 type Props = {
   authStack: AuthStack;
   dbStack: DbStack;
   frontendStack: FrontendStack;
   gatewayStack: GatewayStack;
+  vaultStack: VaultStack;
 };
 
 const API_PORT = 4000;
@@ -58,6 +60,7 @@ export class ApiStack extends Stack {
     });
 
     const { tables } = props.dbStack;
+    const { invokeFunctions } = props.vaultStack;
     const taskDefinition = new FargateTaskDefinition(this, "TaskDefinition", {
       cpu: 256,
       memoryLimitMiB: 512,
@@ -68,6 +71,9 @@ export class ApiStack extends Stack {
     });
     for (const table of Object.values(tables)) {
       table.grants.readWriteData(taskDefinition.taskRole);
+    }
+    for (const func of Object.values(invokeFunctions)) {
+      func.grantInvoke(taskDefinition.taskRole);
     }
 
     const logGroup = new LogGroup(this, "ApiLogs", {
@@ -85,6 +91,9 @@ export class ApiStack extends Stack {
       environment: {
         ADMIN_SCOPE: adminScope,
         APP_ORIGIN: props.frontendStack.appOrigin,
+        INVOKE_FUNCTION_NAMES: JSON.stringify(
+          Object.fromEntries(Object.entries(invokeFunctions).map(([key, func]) => [key, func.functionName]))
+        ),
         PORT: String(API_PORT),
         TABLE_INDEXES: JSON.stringify(INDEXES),
         TABLE_NAMES: JSON.stringify(

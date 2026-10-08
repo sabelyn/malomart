@@ -16,7 +16,13 @@ export const asRegularUser = asUser({
   isAdmin: false,
   customerData: {}
 });
-export const asAdmin = asUser({ id: "admin-123", email: "admin@example.com", name: "Admin User", isAdmin: true, customerData: {} });
+export const asAdmin = asUser({
+  id: "admin-123",
+  email: "admin@example.com",
+  name: "Admin User",
+  isAdmin: true,
+  customerData: {}
+});
 
 export const createTestApp = (router: Router) => {
   const app = express();

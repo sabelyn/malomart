@@ -178,7 +178,10 @@ describe("getPaginatedResults", () => {
 
     it("encodes numeric key values in the cursor", async () => {
       ddb.on(ScanCommand).resolves({
-        Items: [{ id: "a", rank: 1 }, { id: "b", rank: 2 }],
+        Items: [
+          { id: "a", rank: 1 },
+          { id: "b", rank: 2 }
+        ],
         LastEvaluatedKey: { id: "b", rank: 2 }
       });
 

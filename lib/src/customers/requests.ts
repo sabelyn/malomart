@@ -1,4 +1,4 @@
-import { boolean, strictObject, string, infer as zinfer } from "zod";
+import { boolean, literal, strictObject, string, infer as zinfer } from "zod";
 
 import { atLeastOneKeyRefinement } from "../common";
 import { Address, PaymentMethod } from "./types";
@@ -10,13 +10,7 @@ export const CreateAddressBody = strictObject({
 export type CreateAddressBody = zinfer<typeof CreateAddressBody>;
 
 export const CreatePaymentMethodWithTokenBody = strictObject({
-  ...PaymentMethod.pick({
-    token: true,
-    expirationMonth: true,
-    expirationYear: true,
-    lastFour: true,
-    brand: true
-  }).shape,
+  token: string().nonempty(),
   setAsDefault: boolean().optional()
 });
 export type CreatePaymentMethodWithTokenBody = zinfer<typeof CreatePaymentMethodWithTokenBody>;
@@ -24,9 +18,8 @@ export type CreatePaymentMethodWithTokenBody = zinfer<typeof CreatePaymentMethod
 export const UpdateAddressBody = CreateAddressBody.partial().refine(atLeastOneKeyRefinement);
 export type UpdateAddressBody = zinfer<typeof UpdateAddressBody>;
 
-export const UpdatePaymentMethodBody = CreatePaymentMethodWithTokenBody.pick({
-  expirationMonth: true,
-  expirationYear: true,
-  setAsDefault: true
+export const UpdatePaymentMethodBody = strictObject({
+  expiration: PaymentMethod.pick({ expirationMonth: true, expirationYear: true }).optional(),
+  setAsDefault: literal(true).optional()
 }).refine(atLeastOneKeyRefinement);
 export type UpdatePaymentMethodBody = zinfer<typeof UpdatePaymentMethodBody>;

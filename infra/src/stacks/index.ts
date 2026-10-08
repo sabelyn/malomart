@@ -13,8 +13,8 @@ export const configureStacks = (stage: Stage) => {
   const gatewayStack = new GatewayStack(stage, "MaloMartGatewayStack");
   const frontendStack = new FrontendStack(stage, "MaloMartFrontendStack", { gatewayStack });
   const authStack = new AuthStack(stage, "MaloMartAuthStack", { dbStack });
-  new VaultStack(stage, "MaloMartVaultStack", { authStack, gatewayStack });
-  new ApiStack(stage, "MaloMartApiStack", { authStack, dbStack, frontendStack, gatewayStack });
+  const vaultStack = new VaultStack(stage, "MaloMartVaultStack", { authStack, gatewayStack });
+  new ApiStack(stage, "MaloMartApiStack", { authStack, dbStack, frontendStack, gatewayStack, vaultStack });
 };
 
 export const configureLocalStacks = (stage: Stage) => {

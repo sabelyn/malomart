@@ -17,7 +17,9 @@ delete env.AWS_SESSION_TOKEN;
 const assertLocalStackRunning = async () => {
   try {
     const res = await fetch(`${LOCALSTACK_URL}/_localstack/health`);
-    if (!res.ok) throw new Error(`Health check returned ${res.status}`);
+    if (!res.ok) {
+      throw new Error(`Health check returned ${res.status}`);
+    }
   } catch (err) {
     console.error(`LocalStack is not reachable at ${LOCALSTACK_URL}. Start it with "pnpm local:up".`, err);
     process.exit(1);

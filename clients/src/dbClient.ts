@@ -102,9 +102,9 @@ export const getPaginatedResults = async (client: DynamoDBDocumentClient, option
     ...(attributeValues ? { ExpressionAttributeValues: attributeValues } : {}),
     ...(projected
       ? {
-        ProjectionExpression: projected.map((_, i) => `#sel${i}`).join(", "),
-        ExpressionAttributeNames: Object.fromEntries(projected.map((name, i) => [`#sel${i}`, name]))
-      }
+          ProjectionExpression: projected.map((_, i) => `#sel${i}`).join(", "),
+          ExpressionAttributeNames: Object.fromEntries(projected.map((name, i) => [`#sel${i}`, name]))
+        }
       : {})
   };
 

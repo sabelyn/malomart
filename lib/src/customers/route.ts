@@ -1,7 +1,12 @@
 import { apiRoot, Endpoint, Route } from "../api";
 import { IdParams } from "../common";
 import { ListOrdersResponse } from "../orders/responses";
-import { CreateAddressBody, CreatePaymentMethodWithTokenBody, UpdateAddressBody, UpdatePaymentMethodBody } from "./requests";
+import {
+  CreateAddressBody,
+  CreatePaymentMethodWithTokenBody,
+  UpdateAddressBody,
+  UpdatePaymentMethodBody
+} from "./requests";
 import {
   AddressDto,
   CustomerDto,

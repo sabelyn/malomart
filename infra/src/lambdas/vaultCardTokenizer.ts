@@ -9,7 +9,11 @@ import { ZodError } from "zod";
 const { VAULT_CARD_TABLE_NAME, VAULT_KEY_ID } = process.env;
 const kmsClient = new KMSClient({});
 
-const THROTTLING_ERRORS = new Set(["ThrottlingException", "ProvisionedThroughputExceededException", "RequestLimitExceeded"]);
+const THROTTLING_ERRORS = new Set([
+  "ThrottlingException",
+  "ProvisionedThroughputExceededException",
+  "RequestLimitExceeded"
+]);
 const TRANSIENT_ERRORS = new Set([
   "KeyUnavailableException",
   "DependencyTimeoutException",
@@ -24,16 +28,20 @@ export const handler: APIGatewayProxyHandlerV2WithLambdaAuthorizer<{ customerId:
     const lastFour = cardNumber.substring(12);
     const token = crypto.randomBytes(32).toString("base64url");
 
-    const { CiphertextBlob: cypher } = await kmsClient.send(new EncryptCommand({
-      KeyId: VAULT_KEY_ID,
-      Plaintext: Buffer.from(cardNumber),
-      EncryptionContext: { token }
-    }));
+    const { CiphertextBlob: cypher } = await kmsClient.send(
+      new EncryptCommand({
+        KeyId: VAULT_KEY_ID,
+        Plaintext: Buffer.from(cardNumber),
+        EncryptionContext: { token }
+      })
+    );
 
-    await dbClient().send(new PutCommand({
-      TableName: VAULT_CARD_TABLE_NAME,
-      Item: { token, cypher, customerId, lastFour, ...cardData }
-    }));
+    await dbClient().send(
+      new PutCommand({
+        TableName: VAULT_CARD_TABLE_NAME,
+        Item: { token, cypher, customerId, lastFour, ...cardData }
+      })
+    );
 
     return {
       statusCode: 201,
@@ -69,5 +77,5 @@ const processError = (err: unknown) => {
   return {
     statusCode,
     body: JSON.stringify({ message })
-  }
-}
+  };
+};
