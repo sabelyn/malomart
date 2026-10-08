@@ -1,12 +1,12 @@
 import type {
-  CreatePaymentMethodBody,
+  CreatePaymentMethodWithTokenBody,
   ListPaymentMethodsResponse,
   PaymentMethodDto,
   UpdatePaymentMethodBody
 } from "@mm/lib";
 
 export interface IPaymentMethodService {
-  createPaymentMethod: (body: CreatePaymentMethodBody) => Promise<PaymentMethodDto>;
+  createPaymentMethod: (body: CreatePaymentMethodWithTokenBody) => Promise<PaymentMethodDto>;
   deletePaymentMethod: (id: string) => Promise<void>;
   getPaymentMethod: (id: string) => Promise<PaymentMethodDto>;
   listPaymentMethods: () => Promise<ListPaymentMethodsResponse>;

@@ -29,6 +29,7 @@ export class AuthStack extends Stack {
   public readonly userPool: UserPool;
   public readonly userPoolClient: UserPoolClient;
   public readonly adminScope: string;
+  public readonly cookieAuthorizerFunction: NodejsFunction;
 
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id);
@@ -103,5 +104,15 @@ export class AuthStack extends Stack {
       })
     );
     this.userPool.addTrigger(UserPoolOperation.POST_CONFIRMATION, postConfirmation);
+
+    this.cookieAuthorizerFunction = new NodejsFunction(this, "CookieAuthorizerFunction", {
+      entry: path.resolve(__dirname, "../lambdas/cookieAuthorizer.ts"),
+      runtime: Runtime.NODEJS_24_X,
+      architecture: Architecture.ARM_64,
+      environment: {
+        USER_POOL_ID: this.userPool.userPoolId,
+        USER_POOL_CLIENT_ID: this.userPoolClient.userPoolClientId
+      }
+    });
   }
 }

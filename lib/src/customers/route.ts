@@ -1,7 +1,7 @@
 import { apiRoot, Endpoint, Route } from "../api";
 import { IdParams } from "../common";
 import { ListOrdersResponse } from "../orders/responses";
-import { CreateAddressBody, CreatePaymentMethodBody, UpdateAddressBody, UpdatePaymentMethodBody } from "./requests";
+import { CreateAddressBody, CreatePaymentMethodWithTokenBody, UpdateAddressBody, UpdatePaymentMethodBody } from "./requests";
 import {
   AddressDto,
   CustomerDto,
@@ -97,7 +97,7 @@ export const createPaymentMethod = new Endpoint(customers, {
   method: "POST",
   path: "/payment-methods",
   schemas: {
-    body: CreatePaymentMethodBody,
+    body: CreatePaymentMethodWithTokenBody,
     response: PaymentMethodDto
   },
   successDescription: "The newly-created payment method.",

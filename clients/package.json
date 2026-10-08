@@ -11,11 +11,11 @@
     },
     "./db": {
       "types": "./src/dbClient.ts",
-      "default": "./dist/dbClient.js"
+      "default": "./dist/dbClient.mjs"
     },
     "./s3": {
       "types": "./src/s3Client.ts",
-      "default": "./dist/s3Client.js"
+      "default": "./dist/s3Client.mjs"
     }
   },
   "scripts": {

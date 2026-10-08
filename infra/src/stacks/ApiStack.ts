@@ -1,7 +1,7 @@
 import { apiRoot, collectEndpoints } from "@mm/lib";
 import type { RouteAccess } from "@mm/lib";
 import { Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
-import { HttpApi, HttpMethod, HttpRoute, HttpRouteKey, VpcLink } from "aws-cdk-lib/aws-apigatewayv2";
+import { HttpMethod, HttpRoute, HttpRouteKey, VpcLink } from "aws-cdk-lib/aws-apigatewayv2";
 import type { IHttpRouteAuthorizer } from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaAuthorizer, HttpLambdaResponseType } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import { HttpServiceDiscoveryIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
@@ -16,8 +16,6 @@ import {
   LogDriver,
   OperatingSystemFamily
 } from "aws-cdk-lib/aws-ecs";
-import { Architecture, Runtime } from "aws-cdk-lib/aws-lambda";
-import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { DnsRecordType, PrivateDnsNamespace } from "aws-cdk-lib/aws-servicediscovery";
 import type { Construct } from "constructs";
@@ -141,24 +139,13 @@ export class ApiStack extends Stack {
       securityGroups: [vpcLinkSecurityGroup]
     });
 
-    const cookieAuthorizerFunction = new NodejsFunction(this, "CookieAuthorizerFunction", {
-      entry: path.resolve(__dirname, "../lambdas/cookieAuthorizer.ts"),
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
-      environment: {
-        USER_POOL_ID: userPool.userPoolId,
-        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId
-      }
-    });
-    const cookieAuthorizer = new HttpLambdaAuthorizer("CookieAuthorizer", cookieAuthorizerFunction, {
+    const cookieAuthorizer = new HttpLambdaAuthorizer("CookieAuthorizer", props.authStack.cookieAuthorizerFunction, {
       responseTypes: [HttpLambdaResponseType.SIMPLE],
       identitySource: [],
       resultsCacheTtl: Duration.seconds(0)
     });
 
-    const httpApi = HttpApi.fromHttpApiAttributes(this, "HttpApi", {
-      httpApiId: props.gatewayStack.httpApi.apiId
-    });
+    const { httpApi } = props.gatewayStack;
 
     const integration = new HttpServiceDiscoveryIntegration("ApiService", service.cloudMapService!, { vpcLink });
 

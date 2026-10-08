@@ -28,10 +28,11 @@ export const handler: APIGatewayRequestSimpleAuthorizerHandlerV2 = async event =
     throw new Error("Unauthorized");
   }
 
+  let customerId: string;
   try {
-    await verifier.verify(token);
+    ({ sub: customerId } = await verifier.verify(token));
   } catch {
     throw new Error("Unauthorized");
   }
-  return { isAuthorized: true };
+  return { isAuthorized: true, context: { customerId } };
 };

@@ -6,6 +6,7 @@ export default defineLibConfig(import.meta.url, [
   "src/auth/index.ts",
   "src/common/index.ts",
   "src/customers/index.ts",
+  "src/lambdas/index.ts",
   "src/orders/index.ts",
   "src/products/index.ts"
 ]);

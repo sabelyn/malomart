@@ -24,6 +24,10 @@
       "types": "./src/customers/index.ts",
       "default": "./dist/customers/index.mjs"
     },
+    "./lambdas": {
+      "types": "./src/lambdas/index.ts",
+      "default": "./dist/lambdas/index.mjs"
+    },
     "./orders": {
       "types": "./src/orders/index.ts",
       "default": "./dist/orders/index.mjs"

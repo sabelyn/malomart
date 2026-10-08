@@ -3,8 +3,9 @@ import { enum as zenum, strictObject, string, unknown } from "zod";
 
 export const Tags = {
   Auth: "Endpoints for handling signup, signin, and other authentication-related stuff.",
-  Customers: "Customers",
-  Orders: "Orders",
+  Customers: "Endpoints for handling customer data such as addresses and payment methods.",
+  Lambda: "Endpoints that go through lambda functions instead of the ECS backend.",
+  Orders: "Endpoints for creating and listing orders.",
   Products: "The shop's catalog."
 } as const;
 export type Tag = keyof typeof Tags;
