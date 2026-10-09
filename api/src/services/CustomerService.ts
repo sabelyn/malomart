@@ -148,6 +148,7 @@ export class CustomerService implements ICustomerService {
     const dto = address ? this.toAddressDto(address) : await this.getAddress(id);
     if (setAsDefault && this.user.customerData.defaultAddressId !== id) {
       await this.setDefaultAddress(id);
+      return { ...dto, isDefault: true };
     }
 
     return dto;

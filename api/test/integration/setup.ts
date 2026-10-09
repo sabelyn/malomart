@@ -29,6 +29,7 @@ delete process.env.AWS_REGION;
 
 Object.assign(process.env, {
   INVOKE_FUNCTION_NAMES: vault.InvokeFunctionNames,
+  VAULT_CARD_TABLE_NAME: vault.CardTableName,
   TABLE_NAMES: db.TableNames,
   TABLE_INDEXES: db.TableIndexes
 });
