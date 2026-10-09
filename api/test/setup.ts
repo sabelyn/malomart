@@ -7,11 +7,17 @@ Object.assign(process.env, {
   ADMIN_SCOPE: "test/admin",
   AWS_REGION: "us-east-1",
   APP_ORIGIN: "http://localhost:5173",
+  INVOKE_FUNCTION_NAMES: JSON.stringify({
+    deleteCard: "delete-card",
+    describeCard: "describe-card",
+    updateCard: "update-card"
+  }),
   NODE_ENV: "development",
   PORT: "4000",
   TABLE_INDEXES: JSON.stringify({
     addressesByCustomer: "addresses-by-customer",
     ordersByCustomer: "orders-by-customer",
+    ordersByCustomerStatus: "orders-by-customer-status",
     ordersByStatus: "orders-by-status",
     paymentMethodsByCustomer: "payment-methods-by-customer",
     productsByCategory: "products-by-category"

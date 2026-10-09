@@ -1,26 +1,28 @@
-import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
 import type { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { DeleteCommand, PutCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { getItemById } from "@mm/clients";
-import type { CreateAddressBody, CustomerDto, UpdateAddressBody } from "@mm/lib";
+import type { CreateAddressBody, UpdateAddressBody } from "@mm/lib";
 import { Address } from "@mm/lib";
-import { inject } from "tsyringe";
+import { inject, injectable } from "tsyringe";
 
-import type { ICustomerService } from "@/contracts";
-import { DB, USER } from "@/contracts/tokens";
+import type { ICustomerService, IPaymentMethodService } from "@/contracts";
+import { DB, PAYMENT_METHOD_SERVICE, USER } from "@/contracts/tokens";
 import env from "@/env";
-import { notFound } from "@/errors/helpers";
+import { ApiError } from "@/errors/ApiError";
+import { mapConditionFailure, notFound } from "@/errors/helpers";
 import type { User } from "@/types/user";
 import { parseStored } from "@/utils/parsing";
 
 const { addresses, customers } = env.TABLE_NAMES;
 const { addressesByCustomer } = env.TABLE_INDEXES;
 
+@injectable()
 export class CustomerService implements ICustomerService {
   constructor(
     @inject(DB) private readonly db: DynamoDBDocumentClient,
+    @inject(PAYMENT_METHOD_SERVICE) private readonly paymentMethodService: IPaymentMethodService,
     @inject(USER) private readonly user: User
-  ) {}
+  ) { }
 
   createAddress = async (body: CreateAddressBody) => {
     const customerId = this.user.id;
@@ -54,21 +56,45 @@ export class CustomerService implements ICustomerService {
           ExpressionAttributeValues: { ":customerId": this.user.id }
         })
       );
+
+      if (this.user.customerData.defaultAddressId === id) {
+        await this.setDefaultAddress(null);
+      }
     } catch (err) {
-      throw this.mapConditionFailure(err);
+      throw mapConditionFailure(err, "Address");
     }
   };
 
-  getAddress = async (id: string) => this.toAddressDto(await this.getOwnedAddress(id));
+  getAddress = async (id: string) => {
+    const item = await getItemById<{ customerId?: unknown }>(this.db, addresses, id);
+    if (item?.customerId !== this.user.id) {
+      throw notFound("Address could not be found.");
+    }
+    return this.toAddressDto(item);
+  }
 
   getCustomer = async () => {
-    const customer: CustomerDto = { id: this.user.id, defaultAddress: null, defaultPaymentMethod: null };
-    const { defaultAddressId } = this.user.customerData;
-    if (defaultAddressId) {
-      customer.defaultAddress = await this.getAddress(defaultAddressId);
+    const { defaultAddressId, defaultPaymentMethodId } = this.user.customerData;
+    const valueOrNull = <T>(result: PromiseSettledResult<Awaited<T>>): T | null => {
+      if (result.status === "fulfilled") {
+        return result.value;
+      }
+      if (result.reason instanceof ApiError && result.reason.statusCode === 404) {
+        return null;
+      }
+      throw result.reason;
     }
 
-    return customer;
+    const [address, paymentMethod] = await Promise.allSettled([
+      defaultAddressId ? this.getAddress(defaultAddressId) : null,
+      defaultPaymentMethodId ? this.paymentMethodService.getPaymentMethod(defaultPaymentMethodId) : null
+    ]);
+
+    return {
+      id: this.user.id,
+      defaultAddress: valueOrNull(address),
+      defaultPaymentMethod: valueOrNull(paymentMethod)
+    }
   };
 
   listAddresses = async () => {
@@ -106,7 +132,7 @@ export class CustomerService implements ICustomerService {
           new UpdateCommand({
             TableName: addresses,
             Key: { id },
-            ConditionExpression: "attribute_exists(id) AND customerId = :customerId",
+            ConditionExpression: "customerId = :customerId",
             UpdateExpression: `SET ${expParts.join(", ")}`,
             ExpressionAttributeNames: names,
             ExpressionAttributeValues: values,
@@ -115,20 +141,19 @@ export class CustomerService implements ICustomerService {
         );
         address = result.Attributes;
       } catch (err) {
-        throw this.mapConditionFailure(err);
+        throw mapConditionFailure(err, "Address");
       }
-    } else {
-      address = await this.getOwnedAddress(id);
     }
 
+    const dto = address ? this.toAddressDto(address) : await this.getAddress(id);
     if (setAsDefault && this.user.customerData.defaultAddressId !== id) {
       await this.setDefaultAddress(id);
     }
 
-    return this.toAddressDto(address);
+    return dto;
   };
 
-  private setDefaultAddress = async (id: string) => {
+  private setDefaultAddress = async (id: string | null) => {
     await this.db.send(
       new UpdateCommand({
         TableName: customers,
@@ -140,17 +165,6 @@ export class CustomerService implements ICustomerService {
     );
     this.user.customerData.defaultAddressId = id;
   };
-
-  private getOwnedAddress = async (id: string) => {
-    const item = await getItemById<{ customerId?: unknown }>(this.db, addresses, id);
-    if (item?.customerId !== this.user.id) {
-      throw notFound("Address could not be found.");
-    }
-    return parseStored(item, Address);
-  };
-
-  private mapConditionFailure = (err: unknown) =>
-    err instanceof ConditionalCheckFailedException ? notFound("Address could not be found.") : err;
 
   private toAddressDto = (data: unknown) => {
     const { street, city, region, postalCode, id } = parseStored(data, Address);

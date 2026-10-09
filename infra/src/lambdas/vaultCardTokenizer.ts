@@ -6,6 +6,8 @@ import type { APIGatewayProxyHandlerV2WithLambdaAuthorizer } from "aws-lambda";
 import * as crypto from "node:crypto";
 import { ZodError } from "zod";
 
+import { isRetriableError } from "./helpers";
+
 const { VAULT_CARD_TABLE_NAME, VAULT_KEY_ID } = process.env;
 const kmsClient = new KMSClient({});
 
@@ -62,12 +64,9 @@ const processError = (err: unknown) => {
   } else if (err instanceof SyntaxError) {
     statusCode = 400;
     message = "Request body was invalid JSON.";
-  } else if (err instanceof Error && THROTTLING_ERRORS.has(err.name)) {
+  } else if (isRetriableError(err)) {
     statusCode = 503;
-    message = "Too many requests. Try again shortly.";
-  } else if (err instanceof Error && TRANSIENT_ERRORS.has(err.name)) {
-    statusCode = 503;
-    message = "Card storage is temporarily unavailable. Try again shortly.";
+    message = "Too many requests or service unavailable. Try again shortly.";
   }
 
   if (statusCode >= 500) {

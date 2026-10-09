@@ -1,9 +1,11 @@
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
 import { dbClient } from "@mm/clients";
-import type { Address, CreateAddressBody, Customer } from "@mm/lib";
+import type { Address, CreateAddressBody, Customer, PaymentMethodDto } from "@mm/lib";
 
+import type { IPaymentMethodService } from "@/contracts";
 import env from "@/env";
 import { ApiError } from "@/errors/ApiError";
+import { internal, notFound } from "@/errors/helpers";
 import { CustomerService } from "@/services";
 import type { User } from "@/types/user";
 import { clearTable, putItems } from "../../helpers/db";
@@ -20,6 +22,18 @@ const addressData: Omit<CreateAddressBody, "setAsDefault"> = {
 
 let customerId: string;
 
+const getPaymentMethod = vi.fn<IPaymentMethodService["getPaymentMethod"]>();
+const paymentMethodService = { getPaymentMethod } as unknown as IPaymentMethodService;
+
+const paymentMethodDto: PaymentMethodDto = {
+  id: crypto.randomUUID(),
+  brand: "visa",
+  expirationMonth: 4,
+  expirationYear: 2030,
+  lastFour: "4242",
+  isDefault: true
+};
+
 const makeService = (customerData: Omit<Customer, "id"> = {}) => {
   const user: User = {
     id: customerId,
@@ -28,7 +42,7 @@ const makeService = (customerData: Omit<Customer, "id"> = {}) => {
     isAdmin: false,
     customerData
   };
-  return new CustomerService(db, user);
+  return new CustomerService(db, paymentMethodService, user);
 };
 
 const makeAddress = (overrides: Partial<Address> = {}): Address => ({
@@ -47,6 +61,7 @@ const getRawCustomer = async (id: string) =>
   (await db.send(new GetCommand({ TableName: CustomersTable, Key: { id } }))).Item;
 
 beforeEach(async () => {
+  getPaymentMethod.mockReset();
   customerId = crypto.randomUUID();
   await Promise.all([clearTable(db, AddressesTable, ["id"]), clearTable(db, CustomersTable, ["id"])]);
   await putItems(db, CustomersTable, [{ id: customerId }]);
@@ -146,6 +161,37 @@ describe("getCustomer", () => {
       id: customerId,
       defaultAddress: toDto(address, true),
       defaultPaymentMethod: null
+    });
+  });
+
+  it("includes the default payment method", async () => {
+    getPaymentMethod.mockResolvedValue(paymentMethodDto);
+
+    await expect(makeService({ defaultPaymentMethodId: paymentMethodDto.id }).getCustomer()).resolves.toEqual({
+      id: customerId,
+      defaultAddress: null,
+      defaultPaymentMethod: paymentMethodDto
+    });
+    expect(getPaymentMethod).toHaveBeenCalledWith(paymentMethodDto.id);
+  });
+
+  it("returns null for defaults that no longer exist", async () => {
+    getPaymentMethod.mockRejectedValue(notFound("Payment method not found."));
+
+    const service = makeService({ defaultAddressId: crypto.randomUUID(), defaultPaymentMethodId: crypto.randomUUID() });
+
+    await expect(service.getCustomer()).resolves.toEqual({
+      id: customerId,
+      defaultAddress: null,
+      defaultPaymentMethod: null
+    });
+  });
+
+  it("rethrows failures other than a missing default", async () => {
+    getPaymentMethod.mockRejectedValue(internal(new Error("boom")));
+
+    await expect(makeService({ defaultPaymentMethodId: crypto.randomUUID() }).getCustomer()).rejects.toMatchObject({
+      statusCode: 500
     });
   });
 });
@@ -251,6 +297,16 @@ describe("deleteAddress", () => {
     await makeService().deleteAddress(address.id);
 
     expect(await getRawAddress(address.id)).toBeUndefined();
+  });
+
+  it("clears the customer's default when deleting the default address", async () => {
+    const address = makeAddress();
+    await putItems(db, AddressesTable, [address]);
+    await putItems(db, CustomersTable, [{ id: customerId, defaultAddressId: address.id }]);
+
+    await makeService({ defaultAddressId: address.id }).deleteAddress(address.id);
+
+    expect(await getRawCustomer(customerId)).toEqual({ id: customerId, defaultAddressId: null });
   });
 
   it("does not remove an address belonging to another customer", async () => {

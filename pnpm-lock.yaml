@@ -238,6 +238,9 @@ importers:
         specifier: ^6.0.2
         version: 6.0.2(zod@4.6.5)
     devDependencies:
+      "@aws-sdk/client-lambda":
+        specifier: ^3.1147.0
+        version: 3.1147.0
       "@mm/config":
         specifier: workspace:*
         version: link:../config

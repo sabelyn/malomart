@@ -23,8 +23,8 @@ export type Region = (typeof Regions)[number];
 
 export const Customer = strictObject({
   id: Id,
-  defaultAddressId: Id.optional(),
-  defaultPaymentMethodId: Id.optional()
+  defaultAddressId: Id.nullish(),
+  defaultPaymentMethodId: Id.nullish()
 });
 export type Customer = zinfer<typeof Customer>;
 

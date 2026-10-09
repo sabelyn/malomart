@@ -1,4 +1,3 @@
-import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
 import type { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { DeleteCommand, GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import type { PaginatedQueryOptions } from "@mm/clients";
@@ -10,7 +9,7 @@ import { inject, injectable } from "tsyringe";
 import type { IProductService } from "@/contracts";
 import { DB } from "@/contracts/tokens";
 import env from "@/env";
-import { badRequest, notFound } from "@/errors/helpers";
+import { badRequest, mapConditionFailure, notFound } from "@/errors/helpers";
 import { parseStored } from "@/utils/parsing";
 
 const TableName = env.TABLE_NAMES.products;
@@ -131,10 +130,7 @@ export class ProductService implements IProductService {
       const response = await this.db.send(command);
       return this.toProductDto(response.Attributes);
     } catch (err) {
-      if (err instanceof ConditionalCheckFailedException) {
-        throw notFound("Product could not be found.");
-      }
-      throw err;
+      throw mapConditionFailure(err, "Product");
     }
   };
 
