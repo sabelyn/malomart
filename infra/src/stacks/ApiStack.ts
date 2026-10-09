@@ -24,16 +24,16 @@ import path from "node:path";
 import type { AuthStack } from "./AuthStack";
 import type { DbStack } from "./DbStack";
 import { INDEXES } from "./DbStack";
-import type { FrontendStack } from "./FrontendStack";
 import type { GatewayStack } from "./GatewayStack";
 import type { VaultStack } from "./VaultStack";
 
 type Props = {
   authStack: AuthStack;
   dbStack: DbStack;
-  frontendStack: FrontendStack;
+  appOrigin?: string;
   gatewayStack: GatewayStack;
   vaultStack: VaultStack;
+  taskCount: number;
 };
 
 const API_PORT = 4000;
@@ -90,7 +90,7 @@ export class ApiStack extends Stack {
       }),
       environment: {
         ADMIN_SCOPE: adminScope,
-        APP_ORIGIN: props.frontendStack.appOrigin,
+        ...(props.appOrigin ? { APP_ORIGIN: props.appOrigin } : {}),
         INVOKE_FUNCTION_NAMES: JSON.stringify(
           Object.fromEntries(Object.entries(invokeFunctions).map(([key, func]) => [key, func.functionName]))
         ),
@@ -125,7 +125,7 @@ export class ApiStack extends Stack {
     const service = new FargateService(this, "Service", {
       cluster,
       taskDefinition,
-      desiredCount: 1,
+      desiredCount: props.taskCount,
       capacityProviderStrategies: [{ capacityProvider: "FARGATE_SPOT", weight: 1 }],
       minHealthyPercent: 100,
       maxHealthyPercent: 200,

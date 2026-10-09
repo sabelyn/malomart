@@ -2,12 +2,11 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 const OUTPUTS_FILE = path.resolve(__dirname, "../../../local/cdk-outputs.json");
-const DB_STACK = "Dev-MaloMartDbStack";
 const VAULT_STACK = "Dev-MaloMartVaultStack";
 
 type StackOutputs = Record<string, Record<string, string>>;
 
-const readStackOutputs = () => {
+const readVaultStackOutputs = () => {
   let outputs: StackOutputs;
   try {
     outputs = JSON.parse(readFileSync(OUTPUTS_FILE, "utf8"));
@@ -15,20 +14,18 @@ const readStackOutputs = () => {
     throw new Error(`Could not read ${OUTPUTS_FILE}. Run "pnpm deploy:dev" first.`, { cause: err });
   }
 
-  for (const stack of [DB_STACK, VAULT_STACK]) {
-    if (!outputs[stack]) {
-      throw new Error(`No outputs for ${stack} in ${OUTPUTS_FILE}. Run "pnpm deploy:dev".`);
-    }
+  const vaultOutputs = outputs[VAULT_STACK];
+  if (!vaultOutputs) {
+    throw new Error(`No outputs for ${VAULT_STACK} in ${OUTPUTS_FILE}. Run "pnpm deploy:dev".`);
   }
-  return { db: outputs[DB_STACK], vault: outputs[VAULT_STACK] };
+  return vaultOutputs;
 };
 
-const { db, vault } = readStackOutputs();
+const { CardTableName, CardKeyArn } = readVaultStackOutputs();
 
 delete process.env.AWS_REGION;
 
 Object.assign(process.env, {
-  INVOKE_FUNCTION_NAMES: vault.InvokeFunctionNames,
-  TABLE_NAMES: db.TableNames,
-  TABLE_INDEXES: db.TableIndexes
+  VAULT_CARD_TABLE_NAME: CardTableName,
+  VAULT_KEY_ID: CardKeyArn
 });

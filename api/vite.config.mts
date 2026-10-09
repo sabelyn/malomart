@@ -18,6 +18,7 @@ export default defineConfig({
     minify: true,
     sourcemap: true,
     rolldownOptions: {
+      external: ["swagger-ui-express"],
       output: {
         format: "esm",
         entryFileNames: "index.mjs"

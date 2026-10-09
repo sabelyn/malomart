@@ -3,7 +3,6 @@ import "reflect-metadata";
 import cookieParser from "cookie-parser";
 import express from "express";
 import type { Server } from "http";
-import swaggerUi from "swagger-ui-express";
 
 import { registerDependencies } from "@/container";
 import { error, fetchMetadata, identity } from "@/middleware";
@@ -21,14 +20,18 @@ if (env.NODE_ENV === "development") {
     res.json(spec);
   });
 
-  app.use(
-    "/docs",
-    swaggerUi.serve,
-    swaggerUi.setup(undefined, {
-      customSiteTitle: "Malomart API",
-      swaggerOptions: { url: "/openapi.json", displayRequestDuration: true, tryItOutEnabled: true }
-    })
+  const docs = import("swagger-ui-express").then(({ default: swaggerUi }) =>
+    express.Router().use(
+      swaggerUi.serve,
+      swaggerUi.setup(undefined, {
+        customSiteTitle: "Malomart API",
+        swaggerOptions: { url: "/openapi.json", displayRequestDuration: true, tryItOutEnabled: true }
+      })
+    )
   );
+  app.use("/docs", (req, res, next) => {
+    docs.then(router => router(req, res, next), next);
+  });
 
   app.get("/", (_req, res) => {
     res.redirect("/docs");

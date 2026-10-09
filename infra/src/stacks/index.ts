@@ -1,4 +1,3 @@
-import { LegacyStackSynthesizer } from "aws-cdk-lib";
 import type { Stage } from "aws-cdk-lib";
 
 import { ApiStack } from "./ApiStack";
@@ -8,17 +7,25 @@ import { FrontendStack } from "./FrontendStack";
 import { GatewayStack } from "./GatewayStack";
 import { VaultStack } from "./VaultStack";
 
-export const configureStacks = (stage: Stage) => {
-  const dbStack = new DbStack(stage, "MaloMartDbStack");
-  const gatewayStack = new GatewayStack(stage, "MaloMartGatewayStack");
-  const frontendStack = new FrontendStack(stage, "MaloMartFrontendStack", { gatewayStack });
-  const authStack = new AuthStack(stage, "MaloMartAuthStack", { dbStack });
-  const vaultStack = new VaultStack(stage, "MaloMartVaultStack", { authStack, gatewayStack });
-  new ApiStack(stage, "MaloMartApiStack", { authStack, dbStack, frontendStack, gatewayStack, vaultStack });
+export type StageConfig = {
+  apiTaskCount: number;
+  frontend: boolean;
 };
 
-export const configureLocalStacks = (stage: Stage) => {
-  new DbStack(stage, "MaloMartDbStack", {
-    synthesizer: new LegacyStackSynthesizer()
+export const configureStacks = (stage: Stage, config: StageConfig) => {
+  const dbStack = new DbStack(stage, "MaloMartDbStack");
+  const gatewayStack = new GatewayStack(stage, "MaloMartGatewayStack");
+  const frontendStack = config.frontend
+    ? new FrontendStack(stage, "MaloMartFrontendStack", { gatewayStack })
+    : undefined;
+  const authStack = new AuthStack(stage, "MaloMartAuthStack", { dbStack });
+  const vaultStack = new VaultStack(stage, "MaloMartVaultStack", { authStack, gatewayStack });
+  new ApiStack(stage, "MaloMartApiStack", {
+    authStack,
+    dbStack,
+    appOrigin: frontendStack?.appOrigin,
+    gatewayStack,
+    vaultStack,
+    taskCount: config.apiTaskCount
   });
 };

@@ -1,4 +1,4 @@
-import { Duration, Stack } from "aws-cdk-lib";
+import { CfnOutput, Duration, Stack } from "aws-cdk-lib";
 import type { StackProps } from "aws-cdk-lib";
 import {
   AccountRecovery,
@@ -93,7 +93,7 @@ export class AuthStack extends Stack {
       architecture: Architecture.ARM_64,
       environment: {
         CUSTOMER_GROUP,
-        CUSTOMER_TABLE_NAME: customers.tableName
+        CUSTOMERS_TABLE_NAME: customers.tableName
       }
     });
     customers.grants.writeData(postConfirmation);
@@ -114,5 +114,9 @@ export class AuthStack extends Stack {
         USER_POOL_CLIENT_ID: this.userPoolClient.userPoolClientId
       }
     });
+
+    new CfnOutput(this, "UserPoolId", { value: this.userPool.userPoolId });
+    new CfnOutput(this, "UserPoolClientId", { value: this.userPoolClient.userPoolClientId });
+    new CfnOutput(this, "AdminScope", { value: this.adminScope });
   }
 }

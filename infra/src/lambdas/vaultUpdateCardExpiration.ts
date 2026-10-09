@@ -15,7 +15,8 @@ export const handler: Handler<UpdatePaymentMethodExpirationEvent, InvokeErrorRes
       new UpdateCommand({
         TableName: VAULT_CARD_TABLE_NAME!,
         Key: { token },
-        ConditionExpression: "attribute_exists(token) AND customerId = :customerId",
+        ConditionExpression: "attribute_exists(#token) AND customerId = :customerId",
+        ExpressionAttributeNames: { "#token": "token" },
         UpdateExpression: "SET expirationMonth = :month, expirationYear = :year",
         ExpressionAttributeValues: {
           ":month": expirationMonth,

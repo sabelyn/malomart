@@ -6,8 +6,7 @@ import { number, record, strictObject, string, union } from "zod";
 
 let baseClient: DynamoDBDocumentClient;
 export const dbClient = () => {
-  const endpoint = process.env.AWS_ENDPOINT_URL;
-  baseClient ??= DynamoDBDocumentClient.from(new DynamoDBClient(endpoint ? { endpoint } : {}));
+  baseClient ??= DynamoDBDocumentClient.from(new DynamoDBClient({}));
   return baseClient;
 };
 

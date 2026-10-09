@@ -78,13 +78,17 @@ describe("handler", () => {
     expect(captured.verifiers).toHaveLength(1);
   });
 
-  it("authorizes a valid access cookie", async () => {
-    await expect(invoke([`${SessionCookie.Access}=${signJwt()}`])).resolves.toEqual({ isAuthorized: true });
+  it("authorizes a valid access cookie and passes the customer id along", async () => {
+    await expect(invoke([`${SessionCookie.Access}=${signJwt()}`])).resolves.toEqual({
+      isAuthorized: true,
+      context: { customerId: "user-123" }
+    });
   });
 
   it("authorizes admins and users alike, leaving admin checks to the API", async () => {
     await expect(invoke([`${SessionCookie.Access}=${signJwt({ scope: "openid malomart/admin" })}`])).resolves.toEqual({
-      isAuthorized: true
+      isAuthorized: true,
+      context: { customerId: "user-123" }
     });
   });
 

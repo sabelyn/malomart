@@ -11,18 +11,6 @@ import { isRetriableError } from "./helpers";
 const { VAULT_CARD_TABLE_NAME, VAULT_KEY_ID } = process.env;
 const kmsClient = new KMSClient({});
 
-const THROTTLING_ERRORS = new Set([
-  "ThrottlingException",
-  "ProvisionedThroughputExceededException",
-  "RequestLimitExceeded"
-]);
-const TRANSIENT_ERRORS = new Set([
-  "KeyUnavailableException",
-  "DependencyTimeoutException",
-  "KMSInternalException",
-  "InternalServerError"
-]);
-
 export const handler: APIGatewayProxyHandlerV2WithLambdaAuthorizer<{ customerId: string }> = async event => {
   try {
     const { cardNumber, ...cardData } = CreatePaymentMethodBody.parse(JSON.parse(event.body ?? ""));

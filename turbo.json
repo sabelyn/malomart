@@ -7,6 +7,11 @@
       "outputs": ["dist/**", "cdk.out/**"]
     },
     "check": {},
+    "dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
     "lint": {},
     "lint:fix": {
       "cache": false

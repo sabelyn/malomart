@@ -3,26 +3,27 @@ import type { StackProps } from "aws-cdk-lib";
 import { App, Stage } from "aws-cdk-lib";
 import { RemovalPolicies } from "aws-cdk-lib/core";
 
-import { configureLocalStacks, configureStacks } from "./stacks";
-
-const LOCALSTACK_ENV: StackProps["env"] = { account: "000000000000", region: "us-east-1" };
-
-const stages: Record<string, StackProps["env"]> = {
-  Dev: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION }
-};
+import type { StageConfig } from "./stacks";
+import { configureStacks } from "./stacks";
 
 const app = new App();
 
-if (app.node.tryGetContext("local")) {
-  configureLocalStacks(new Stage(app, "MaloMartLocal", { env: LOCALSTACK_ENV, stageName: "Local" }));
-} else {
-  for (const [stageName, env] of Object.entries(stages)) {
-    const stage = new Stage(app, `MaloMart${stageName}`, {
-      env,
-      stageName
-    });
-    configureStacks(stage);
+const stages: Record<string, { env: StackProps["env"]; config: StageConfig }> = {
+  Dev: {
+    env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+    config: {
+      apiTaskCount: Number(app.node.tryGetContext("apiTasks") ?? 0),
+      frontend: String(app.node.tryGetContext("skipFrontend")) !== "true"
+    }
   }
+};
+
+for (const [stageName, { env, config }] of Object.entries(stages)) {
+  const stage = new Stage(app, `MaloMart${stageName}`, {
+    env,
+    stageName
+  });
+  configureStacks(stage, config);
 }
 
 RemovalPolicies.of(app).destroy();

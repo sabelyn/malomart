@@ -1,7 +1,7 @@
 import type { InvokeFunctionNames } from "@mm/clients/lambda";
 import { tokenizeCard } from "@mm/lib/lambdas";
 import type { StackProps } from "aws-cdk-lib";
-import { Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
+import { CfnOutput, Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
 import { HttpMethod, HttpRoute, HttpRouteKey } from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaAuthorizer, HttpLambdaResponseType } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
@@ -117,5 +117,13 @@ export class VaultStack extends Stack {
       describeCard,
       updateCard
     };
+
+    new CfnOutput(this, "CardTableName", { value: cardTable.tableName });
+    new CfnOutput(this, "CardKeyArn", { value: cardKey.keyArn });
+    new CfnOutput(this, "InvokeFunctionNames", {
+      value: this.toJsonString(
+        Object.fromEntries(Object.entries(this.invokeFunctions).map(([key, func]) => [key, func.functionName]))
+      )
+    });
   }
 }

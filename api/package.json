@@ -5,6 +5,8 @@
   "scripts": {
     "build": "vite build",
     "check": "tsc --noEmit && eslint . --fix",
+    "dev": "tsx ./scripts/dev.ts",
+    "env:dev": "tsx ./scripts/writeDevEnv.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "spec": "tsx ./scripts/writeSpec.ts",

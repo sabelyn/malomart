@@ -30,29 +30,9 @@ describe("dbClient", () => {
     vi.resetModules();
   });
 
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
   it("returns the same instance on repeated calls", async () => {
     const { dbClient } = await import("../../src/dbClient.js");
     expect(dbClient()).toBe(dbClient());
-  });
-
-  it("uses the default endpoint when AWS_ENDPOINT_URL is not set", async () => {
-    vi.stubEnv("AWS_ENDPOINT_URL", undefined);
-    const { dbClient } = await import("../../src/dbClient.js");
-
-    expect(dbClient().config.endpoint).toBeUndefined();
-  });
-
-  it("uses AWS_ENDPOINT_URL when set", async () => {
-    vi.stubEnv("AWS_ENDPOINT_URL", "http://localhost:8000");
-    const { dbClient } = await import("../../src/dbClient.js");
-
-    const endpoint = await dbClient().config.endpoint?.();
-    expect(endpoint?.hostname).toBe("localhost");
-    expect(endpoint?.port).toBe(8000);
   });
 });
 

@@ -9,8 +9,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest run --project unit",
-    "test:integration": "vitest run --project integration",
-    "cdk:local": "tsx scripts/cdkLocal.ts"
+    "test:integration": "vitest run --project integration"
   },
   "devDependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.1140.0",

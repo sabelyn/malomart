@@ -11,8 +11,7 @@ export type InvokeFunctionNames = zinfer<typeof InvokeFunctionNames>;
 
 let baseClient: LambdaClient;
 export const lambdaClient = () => {
-  const endpoint = process.env.AWS_ENDPOINT_URL;
-  baseClient ??= new LambdaClient(endpoint ? { endpoint } : {});
+  baseClient ??= new LambdaClient({});
   return baseClient;
 };
 
