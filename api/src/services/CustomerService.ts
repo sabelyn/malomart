@@ -22,7 +22,7 @@ export class CustomerService implements ICustomerService {
     @inject(DB) private readonly db: DynamoDBDocumentClient,
     @inject(PAYMENT_METHOD_SERVICE) private readonly paymentMethodService: IPaymentMethodService,
     @inject(USER) private readonly user: User
-  ) { }
+  ) {}
 
   createAddress = async (body: CreateAddressBody) => {
     const customerId = this.user.id;
@@ -71,7 +71,7 @@ export class CustomerService implements ICustomerService {
       throw notFound("Address could not be found.");
     }
     return this.toAddressDto(item);
-  }
+  };
 
   getCustomer = async () => {
     const { defaultAddressId, defaultPaymentMethodId } = this.user.customerData;
@@ -83,7 +83,7 @@ export class CustomerService implements ICustomerService {
         return null;
       }
       throw result.reason;
-    }
+    };
 
     const [address, paymentMethod] = await Promise.allSettled([
       defaultAddressId ? this.getAddress(defaultAddressId) : null,
@@ -94,7 +94,7 @@ export class CustomerService implements ICustomerService {
       id: this.user.id,
       defaultAddress: valueOrNull(address),
       defaultPaymentMethod: valueOrNull(paymentMethod)
-    }
+    };
   };
 
   listAddresses = async () => {

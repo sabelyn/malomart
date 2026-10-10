@@ -1,5 +1,5 @@
 import type { infer as zinfer } from "zod";
-import { strictObject, string, enum as zenum } from "zod";
+import { set, strictObject, string, enum as zenum } from "zod";
 
 import { Id, NonnegativeInt, PositiveInt } from "../common";
 
@@ -25,9 +25,9 @@ export const Product = strictObject({
   category: CategorySchema.meta({ example: Category.Masks }),
   price: PositiveInt.meta({ example: 80 }),
   inStock: NonnegativeInt.meta({ example: 2 }),
-  originalPrice: PositiveInt.optional(),
-  iconKey: string().nonempty().optional(),
-  imageKeys: string().nonempty().array().optional(),
+  originalPrice: PositiveInt.nullish(),
+  thumbnailKey: string().nonempty().nullish(),
+  imageKeys: set(string().nonempty()).optional(),
   features: string().nonempty().array()
 });
 export type Product = zinfer<typeof Product>;

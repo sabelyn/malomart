@@ -1,7 +1,8 @@
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
-import { dbClient } from "@mm/clients";
+import { dbClient, s3Client } from "@mm/clients";
 import type { CreateProductBody, Product } from "@mm/lib";
 import { Category } from "@mm/lib";
+import { mockClient } from "aws-sdk-client-mock";
 
 import env from "@/env";
 import { ApiError } from "@/errors/ApiError";
@@ -10,7 +11,8 @@ import { clearTable, putItems } from "../../helpers/db";
 
 const TableName = env.TABLE_NAMES.products;
 const db = dbClient();
-const service = new ProductService(db);
+const s3 = mockClient(s3Client());
+const service = new ProductService(db, s3Client());
 
 const productData: CreateProductBody = {
   title: "Mask of Truth",
@@ -30,6 +32,7 @@ const makeProduct = (overrides: Partial<Product> = {}): Product => ({
 const getRawItem = async (id: string) => (await db.send(new GetCommand({ TableName, Key: { id } }))).Item;
 
 beforeEach(async () => {
+  s3.reset();
   await clearTable(db, TableName, ["id"]);
 });
 
@@ -120,7 +123,7 @@ describe("deleteProduct", () => {
 });
 
 describe("listProducts", () => {
-  const toOverview = ({ id, title, price }: Product) => ({ id, title, price });
+  const toOverview = ({ id, title, price, inStock }: Product) => ({ id, title, price, inStock });
   const byId = (a: { id: string }, b: { id: string }) => a.id.localeCompare(b.id);
 
   const listAll = async (query: Omit<Parameters<typeof service.listProducts>[0], "cursor">) => {

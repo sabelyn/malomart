@@ -1,17 +1,15 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { S3Client } from "@aws-sdk/client-s3";
+import type { infer as zinfer } from "zod";
+import { strictObject, string } from "zod";
 
-export type UploadUrlOptions = {
-  contentType?: string;
-  expireSeconds?: number;
-};
-export type DownloadUrlOptions = {
-  contentDisposition?: "inline" | "attachment";
-  expireSeconds?: number;
-};
+export const BucketNames = strictObject({
+  image: string().nonempty().optional(),
+  uploadStaging: string().nonempty().optional()
+});
+export type BucketNames = zinfer<typeof BucketNames>;
 
-const DEFAULT_PRESIGNED_UPLOAD_EXPIRE_SECONDS = 300;
-const DEFAULT_PRESIGNED_DOWNLOAD_EXPIRE_SECONDS = 3600;
+export const IMAGE_WIDTHS = [320, 640, 1280];
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 let baseClient: S3Client;
 export const s3Client = () => {
@@ -19,25 +17,5 @@ export const s3Client = () => {
   return baseClient;
 };
 
-export const getUploadUrl = (client: S3Client, bucket: string, key: string, opts?: UploadUrlOptions) => {
-  const command = new PutObjectCommand({
-    Bucket: bucket,
-    Key: key,
-    ContentType: opts?.contentType
-  });
-  return getSignedUrl(client, command, {
-    expiresIn: opts?.expireSeconds ?? DEFAULT_PRESIGNED_UPLOAD_EXPIRE_SECONDS,
-    signableHeaders: new Set(["content-type"])
-  });
-};
-
-export const getDownloadUrl = (client: S3Client, bucket: string, key: string, opts?: DownloadUrlOptions) => {
-  const command = new GetObjectCommand({
-    Bucket: bucket,
-    Key: key,
-    ResponseContentDisposition: opts?.contentDisposition ?? "inline"
-  });
-  return getSignedUrl(client, command, {
-    expiresIn: opts?.expireSeconds ?? DEFAULT_PRESIGNED_DOWNLOAD_EXPIRE_SECONDS
-  });
-};
+export const IMAGE_KEY_PREFIX = "images/";
+export const imageVariantKey = (imageKey: string, width: number) => `${IMAGE_KEY_PREFIX}${imageKey}-${width}.webp`;

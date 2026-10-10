@@ -105,13 +105,13 @@ export const describeError = (err: ApiError) => {
     cause:
       cause instanceof Error
         ? {
-          name: cause.name,
-          message: cause.message,
-          stack: cause.stack,
-          requestId: isService ? cause.$metadata.requestId : undefined,
-          httpStatusCode: isService ? cause.$metadata.httpStatusCode : undefined,
-          attempts: isService ? cause.$metadata.attempts : undefined
-        }
+            name: cause.name,
+            message: cause.message,
+            stack: cause.stack,
+            requestId: isService ? cause.$metadata.requestId : undefined,
+            httpStatusCode: isService ? cause.$metadata.httpStatusCode : undefined,
+            attempts: isService ? cause.$metadata.attempts : undefined
+          }
         : cause
   };
 };

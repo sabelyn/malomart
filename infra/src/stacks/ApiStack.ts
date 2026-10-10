@@ -1,3 +1,4 @@
+import type { EnvInput as ApiEnv } from "@mm/api/env";
 import type { RouteAccess } from "@mm/lib";
 import { apiRoot, collectEndpoints } from "@mm/lib";
 import { Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
@@ -17,6 +18,7 @@ import {
   OperatingSystemFamily
 } from "aws-cdk-lib/aws-ecs";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
+import type { IBucket } from "aws-cdk-lib/aws-s3";
 import { DnsRecordType, PrivateDnsNamespace } from "aws-cdk-lib/aws-servicediscovery";
 import type { Construct } from "constructs";
 import path from "node:path";
@@ -34,6 +36,8 @@ type Props = {
   gatewayStack: GatewayStack;
   vaultStack: VaultStack;
   taskCount: number;
+  imageBucket?: IBucket;
+  uploadBucket?: IBucket;
 };
 
 const API_PORT = 4000;
@@ -75,6 +79,8 @@ export class ApiStack extends Stack {
     for (const func of Object.values(invokeFunctions)) {
       func.grantInvoke(taskDefinition.taskRole);
     }
+    props.uploadBucket?.grantPut(taskDefinition.taskRole);
+    props.imageBucket?.grantDelete(taskDefinition.taskRole);
 
     const logGroup = new LogGroup(this, "ApiLogs", {
       retention: RetentionDays.ONE_WEEK,
@@ -83,25 +89,31 @@ export class ApiStack extends Stack {
 
     const { userPool, userPoolClient, adminScope } = props.authStack;
     userPool.grant(taskDefinition.taskRole, "cognito-idp:DescribeUserPoolClient");
+
+    const apiEnv = {
+      ADMIN_SCOPE: adminScope,
+      ...(props.appOrigin ? { APP_ORIGIN: props.appOrigin } : {}),
+      BUCKET_NAMES: JSON.stringify({
+        ...(props.imageBucket ? { image: props.imageBucket.bucketName } : {}),
+        ...(props.uploadBucket ? { uploadStaging: props.uploadBucket.bucketName } : {})
+      }),
+      INVOKE_FUNCTION_NAMES: JSON.stringify(
+        Object.fromEntries(Object.entries(invokeFunctions).map(([key, func]) => [key, func.functionName]))
+      ),
+      PORT: String(API_PORT),
+      TABLE_INDEXES: JSON.stringify(INDEXES),
+      TABLE_NAMES: JSON.stringify(
+        Object.fromEntries(Object.entries(tables).map(([key, table]) => [key, table.tableName]))
+      ),
+      USER_POOL_ID: userPool.userPoolId,
+      USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId
+    } satisfies ApiEnv;
     const container = taskDefinition.addContainer("Api", {
       image: ContainerImage.fromAsset(repoRoot, {
         file: "api/Dockerfile",
         platform: Platform.LINUX_ARM64
       }),
-      environment: {
-        ADMIN_SCOPE: adminScope,
-        ...(props.appOrigin ? { APP_ORIGIN: props.appOrigin } : {}),
-        INVOKE_FUNCTION_NAMES: JSON.stringify(
-          Object.fromEntries(Object.entries(invokeFunctions).map(([key, func]) => [key, func.functionName]))
-        ),
-        PORT: String(API_PORT),
-        TABLE_INDEXES: JSON.stringify(INDEXES),
-        TABLE_NAMES: JSON.stringify(
-          Object.fromEntries(Object.entries(tables).map(([key, table]) => [key, table.tableName]))
-        ),
-        USER_POOL_ID: userPool.userPoolId,
-        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId
-      },
+      environment: apiEnv,
       portMappings: [{ containerPort: API_PORT }],
       logging: LogDriver.awsLogs({ logGroup, streamPrefix: "api" }),
       healthCheck: {

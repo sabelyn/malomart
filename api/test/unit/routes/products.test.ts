@@ -1,4 +1,4 @@
-import type { ListProductsResponse, ProductDto } from "@mm/lib";
+import type { ListProductsResponse, PresignedPostResponse, ProductDto } from "@mm/lib";
 import request from "supertest";
 import { container } from "tsyringe";
 
@@ -30,9 +30,16 @@ const productData = {
 };
 
 const listResult: ListProductsResponse = {
-  data: [{ id: ID, title: product.title, price: product.price }],
+  data: [{ id: ID, title: product.title, price: product.price, inStock: product.inStock }],
   pagination: { hasNext: false, limit: 20 }
 };
+
+const uploadPost: PresignedPostResponse = {
+  url: "https://upload-staging.s3.us-east-1.amazonaws.com/",
+  fields: { key: `products/${ID}/upload`, "Content-Type": "image/png" }
+};
+
+const IMAGE_KEY = "0123456789abcdef";
 
 const app = createTestApp(api);
 
@@ -42,8 +49,11 @@ beforeEach(() => {
   service = {
     createProduct: vi.fn<IProductService["createProduct"]>().mockResolvedValue(product),
     deleteProduct: vi.fn<IProductService["deleteProduct"]>().mockResolvedValue(),
+    deleteProductImage: vi.fn<IProductService["deleteProductImage"]>().mockResolvedValue(product),
     getProduct: vi.fn<IProductService["getProduct"]>().mockResolvedValue(product),
+    getProductImageUploadPost: vi.fn<IProductService["getProductImageUploadPost"]>().mockResolvedValue(uploadPost),
     listProducts: vi.fn<IProductService["listProducts"]>().mockResolvedValue(listResult),
+    setImageAsThumbnail: vi.fn<IProductService["setImageAsThumbnail"]>().mockResolvedValue(product),
     updateProduct: vi.fn<IProductService["updateProduct"]>().mockResolvedValue(product)
   };
   container.registerInstance(PRODUCT_SERVICE, service);
@@ -247,5 +257,115 @@ describe("DELETE /api/products/:id", () => {
 
     expect(res.status).toBe(400);
     expect(service.deleteProduct).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/products/:id/images", () => {
+  const path = `/api/products/${ID}/images`;
+
+  it("requires a user", async () => {
+    const res = await request(app).post(path).query({ contentType: "image/png" });
+
+    expect(res.status).toBe(401);
+  });
+
+  it("requires an admin", async () => {
+    const res = await request(app).post(path).query({ contentType: "image/png" }).set(asRegularUser);
+
+    expect(res.status).toBe(403);
+    expect(service.getProductImageUploadPost).not.toHaveBeenCalled();
+  });
+
+  it("responds with the presigned post", async () => {
+    const res = await request(app).post(path).query({ contentType: "image/png" }).set(asAdmin);
+
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual(uploadPost);
+    expect(service.getProductImageUploadPost).toHaveBeenCalledWith(ID, "image/png");
+  });
+
+  it.each([
+    ["a missing content type", {}],
+    ["a non-image content type", { contentType: "application/pdf" }]
+  ])("rejects %s with a 400", async (_, query) => {
+    const res = await request(app).post(path).query(query).set(asAdmin);
+
+    expect(res.status).toBe(400);
+    expect(service.getProductImageUploadPost).not.toHaveBeenCalled();
+  });
+
+  it("rejects an invalid id with a 400", async () => {
+    const res = await request(app)
+      .post("/api/products/not-a-uuid/images")
+      .query({ contentType: "image/png" })
+      .set(asAdmin);
+
+    expect(res.status).toBe(400);
+    expect(service.getProductImageUploadPost).not.toHaveBeenCalled();
+  });
+});
+
+describe("PUT /api/products/:id/images/:key", () => {
+  const path = `/api/products/${ID}/images/${IMAGE_KEY}`;
+
+  it("requires a user", async () => {
+    const res = await request(app).put(path);
+
+    expect(res.status).toBe(401);
+  });
+
+  it("requires an admin", async () => {
+    const res = await request(app).put(path).set(asRegularUser);
+
+    expect(res.status).toBe(403);
+    expect(service.setImageAsThumbnail).not.toHaveBeenCalled();
+  });
+
+  it("sets the thumbnail and responds with the product", async () => {
+    const res = await request(app).put(path).set(asAdmin);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(product);
+    expect(service.setImageAsThumbnail).toHaveBeenCalledWith(ID, IMAGE_KEY);
+  });
+
+  it("returns a 404 when the product image does not exist", async () => {
+    service.setImageAsThumbnail.mockRejectedValue(new ApiError(404, "Product image could not be found."));
+
+    const res = await request(app).put(path).set(asAdmin);
+
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("DELETE /api/products/:id/images/:key", () => {
+  const path = `/api/products/${ID}/images/${IMAGE_KEY}`;
+
+  it("requires a user", async () => {
+    const res = await request(app).delete(path);
+
+    expect(res.status).toBe(401);
+  });
+
+  it("requires an admin", async () => {
+    const res = await request(app).delete(path).set(asRegularUser);
+
+    expect(res.status).toBe(403);
+    expect(service.deleteProductImage).not.toHaveBeenCalled();
+  });
+
+  it("deletes the image and responds with the product", async () => {
+    const res = await request(app).delete(path).set(asAdmin);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(product);
+    expect(service.deleteProductImage).toHaveBeenCalledWith(ID, IMAGE_KEY);
+  });
+
+  it("rejects an invalid id with a 400", async () => {
+    const res = await request(app).delete(`/api/products/not-a-uuid/images/${IMAGE_KEY}`).set(asAdmin);
+
+    expect(res.status).toBe(400);
+    expect(service.deleteProductImage).not.toHaveBeenCalled();
   });
 });

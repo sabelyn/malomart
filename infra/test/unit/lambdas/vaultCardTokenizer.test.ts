@@ -62,7 +62,7 @@ describe("success", () => {
     const { token } = (await tokenize()).body;
 
     expect(db).toHaveReceivedCommandTimes(PutCommand, 1);
-    expect(db.commandCalls(PutCommand)[0]!.args[0].input).toEqual({
+    expect(db.commandCalls(PutCommand)[0].args[0].input).toEqual({
       TableName: "vault-cards",
       Item: {
         token,

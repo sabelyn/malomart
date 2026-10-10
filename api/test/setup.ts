@@ -7,6 +7,7 @@ Object.assign(process.env, {
   ADMIN_SCOPE: "test/admin",
   AWS_REGION: "us-east-1",
   APP_ORIGIN: "http://localhost:5173",
+  BUCKET_NAMES: JSON.stringify({ image: "images", uploadStaging: "upload-staging" }),
   INVOKE_FUNCTION_NAMES: JSON.stringify({
     deleteCard: "delete-card",
     describeCard: "describe-card",

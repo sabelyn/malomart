@@ -68,9 +68,7 @@ describe("vaultCardTokenizer", () => {
     const { token } = await tokenizeCard();
     const { cypher } = (await getRawCard(token))!;
 
-    const { Plaintext } = await kms.send(
-      new DecryptCommand({ CiphertextBlob: cypher, EncryptionContext: { token } })
-    );
+    const { Plaintext } = await kms.send(new DecryptCommand({ CiphertextBlob: cypher, EncryptionContext: { token } }));
     expect(Buffer.from(Plaintext!).toString()).toBe(cardData.cardNumber);
 
     await expect(

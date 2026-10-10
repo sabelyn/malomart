@@ -66,9 +66,7 @@ const getRawCustomer = async (id: string) =>
   (await db.send(new GetCommand({ TableName: CustomersTable, Key: { id } }))).Item;
 
 const getRawVaultCard = async (token: string) =>
-  (await db.send(new GetCommand({ TableName: VAULT_CARD_TABLE_NAME, Key: { token } }))).Item as
-    | VaultCard
-    | undefined;
+  (await db.send(new GetCommand({ TableName: VAULT_CARD_TABLE_NAME, Key: { token } }))).Item as VaultCard | undefined;
 
 beforeEach(async () => {
   customerId = crypto.randomUUID();

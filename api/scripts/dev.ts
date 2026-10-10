@@ -15,10 +15,14 @@ const main = async () => {
   await build({ root, build: { minify: false } });
 
   const children = [
-    spawn(process.execPath, [path.join(root, "node_modules/vite/bin/vite.js"), "build", "--watch", "--minify", "false"], {
-      cwd: root,
-      stdio: ["ignore", "ignore", "inherit"]
-    }),
+    spawn(
+      process.execPath,
+      [path.join(root, "node_modules/vite/bin/vite.js"), "build", "--watch", "--minify", "false"],
+      {
+        cwd: root,
+        stdio: ["ignore", "ignore", "inherit"]
+      }
+    ),
     spawn(
       process.execPath,
       ["--watch", "--enable-source-maps", `--env-file=${envFile}`, path.join(root, "dist/index.mjs")],

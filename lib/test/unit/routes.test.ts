@@ -1,7 +1,8 @@
 import * as lib from "../../src";
 import { apiRoot, collectEndpoints, Endpoint } from "../../src/api";
+import { lambdaRoot } from "../../src/lambdas";
 
-const endpoints = collectEndpoints(apiRoot);
+const endpoints = [apiRoot, lambdaRoot].flatMap(collectEndpoints);
 
 const exportedEndpoints = Object.values(lib).filter(value => value instanceof Endpoint);
 
@@ -14,7 +15,7 @@ describe("lib routes", () => {
     expect(endpoints.length).toBeGreaterThan(0);
   });
 
-  it("reaches every exported endpoint from the api root", () => {
+  it("reaches every exported endpoint from a root route", () => {
     expect(exportedEndpoints.filter(endpoint => !endpoints.includes(endpoint)).map(e => e.id)).toEqual([]);
   });
 

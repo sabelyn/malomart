@@ -1,7 +1,13 @@
 import { apiRoot, Endpoint, Route } from "../api";
 import { IdParams } from "../common";
-import { CreateProductBody, ListProductsQuery, UpdateProductBody } from "./requests";
-import { ListProductsResponse, ProductDto } from "./responses";
+import {
+  CreateProductBody,
+  ListProductsQuery,
+  ProductImageParams,
+  RequestImageUploadPostQuery,
+  UpdateProductBody
+} from "./requests";
+import { ListProductsResponse, PresignedPostResponse, ProductDto } from "./responses";
 
 export const products = new Route("/products", "public", ["Products"], apiRoot);
 
@@ -78,4 +84,60 @@ export const deleteProduct = new Endpoint(products, {
   successDescription: "the product was successfully deleted.",
   successStatus: "204",
   summary: "Delete a Product"
+});
+
+export const requestImageUpload = new Endpoint(products, {
+  access: "admin",
+  description: "Request a presigned URL and fields for a direct post request to S3 for an image upload.",
+  errors: {
+    400: "Request query is invalid.",
+    404: "Product could not be found."
+  },
+  id: "productImageUpload",
+  method: "POST",
+  path: "/{id}/images",
+  schemas: {
+    params: IdParams,
+    query: RequestImageUploadPostQuery,
+    response: PresignedPostResponse
+  },
+  successDescription: "A presigned URL and form fields.",
+  successStatus: "201",
+  summary: "Request a Product Image Upload"
+});
+
+export const setImageAsThumbnail = new Endpoint(products, {
+  access: "admin",
+  description: "Set an image as a product's thumbnail.",
+  errors: {
+    400: "Invalid path parameters.",
+    404: "Product or image could not be found."
+  },
+  id: "setImageAsThumbnail",
+  method: "PUT",
+  path: "/{id}/images/{hash}",
+  schemas: {
+    params: ProductImageParams,
+    response: ProductDto
+  },
+  successDescription: "The updated image with new thumbnail.",
+  summary: "Set a Product Thumbnail"
+});
+
+export const deleteProductImage = new Endpoint(products, {
+  access: "admin",
+  description: "Delete one of a product's uploaded images.",
+  errors: {
+    400: "Invalid path parameters.",
+    404: "Product could not be found."
+  },
+  id: "deleteProductImage",
+  method: "DELETE",
+  path: "/{id}/images/{hash}",
+  schemas: {
+    params: ProductImageParams,
+    response: ProductDto
+  },
+  successDescription: "The image was successfully deleted.",
+  summary: "Delete a Product Image"
 });

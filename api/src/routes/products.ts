@@ -1,4 +1,13 @@
-import { createProduct, deleteProduct, getProduct, listProducts, updateProduct } from "@mm/lib/products";
+import {
+  createProduct,
+  deleteProduct,
+  deleteProductImage,
+  getProduct,
+  listProducts,
+  requestImageUpload,
+  setImageAsThumbnail,
+  updateProduct
+} from "@mm/lib/products";
 import { Router } from "express";
 
 import { PRODUCT_SERVICE } from "@/contracts/tokens";
@@ -44,6 +53,35 @@ router.post(...pathAndMiddleware(createProduct), async (req, res, next) => {
   }
 });
 
+router.post(...pathAndMiddleware(requestImageUpload), async (req, res, next) => {
+  try {
+    const {
+      query,
+      params: { id }
+    } = validateRequest(requestImageUpload, req);
+
+    const service = req.container.resolve(PRODUCT_SERVICE);
+    const post = await service.getProductImageUploadPost(id, query?.contentType);
+    return respond(res, requestImageUpload, post);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.put(...pathAndMiddleware(setImageAsThumbnail), async (req, res, next) => {
+  try {
+    const {
+      params: { id, hash }
+    } = validateRequest(setImageAsThumbnail, req);
+
+    const service = req.container.resolve(PRODUCT_SERVICE);
+    const product = await service.setImageAsThumbnail(id, hash);
+    return respond(res, setImageAsThumbnail, product);
+  } catch (err) {
+    return next(err);
+  }
+});
+
 router.put(...pathAndMiddleware(updateProduct), async (req, res, next) => {
   try {
     const {
@@ -54,6 +92,20 @@ router.put(...pathAndMiddleware(updateProduct), async (req, res, next) => {
     const service = req.container.resolve(PRODUCT_SERVICE);
     const product = await service.updateProduct(id, body);
     return respond(res, updateProduct, product);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.delete(...pathAndMiddleware(deleteProductImage), async (req, res, next) => {
+  try {
+    const {
+      params: { id, hash }
+    } = validateRequest(deleteProductImage, req);
+
+    const service = req.container.resolve(PRODUCT_SERVICE);
+    const product = await service.deleteProductImage(id, hash);
+    return respond(res, deleteProductImage, product);
   } catch (err) {
     return next(err);
   }

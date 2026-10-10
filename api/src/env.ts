@@ -1,8 +1,8 @@
-import { InvokeFunctionNames, TableIndexes, TableNames } from "@mm/clients";
+import { BucketNames, InvokeFunctionNames, TableIndexes, TableNames } from "@mm/clients";
 import { enum as zenum, preprocess, coerce, object, string, url, prettifyError, ZodError } from "zod";
-import type { infer as zinfer, ZodSchema } from "zod";
+import type { infer as zinfer, input as zinput, ZodType } from "zod";
 
-const fromJson = <T extends ZodSchema>(schema: T) =>
+const fromJson = <T extends ZodType>(schema: T) =>
   preprocess(val => {
     if (typeof val === "string") {
       try {
@@ -17,6 +17,7 @@ const fromJson = <T extends ZodSchema>(schema: T) =>
 const EnvSchema = object({
   ADMIN_SCOPE: string().nonempty(),
   APP_ORIGIN: url().optional().default("http://localhost:5173"),
+  BUCKET_NAMES: fromJson(BucketNames),
   INVOKE_FUNCTION_NAMES: fromJson(InvokeFunctionNames),
   NODE_ENV: zenum(["development", "production"]).optional().default("development"),
   PORT: coerce.number().int().positive().optional().default(4000),
@@ -26,6 +27,7 @@ const EnvSchema = object({
   USER_POOL_CLIENT_ID: string().nonempty()
 });
 export type Env = zinfer<typeof EnvSchema>;
+export type EnvInput = zinput<typeof EnvSchema>;
 
 let env: Env;
 try {
