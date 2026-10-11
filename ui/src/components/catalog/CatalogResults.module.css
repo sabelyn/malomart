@@ -1,0 +1,5 @@
+.count {
+  margin-block: var(--mantine-spacing-lg);
+  color: var(--mantine-color-dark-2);
+  font-size: var(--mantine-font-size-sm);
+}

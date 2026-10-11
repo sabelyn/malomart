@@ -1,3 +1,4 @@
+export * from "./images";
 export * from "./requests";
 export * from "./responses";
 export * from "./route";

@@ -1,0 +1,4 @@
+.grid[aria-busy="true"] {
+  opacity: 0.6;
+  transition: opacity 150ms;
+}

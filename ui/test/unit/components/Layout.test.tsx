@@ -13,6 +13,7 @@ const app = (
     <Route element={<Layout />}>
       <Route index element={<Link to="/other">go elsewhere</Link>} />
       <Route path="other" element={<p>other page</p>} />
+      <Route path="products" element={<p>catalog</p>} />
       <Route path="broken" element={<Thrower />} />
     </Route>
   </Routes>
@@ -45,7 +46,7 @@ describe("Layout", () => {
   });
 
   it("marks the current page in the main navigation", () => {
-    renderWithProviders(app, { session: customer });
+    renderWithProviders(app, { route: "/products", session: customer });
 
     const nav = screen.getByRole("navigation", { name: "Main" });
     expect(nav.querySelector('[aria-current="page"]')?.textContent).toBe("Shop");

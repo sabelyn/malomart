@@ -128,7 +128,7 @@ describe("endpointQuery", () => {
 
 describe("endpointInfiniteQuery", () => {
   const page = (id: string, pagination: { hasNext: boolean; cursor?: string }) => ({
-    data: [{ id, title: product.title, price: product.price }],
+    data: [{ id, title: product.title, price: product.price, inStock: product.inStock }],
     pagination: { limit: 20, ...pagination }
   });
 

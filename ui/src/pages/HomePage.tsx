@@ -14,7 +14,7 @@ import ProductPlacard from "@/components/ProductPlacard";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import classes from "./pages.module.css";
 
-type ShelfItem = { product: Product; image?: string; chudleyPrice?: number };
+type ShelfItem = { product: Product; image: string };
 
 const sampleShelf: ShelfItem[] = [
   {
@@ -25,10 +25,10 @@ const sampleShelf: ShelfItem[] = [
       category: Category.Armor,
       price: 598,
       inStock: 1,
+      originalPrice: 1000000,
       features: ["Damage drains rupees instead of hearts", "Stops working when your wallet hits zero"]
     },
-    image: magicArmorImage,
-    chudleyPrice: 1000000
+    image: magicArmorImage
   },
   {
     product: {
@@ -38,10 +38,10 @@ const sampleShelf: ShelfItem[] = [
       category: Category.Shields,
       price: 200,
       inStock: 2,
+      originalPrice: 20000,
       features: ["Fireproof", "Blocks Guardian lasers with good timing"]
     },
-    image: hylianShieldImage,
-    chudleyPrice: 20000
+    image: hylianShieldImage
   },
   {
     product: {
@@ -51,10 +51,10 @@ const sampleShelf: ShelfItem[] = [
       category: Category.Potions,
       price: 30,
       inStock: 14,
+      originalPrice: 300,
       features: ["Restores eight hearts", "Bottle not included"]
     },
-    image: redPotionImage,
-    chudleyPrice: 300
+    image: redPotionImage
   },
   {
     product: {
@@ -76,10 +76,10 @@ const sampleShelf: ShelfItem[] = [
       category: Category.Bombs,
       price: 50,
       inStock: 6,
+      originalPrice: 1000,
       features: ["Bundle of ten", "Lit fuse not included"]
     },
-    image: bombsImage,
-    chudleyPrice: 1000
+    image: bombsImage
   }
 ];
 
@@ -98,12 +98,11 @@ const HomePage = () => {
           On the shelves
         </Title>
         <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="xl" verticalSpacing="xl">
-          {sampleShelf.map(({ product, image, chudleyPrice }) => (
+          {sampleShelf.map(({ product, image }) => (
             <ProductPlacard
               key={product.id}
               product={product}
               image={image}
-              chudleyPrice={chudleyPrice}
               onAddToCart={addToCart}
             />
           ))}

@@ -64,9 +64,7 @@ const SiteHeader = ({ cartCount }: SiteHeaderProps) => (
         </Link>
         <nav aria-label="Main" className={classes.nav}>
           <Group gap="lg">
-            <NavLink to="/" end>
-              Shop
-            </NavLink>
+            <NavLink to="/products">Shop</NavLink>
             <NavLink to="/cart">Cart ({cartCount})</NavLink>
             <AccountLinks />
           </Group>

@@ -2,6 +2,7 @@ import { lazy } from "react";
 import { Navigate, Route, Routes } from "react-router";
 
 import Layout from "@/components/Layout";
+import CatalogPage from "@/pages/CatalogPage";
 import HomePage from "@/pages/HomePage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import PlaceholderPage from "@/pages/PlaceholderPage";
@@ -16,7 +17,7 @@ const App = () => (
     <Route element={<Layout />}>
       <Route index element={<HomePage />} />
       <Route path="products">
-        <Route index element={<PlaceholderPage title="Products" />} />
+        <Route index element={<CatalogPage />} />
         <Route path=":id" element={<PlaceholderPage title="Product" />} />
       </Route>
       <Route path="cart" element={<PlaceholderPage title="Cart" />} />

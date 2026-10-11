@@ -14,6 +14,9 @@
   display: flex;
   align-items: center;
   gap: var(--mantine-spacing-md);
+}
+
+.placard:has(.sticker) .heading {
   padding-right: 4.5rem;
 }
 
@@ -37,6 +40,33 @@
   color: var(--mantine-color-dark-0);
 }
 
+.link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.placard:hover .link {
+  text-decoration: underline;
+  text-decoration-color: var(--mantine-color-gilt-5);
+}
+
+.link:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.placard:has(.link:focus-visible) {
+  outline: 3px solid var(--mm-focus);
+  outline-offset: 3px;
+  box-shadow: 0 0 12px rgb(95 212 200 / 0.6);
+}
+
 .description {
   color: var(--mantine-color-dark-1);
   flex-grow: 1;
@@ -57,6 +87,18 @@
   border-radius: 999px;
   transform: rotate(6deg);
   box-shadow: 2px 3px 0 var(--mantine-color-dark-9);
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-sm);
+  margin-top: auto;
+}
+
+.action {
+  position: relative;
+  z-index: 1;
 }
 
 .stock {

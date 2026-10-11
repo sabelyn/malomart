@@ -1,0 +1,29 @@
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-md);
+  margin-top: var(--mantine-spacing-xl);
+  padding-block: var(--mantine-spacing-lg);
+  border-block: var(--mm-rule);
+}
+
+.fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.legend {
+  padding: 0;
+  margin-bottom: var(--mantine-spacing-sm);
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mantine-color-gilt-2);
+}
+
+.chip[data-checked] {
+  --chip-icon-color: var(--mantine-color-dark-8);
+  color: var(--mantine-color-dark-8);
+}
