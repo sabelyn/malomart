@@ -13,8 +13,7 @@
     "spec": "pnpm --filter api spec",
     "dev": "turbo run dev --filter=@mm/api --filter=@mm/ui --ui=stream",
     "deploy:dev": "pnpm --filter @mm/ui build && pnpm --filter @mm/infra cdk deploy \"MaloMartDev/*\" --outputs-file ../local/cdk-outputs.json && pnpm --filter @mm/api env:dev",
-    "deploy:dev:backend": "pnpm --filter @mm/infra cdk deploy \"MaloMartDev/*\" -c skipFrontend=true --outputs-file ../local/cdk-outputs.json && pnpm --filter @mm/api env:dev",
-    "deploy:frontend": "pnpm --filter @mm/ui build && pnpm --filter @mm/infra cdk deploy MaloMartDev/MaloMartFrontendStack"
+    "seed": "turbo run build --filter=@mm/tools... --output-logs=errors-only && pnpm --filter @mm/tools seed"
   },
   "devDependencies": {
     "prettier": "^3.9.6",

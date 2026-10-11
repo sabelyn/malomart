@@ -24,9 +24,11 @@ const stackOutputs = (name: string) => {
 const auth = stackOutputs("MaloMartAuthStack");
 const db = stackOutputs("MaloMartDbStack");
 const vault = stackOutputs("MaloMartVaultStack");
+const frontend = stackOutputs("MaloMartFrontendStack");
 
 const env = {
   ADMIN_SCOPE: auth.AdminScope,
+  BUCKET_NAMES: frontend.BucketNames,
   INVOKE_FUNCTION_NAMES: vault.InvokeFunctionNames,
   NODE_ENV: "development",
   TABLE_INDEXES: db.TableIndexes,

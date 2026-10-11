@@ -1,9 +1,8 @@
 import { DeleteObjectCommand, DeleteObjectsCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { dbClient } from "@mm/clients/db";
-import { IMAGE_WIDTHS, imageVariantKey, MAX_UPLOAD_BYTES, s3Client } from "@mm/clients/s3";
+import { IMAGE_WIDTHS, imageHash, imageVariantKey, MAX_UPLOAD_BYTES, productImageKey, s3Client } from "@mm/clients/s3";
 import type { S3ObjectCreatedNotificationEvent } from "aws-lambda";
-import { createHash } from "node:crypto";
 import sharp from "sharp";
 
 const { IMAGE_BUCKET_NAME, PRODUCTS_TABLE_NAME } = process.env;
@@ -41,8 +40,7 @@ export const handler = async (event: S3ObjectCreatedNotificationEvent) => {
     return;
   }
 
-  const hash = createHash("sha256").update(input).digest("hex").slice(0, 16);
-  const imageKey = `products/${productId}/${hash}`;
+  const imageKey = productImageKey(productId, imageHash(input));
 
   await Promise.all(
     variants.map(({ width, data }) =>

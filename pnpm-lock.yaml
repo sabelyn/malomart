@@ -480,6 +480,21 @@ importers:
 
   tools:
     dependencies:
+      "@aws-sdk/client-dynamodb":
+        specifier: ^3.1131.0
+        version: 3.1146.0
+      "@aws-sdk/client-s3":
+        specifier: ^3.1131.0
+        version: 3.1148.0
+      "@aws-sdk/lib-dynamodb":
+        specifier: ^3.1138.0
+        version: 3.1146.0(@aws-sdk/client-dynamodb@3.1146.0)
+      "@mm/clients":
+        specifier: workspace:*
+        version: link:../clients
+      "@mm/lib":
+        specifier: workspace:*
+        version: link:../lib
       sharp:
         specifier: ^0.34.4
         version: 0.34.5

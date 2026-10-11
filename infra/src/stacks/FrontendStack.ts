@@ -1,3 +1,4 @@
+import type { BucketNames } from "@mm/clients/s3";
 import { IMAGE_KEY_PREFIX } from "@mm/clients/s3";
 import type { StackProps } from "aws-cdk-lib";
 import { CfnOutput, Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
@@ -198,6 +199,7 @@ export class FrontendStack extends Stack {
     rootDeployment.node.addDependency(assetsDeployment);
 
     new CfnOutput(this, "SiteUrl", { value: this.appOrigin });
-    new CfnOutput(this, "UploadBucketName", { value: this.uploadBucket.bucketName });
+    const bucketNames: BucketNames = { image: this.imageBucket.bucketName, uploadStaging: this.uploadBucket.bucketName };
+    new CfnOutput(this, "BucketNames", { value: this.toJsonString(bucketNames) });
   }
 }

@@ -9,23 +9,20 @@ import { VaultStack } from "./VaultStack";
 
 export type StageConfig = {
   apiTaskCount: number;
-  frontend: boolean;
 };
 
 export const configureStacks = (stage: Stage, config: StageConfig) => {
   const dbStack = new DbStack(stage, "MaloMartDbStack");
   const gatewayStack = new GatewayStack(stage, "MaloMartGatewayStack");
-  const frontendStack = config.frontend
-    ? new FrontendStack(stage, "MaloMartFrontendStack", { dbStack, gatewayStack })
-    : undefined;
+  const frontendStack = new FrontendStack(stage, "MaloMartFrontendStack", { dbStack, gatewayStack });
   const authStack = new AuthStack(stage, "MaloMartAuthStack", { dbStack });
   const vaultStack = new VaultStack(stage, "MaloMartVaultStack", { authStack, gatewayStack });
   new ApiStack(stage, "MaloMartApiStack", {
     authStack,
     dbStack,
-    appOrigin: frontendStack?.appOrigin,
-    imageBucket: frontendStack?.imageBucket,
-    uploadBucket: frontendStack?.uploadBucket,
+    appOrigin: frontendStack.appOrigin,
+    imageBucket: frontendStack.imageBucket,
+    uploadBucket: frontendStack.uploadBucket,
     gatewayStack,
     vaultStack,
     taskCount: config.apiTaskCount

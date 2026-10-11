@@ -1,10 +1,11 @@
 import { S3Client } from "@aws-sdk/client-s3";
+import { createHash } from "node:crypto";
 import type { infer as zinfer } from "zod";
 import { strictObject, string } from "zod";
 
 export const BucketNames = strictObject({
-  image: string().nonempty().optional(),
-  uploadStaging: string().nonempty().optional()
+  image: string().nonempty(),
+  uploadStaging: string().nonempty()
 });
 export type BucketNames = zinfer<typeof BucketNames>;
 
@@ -19,3 +20,5 @@ export const s3Client = () => {
 
 export const IMAGE_KEY_PREFIX = "images/";
 export const imageVariantKey = (imageKey: string, width: number) => `${IMAGE_KEY_PREFIX}${imageKey}-${width}.webp`;
+export const imageHash = (data: Uint8Array) => createHash("sha256").update(data).digest("hex").slice(0, 16);
+export const productImageKey = (productId: string, hash: string) => `products/${productId}/${hash}`;

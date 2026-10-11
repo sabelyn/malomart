@@ -1,8 +1,7 @@
 {
   "extends": "@mm/config/tsconfig",
   "compilerOptions": {
-    "allowImportingTsExtensions": true,
-    "erasableSyntaxOnly": true
+    "allowImportingTsExtensions": true
   },
   "include": ["src"]
 }

@@ -3,7 +3,7 @@ import { DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import type { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { DeleteCommand, GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import type { PaginatedQueryOptions } from "@mm/clients";
-import { getPaginatedResults, IMAGE_WIDTHS, imageVariantKey, InvalidCursorError } from "@mm/clients";
+import { getPaginatedResults, IMAGE_WIDTHS, imageVariantKey, InvalidCursorError, productImageKey } from "@mm/clients";
 import type { CreateProductBody, ListProductsQuery, UpdateProductBody } from "@mm/lib";
 import { isDefined, Product, ProductOverview } from "@mm/lib";
 import { inject, injectable } from "tsyringe";
@@ -56,7 +56,7 @@ export class ProductService implements IProductService {
   };
 
   deleteProductImage = async (productId: string, imageHash: string) => {
-    const imageKey = `products/${productId}/${imageHash}`;
+    const imageKey = productImageKey(productId, imageHash);
     try {
       const result = await this.db.send(
         new UpdateCommand({
@@ -102,10 +102,6 @@ export class ProductService implements IProductService {
   };
 
   getProductImageUploadPost = async (id: string, contentType?: string) => {
-    if (!uploadStaging) {
-      throw new Error("The upload staging bucket name has not been configured.");
-    }
-
     // Existence check
     await this.getProduct(id);
 
@@ -161,7 +157,7 @@ export class ProductService implements IProductService {
   };
 
   setImageAsThumbnail = async (productId: string, imageHash: string) => {
-    const imageKey = `products/${productId}/${imageHash}`;
+    const imageKey = productImageKey(productId, imageHash);
     try {
       const result = await this.db.send(
         new UpdateCommand({
@@ -215,15 +211,14 @@ export class ProductService implements IProductService {
   };
 
   private deleteImagesFromStorage = async (...keys: string[]) => {
-    image &&
-      (await this.s3.send(
-        new DeleteObjectsCommand({
-          Bucket: image,
-          Delete: {
-            Objects: keys.flatMap(Key => IMAGE_WIDTHS.map(width => ({ Key: imageVariantKey(Key, width) })))
-          }
-        })
-      ));
+    await this.s3.send(
+      new DeleteObjectsCommand({
+        Bucket: image,
+        Delete: {
+          Objects: keys.flatMap(Key => IMAGE_WIDTHS.map(width => ({ Key: imageVariantKey(Key, width) })))
+        }
+      })
+    );
   };
 
   private toProductDto = (data: unknown) => {

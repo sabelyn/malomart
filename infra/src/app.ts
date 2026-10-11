@@ -12,8 +12,7 @@ const stages: Record<string, { env: StackProps["env"]; config: StageConfig }> = 
   Dev: {
     env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
     config: {
-      apiTaskCount: Number(app.node.tryGetContext("apiTasks") ?? 0),
-      frontend: String(app.node.tryGetContext("skipFrontend")) !== "true"
+      apiTaskCount: Number(app.node.tryGetContext("apiTasks") ?? 0)
     }
   }
 };

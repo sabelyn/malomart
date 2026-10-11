@@ -1,7 +1,7 @@
 {
   "name": "@mm/infra",
   "version": "0.1.0",
-  "description": "The AWS CDK app that bundles and deplys everything.",
+  "description": "The AWS CDK app that bundles and deploys everything.",
   "scripts": {
     "build": "cdk synth",
     "check": "tsc",

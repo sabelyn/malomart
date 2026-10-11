@@ -1,14 +1,20 @@
 {
   "name": "@mm/tools",
   "version": "0.1.0",
-  "description": "Local developer utilities, such as slicing sprite sheets into individual images.",
+  "description": "Local developer utilities, such as slicing sprite sheets into individual images and seeding the Dev stage with data.",
   "private": true,
   "type": "module",
   "scripts": {
+    "seed": "node src/seed/index.ts",
     "sprites": "node src/sprites.ts",
     "check": "tsc --noEmit"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1131.0",
+    "@aws-sdk/client-s3": "^3.1131.0",
+    "@aws-sdk/lib-dynamodb": "^3.1138.0",
+    "@mm/clients": "workspace:*",
+    "@mm/lib": "workspace:*",
     "sharp": "^0.34.4"
   },
   "devDependencies": {
