@@ -1,0 +1,32 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-sm);
+  height: 100%;
+  padding: var(--mantine-spacing-lg);
+  background: linear-gradient(170deg, var(--mantine-color-velvet-8), var(--mantine-color-velvet-9));
+  border: 1px solid var(--mantine-color-gilt-6);
+  outline: 1px solid var(--mantine-color-gilt-8);
+  outline-offset: -7px;
+}
+
+.title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mantine-spacing-xs);
+  font-size: 1.25rem;
+  color: var(--mantine-color-dark-0);
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  font-style: normal;
+  color: var(--mantine-color-dark-1);
+}
+
+.actions {
+  margin-top: auto;
+  padding-top: var(--mantine-spacing-sm);
+}

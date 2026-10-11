@@ -1,7 +1,7 @@
 import { DecryptCommand, KMSClient } from "@aws-sdk/client-kms";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { dbClient } from "@mm/clients/db";
-import type { VaultCard } from "@mm/lib/lambdas";
+import type { PaymentMethodMetadata, VaultCard } from "@mm/lib/lambdas";
 
 import { handler as tokenize } from "../../../src/lambdas/vaultCardTokenizer";
 import { handler as deleteCard } from "../../../src/lambdas/vaultDeleteCard";
@@ -14,12 +14,12 @@ const db = dbClient();
 const kms = new KMSClient({});
 
 const cardData = {
-  brand: "visa",
+  brand: "Hyrulian Express",
   cardNumber: "4111111111114242",
   expirationMonth: 4,
   expirationYear: 2030
 };
-const metadata = { brand: "visa", expirationMonth: 4, expirationYear: 2030, lastFour: "4242" };
+const metadata: PaymentMethodMetadata = { brand: "Hyrulian Express", expirationMonth: 4, expirationYear: 2030, lastFour: "4242" };
 
 let customerId: string;
 

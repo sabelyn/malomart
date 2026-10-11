@@ -50,7 +50,7 @@ describe("Layout", () => {
 
     const nav = screen.getByRole("navigation", { name: "Main" });
     expect(nav.querySelector('[aria-current="page"]')?.textContent).toBe("Shop");
-    expect(screen.getByRole("link", { name: "Orders" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Account" })).toBeTruthy();
   });
 
   it("offers sign in with a return path when signed out", () => {

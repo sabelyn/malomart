@@ -1,0 +1,25 @@
+.content {
+  background-color: var(--mantine-color-dark-7);
+  border: 1px solid var(--mantine-color-gilt-6);
+}
+
+.header {
+  background-color: var(--mantine-color-dark-7);
+  border-bottom: var(--mm-rule);
+  margin-bottom: var(--mantine-spacing-md);
+}
+
+.title {
+  font-size: var(--mantine-h3-font-size);
+  font-weight: 700;
+  color: var(--mantine-color-gilt-3);
+}
+
+.description {
+  padding-bottom: 0;
+  margin-bottom: var(--mantine-spacing-md);
+}
+
+.body {
+  padding: 0 var(--mantine-spacing-md) var(--mantine-spacing-md);
+}

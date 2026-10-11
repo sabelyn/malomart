@@ -9,7 +9,12 @@ import PlaceholderPage from "@/pages/PlaceholderPage";
 import ProductPage from "@/pages/ProductPage";
 import { GuestOnly, RequireAdmin, RequireUser } from "@/routes/guards";
 
+const AccountPage = lazy(() => import("@/pages/account/AccountPage"));
+const AccountPlaceholder = lazy(() => import("@/pages/account/AccountPlaceholder"));
+const AddressesSection = lazy(() => import("@/pages/account/AddressesSection"));
 const AdminPage = lazy(() => import("@/pages/admin/AdminPage"));
+const PaymentMethodsSection = lazy(() => import("@/pages/account/PaymentMethodsSection"));
+const ProfileSection = lazy(() => import("@/pages/account/ProfileSection"));
 const SignInPage = lazy(() => import("@/pages/auth/SignInPage"));
 const SignUpPage = lazy(() => import("@/pages/auth/SignUpPage"));
 
@@ -28,7 +33,13 @@ const App = () => (
         <Route path="sign-up" element={<SignUpPage />} />
       </Route>
       <Route element={<RequireUser />}>
-        <Route path="orders" element={<PlaceholderPage title="Orders" />} />
+        <Route path="account" element={<AccountPage />}>
+          <Route index element={<ProfileSection />} />
+          <Route path="addresses" element={<AddressesSection />} />
+          <Route path="payment-methods" element={<PaymentMethodsSection />} />
+          <Route path="orders" element={<AccountPlaceholder title="Orders" />} />
+        </Route>
+        <Route path="orders" element={<Navigate to="/account/orders" replace />} />
         <Route path="orders/:id" element={<PlaceholderPage title="Order" />} />
       </Route>
       <Route path="admin" element={<RequireAdmin />}>

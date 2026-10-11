@@ -1,7 +1,7 @@
 import { DeleteCommand, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { dbClient, lambdaClient } from "@mm/clients";
 import type { Customer, PaymentMethod } from "@mm/lib";
-import type { VaultCard } from "@mm/lib/lambdas";
+import type { PaymentMethodMetadata, VaultCard } from "@mm/lib/lambdas";
 
 import env from "@/env";
 import { ApiError } from "@/errors/ApiError";
@@ -17,7 +17,7 @@ const lambda = lambdaClient();
 const ASYNC_TIMEOUT = 20_000;
 const waitForVault = { timeout: ASYNC_TIMEOUT, interval: 500 };
 
-const metadata = { brand: "visa", expirationMonth: 4, expirationYear: 2030, lastFour: "4242" };
+const metadata: PaymentMethodMetadata = { brand: "Hyrulian Express", expirationMonth: 4, expirationYear: 2030, lastFour: "4242" };
 
 let customerId: string;
 let vaultTokens: string[];
@@ -180,7 +180,7 @@ describe("listPaymentMethods", () => {
   });
 
   it("returns only the customer's payment methods", async () => {
-    const own = [makePaymentMethod(), makePaymentMethod({ brand: "mastercard", lastFour: "4444" })];
+    const own = [makePaymentMethod(), makePaymentMethod({ brand: "Castle One", lastFour: "4444" })];
     await putItems(db, PaymentMethodsTable, [...own, makePaymentMethod({ customerId: crypto.randomUUID() })]);
 
     const result = await makeService({ defaultPaymentMethodId: own[1].id }).listPaymentMethods();

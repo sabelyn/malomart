@@ -1,0 +1,122 @@
+.nav {
+  margin-top: var(--mantine-spacing-xl);
+  border-bottom: var(--mm-rule);
+}
+
+.navList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mantine-spacing-xs) var(--mantine-spacing-xl);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.navLink {
+  display: inline-block;
+  margin-bottom: -1px;
+  padding-block: var(--mantine-spacing-xs);
+  border-bottom: 3px solid transparent;
+  color: var(--mantine-color-dark-0);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.navLink:hover {
+  border-bottom-color: var(--mantine-color-gilt-6);
+}
+
+.navLink[aria-current="page"] {
+  border-bottom-color: var(--mantine-color-gold-5);
+  color: var(--mantine-color-gold-5);
+}
+
+.section {
+  margin-top: calc(var(--mantine-spacing-xl) * 1.5);
+}
+
+.sectionHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-md);
+  padding-bottom: var(--mantine-spacing-xs);
+  margin-bottom: var(--mantine-spacing-xl);
+  border-bottom: var(--mm-rule);
+}
+
+.sectionTitle {
+  color: var(--mantine-color-gilt-3);
+}
+
+.status:empty {
+  margin: 0;
+}
+
+.status {
+  margin-bottom: var(--mantine-spacing-md);
+  color: var(--mantine-color-dark-1);
+}
+
+.error {
+  margin-bottom: var(--mantine-spacing-md);
+  color: var(--mantine-color-red-4);
+}
+
+.subheading {
+  margin-top: calc(var(--mantine-spacing-xl) * 1.5);
+  margin-bottom: var(--mantine-spacing-md);
+  color: var(--mantine-color-gilt-3);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: var(--mantine-spacing-lg);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--mantine-spacing-xs) var(--mantine-spacing-xl);
+  margin: 0;
+}
+
+.facts dt {
+  color: var(--mantine-color-dark-2);
+  font-weight: 600;
+}
+
+.facts dd {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 0;
+  color: var(--mantine-color-dark-0);
+}
+
+.facts address {
+  display: flex;
+  flex-direction: column;
+  font-style: normal;
+}
+
+.factLink {
+  display: inline-block;
+  margin-top: 0.25rem;
+  color: var(--mantine-color-gilt-3);
+}
+
+@media (max-width: 36em) {
+  .facts {
+    grid-template-columns: 1fr;
+  }
+
+  .facts dd + dt {
+    margin-top: var(--mantine-spacing-sm);
+  }
+}

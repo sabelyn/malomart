@@ -42,7 +42,7 @@ const AccountLinks = () => {
   if (user) {
     return (
       <>
-        <NavLink to="/orders">Orders</NavLink>
+        <NavLink to="/account">Account</NavLink>
         <SignOutButton />
       </>
     );

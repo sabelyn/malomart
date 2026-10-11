@@ -12,21 +12,23 @@ This list will grow as the user learns and discovers new tools and requirements.
 
 - Infrastructure-as-Code with CDK: All resources should be provisioned and configured using CDK code.
 - Backend Node/Express API service hosted on ECS with Fargate for most synchronous (user-driven) work.
-- A few Lambda functions responding to triggers for small, infrequent tasks.
+- A few Lambda functions responding to triggers, handling long-running tasks, or for keeping secure data off the server.
 - Cognito for auth: a user pool with email OTP and Google sign-in.
-- API Gateway sitting in front of the ECS service to route and authorize requests with Cognito integration.
+- API Gateway sitting in front of the ECS service and any HTTP lambdas to route and authorize requests with Cognito integration.
 - DynamoDB for data persistence.
 - S3 for asset (photo) storage and analytics data dumps.
 - SQS, SNS, and Event Bridge for a responsive and event-driven approach.
 - User event tracking using Data Firehose to collect and route data.
 - Client app hosted on Cloud Front, built with React+Vite.
+- Credit Card tokenization and encryption with Customer-managed KMS key
 
 ## Tech Stack
 
-- TypeScript
-- Node + Express
-- React
-- Vite
-- Vitest
-- PNPM
-- AWS CDK
+- Language: TypeScript
+- Backend: Node + Express, TSyringe
+- Frontend: React, React Router, Tanstack Query, Mantine
+- Validation: Zod
+- Build: Vite
+- Testing: Vitest, Supertest, Playwright
+- Workspace: PNPM, Turborepo
+- IaC: AWS CDK

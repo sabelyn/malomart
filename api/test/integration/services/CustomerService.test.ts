@@ -14,6 +14,8 @@ const { addresses: AddressesTable, customers: CustomersTable } = env.TABLE_NAMES
 const db = dbClient();
 
 const addressData: Omit<CreateAddressBody, "setAsDefault"> = {
+  label: "Home",
+  recipient: "Link",
   street: "12 Lost Woods Path",
   city: "Kakariko",
   region: "Eldin",
@@ -27,7 +29,7 @@ const paymentMethodService = { getPaymentMethod } as unknown as IPaymentMethodSe
 
 const paymentMethodDto: PaymentMethodDto = {
   id: crypto.randomUUID(),
-  brand: "visa",
+  brand: "Hyrulian Express",
   expirationMonth: 4,
   expirationYear: 2030,
   lastFour: "4242",
@@ -228,6 +230,8 @@ describe("updateAddress", () => {
     const address = makeAddress();
     await putItems(db, AddressesTable, [address]);
     const changes = {
+      label: "Castle",
+      recipient: "Zelda",
       street: "1 Castle Way",
       city: "Castle Town",
       region: "Central Hyrule",
@@ -238,6 +242,28 @@ describe("updateAddress", () => {
 
     expect(updated).toEqual(toDto({ ...address, ...changes }));
     expect(await getRawAddress(address.id)).toEqual({ ...address, ...changes });
+  });
+
+  it("removes the label when it is null", async () => {
+    const address = makeAddress();
+    await putItems(db, AddressesTable, [address]);
+    const { label: _, ...unlabeled } = address;
+
+    const updated = await makeService().updateAddress(address.id, { label: null, city: "Hateno" });
+
+    expect(updated).toEqual(toDto({ ...unlabeled, city: "Hateno" }));
+    expect(await getRawAddress(address.id)).toEqual({ ...unlabeled, city: "Hateno" });
+  });
+
+  it("removes the label without other changes", async () => {
+    const address = makeAddress();
+    await putItems(db, AddressesTable, [address]);
+    const { label: _, ...unlabeled } = address;
+
+    const updated = await makeService().updateAddress(address.id, { label: null });
+
+    expect(updated).toEqual(toDto(unlabeled));
+    expect(await getRawAddress(address.id)).toEqual(unlabeled);
   });
 
   it("sets the address as the default without changing other fields", async () => {

@@ -1,11 +1,13 @@
-import { apiRoot, auth, products } from "@mm/lib";
+import { apiRoot, auth, customers, products } from "@mm/lib";
 import { Router } from "express";
 
 import authRouter from "./auth";
+import customersRouter from "./customers";
 import productsRouter from "./products";
 
 const routes = Router();
 routes.use(auth.expressPath, authRouter);
+routes.use(customers.expressPath, customersRouter);
 routes.use(products.expressPath, productsRouter);
 
 const api = Router();

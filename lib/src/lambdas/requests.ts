@@ -9,7 +9,7 @@ export const CreatePaymentMethodBody = strictObject({
     expirationMonth: true,
     expirationYear: true
   }).shape,
-  cardNumber: string().regex(/^\d{16}$/)
+  cardNumber: string().regex(/^\d{16}$/, { error: "Enter the 16-digit card number." })
 });
 export type CreatePaymentMethodBody = zinfer<typeof CreatePaymentMethodBody>;
 

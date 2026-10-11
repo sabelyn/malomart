@@ -14,7 +14,7 @@ const db = mockClient(dbClient());
 const customerId = crypto.randomUUID();
 const cypher = new Uint8Array([1, 2, 3]);
 const card = {
-  brand: "visa",
+  brand: "Hyrulian Express",
   cardNumber: "4111111111114242",
   expirationMonth: 4,
   expirationYear: 2030

@@ -114,16 +114,25 @@ export class CustomerService implements ICustomerService {
     const { setAsDefault, ...fields } = body;
     const customerId = this.user.id;
 
-    const expParts: string[] = [];
+    const setParts: string[] = [];
+    const removeParts: string[] = [];
     const names: Record<string, string> = {};
     const values: Record<string, string> = { ":customerId": customerId };
     for (const [key, value] of Object.entries(fields)) {
-      if (value) {
-        expParts.push(`#${key} = :${key}`);
+      if (value === null) {
+        removeParts.push(`#${key}`);
+        names[`#${key}`] = key;
+      } else if (value) {
+        setParts.push(`#${key} = :${key}`);
         names[`#${key}`] = key;
         values[`:${key}`] = value;
       }
     }
+
+    const expParts = [
+      ...(setParts.length > 0 ? [`SET ${setParts.join(", ")}`] : []),
+      ...(removeParts.length > 0 ? [`REMOVE ${removeParts.join(", ")}`] : [])
+    ];
 
     let address: unknown;
     if (expParts.length > 0) {
@@ -133,7 +142,7 @@ export class CustomerService implements ICustomerService {
             TableName: addresses,
             Key: { id },
             ConditionExpression: "customerId = :customerId",
-            UpdateExpression: `SET ${expParts.join(", ")}`,
+            UpdateExpression: expParts.join(" "),
             ExpressionAttributeNames: names,
             ExpressionAttributeValues: values,
             ReturnValues: "ALL_NEW"
@@ -168,14 +177,10 @@ export class CustomerService implements ICustomerService {
   };
 
   private toAddressDto = (data: unknown) => {
-    const { street, city, region, postalCode, id } = parseStored(data, Address);
+    const { customerId: _, ...address } = parseStored(data, Address);
     return {
-      id,
-      street,
-      city,
-      region,
-      postalCode,
-      isDefault: this.user.customerData.defaultAddressId === id
+      ...address,
+      isDefault: this.user.customerData.defaultAddressId === address.id
     };
   };
 }

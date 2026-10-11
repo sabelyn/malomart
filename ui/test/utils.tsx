@@ -28,7 +28,7 @@ export const renderWithProviders = (ui: ReactNode, { route = "/", session }: Ren
 
   const result = render(
     <QueryClientProvider client={queryClient}>
-      <MantineProvider>
+      <MantineProvider env="test">
         <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
       </MantineProvider>
     </QueryClientProvider>

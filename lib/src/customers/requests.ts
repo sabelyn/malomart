@@ -15,7 +15,9 @@ export const CreatePaymentMethodWithTokenBody = strictObject({
 });
 export type CreatePaymentMethodWithTokenBody = zinfer<typeof CreatePaymentMethodWithTokenBody>;
 
-export const UpdateAddressBody = CreateAddressBody.partial().refine(atLeastOneKeyRefinement);
+export const UpdateAddressBody = CreateAddressBody.partial()
+  .extend({ label: Address.shape.label.unwrap().nullable().optional() })
+  .refine(atLeastOneKeyRefinement);
 export type UpdateAddressBody = zinfer<typeof UpdateAddressBody>;
 
 export const UpdatePaymentMethodBody = strictObject({
