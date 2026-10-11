@@ -6,10 +6,12 @@
   "type": "module",
   "scripts": {
     "seed": "node src/seed/index.ts",
+    "dev:session": "node src/devSession.ts",
     "sprites": "node src/sprites.ts",
     "check": "tsc --noEmit"
   },
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.1141.0",
     "@aws-sdk/client-dynamodb": "^3.1131.0",
     "@aws-sdk/client-s3": "^3.1131.0",
     "@aws-sdk/lib-dynamodb": "^3.1138.0",

@@ -13,7 +13,8 @@
     "spec": "pnpm --filter api spec",
     "dev": "turbo run dev --filter=@mm/api --filter=@mm/ui --ui=stream",
     "deploy:dev": "pnpm --filter @mm/ui build && pnpm --filter @mm/infra cdk deploy \"MaloMartDev/*\" --outputs-file ../local/cdk-outputs.json && pnpm --filter @mm/api env:dev",
-    "seed": "turbo run build --filter=@mm/tools... --output-logs=errors-only && pnpm --filter @mm/tools seed"
+    "seed": "turbo run build --filter=@mm/tools... --output-logs=errors-only && pnpm --filter @mm/tools seed",
+    "dev:session": "turbo run build --filter=@mm/tools... --output-logs=errors-only && pnpm --filter @mm/tools dev:session"
   },
   "devDependencies": {
     "prettier": "^3.9.6",

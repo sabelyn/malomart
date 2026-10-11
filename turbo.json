@@ -1,5 +1,6 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
+  "globalPassThroughEnv": ["AWS_PROFILE", "AWS_REGION"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
