@@ -17,7 +17,12 @@ const lambda = lambdaClient();
 const ASYNC_TIMEOUT = 20_000;
 const waitForVault = { timeout: ASYNC_TIMEOUT, interval: 500 };
 
-const metadata: PaymentMethodMetadata = { brand: "Hyrulian Express", expirationMonth: 4, expirationYear: 2030, lastFour: "4242" };
+const metadata: PaymentMethodMetadata = {
+  brand: "Hyrulian Express",
+  expirationMonth: 4,
+  expirationYear: 2030,
+  lastFour: "4242"
+};
 
 let customerId: string;
 let vaultTokens: string[];
@@ -28,6 +33,7 @@ const makeService = (customerData: Omit<Customer, "id"> = {}) => {
     email: "link@hyrule.test",
     name: "Link",
     isAdmin: false,
+    signInMethod: "email",
     customerData
   };
   return new PaymentMethodService(db, lambda, user);

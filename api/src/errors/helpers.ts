@@ -51,6 +51,7 @@ const fromCognito = (err: CognitoIdentityProviderServiceException): ApiError => 
       return new ApiError(400, "The code has expired.", { cause: err, code: ErrorCode.ExpiredCode });
     case "InvalidParameterException":
       return badRequest("The request was rejected by the identity provider.", { cause: err });
+    case "AliasExistsException":
     case "UsernameExistsException":
       return new ApiError(409, "An account already exists for this email.", {
         cause: err,

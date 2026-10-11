@@ -99,12 +99,7 @@ const HomePage = () => {
         </Title>
         <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="xl" verticalSpacing="xl">
           {sampleShelf.map(({ product, image }) => (
-            <ProductPlacard
-              key={product.id}
-              product={product}
-              image={image}
-              onAddToCart={addToCart}
-            />
+            <ProductPlacard key={product.id} product={product} image={image} onAddToCart={addToCart} />
           ))}
         </SimpleGrid>
       </section>

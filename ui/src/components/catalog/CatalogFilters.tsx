@@ -18,10 +18,7 @@ const CatalogFilters = ({ category, inStock, onChange }: CatalogFiltersProps) =>
   <section aria-label="Filters" className={classes.filters}>
     <fieldset className={classes.fieldset}>
       <legend className={classes.legend}>Category</legend>
-      <Chip.Group
-        value={category ?? ALL}
-        onChange={value => onChange({ category: value === ALL ? undefined : (value as Category) })}
-      >
+      <Chip.Group value={category ?? ALL} onChange={value => onChange({ category: value === ALL ? undefined : value })}>
         <Group gap="xs">
           <Chip type="radio" name="category" value={ALL} classNames={{ label: classes.chip }}>
             All

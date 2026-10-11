@@ -3,6 +3,8 @@ import type { AddressDto, CreateAddressBody, CustomerDto, ListAddressesResponse,
 export interface ICustomerService {
   createAddress: (body: CreateAddressBody) => Promise<AddressDto>;
   deleteAddress: (id: string) => Promise<void>;
+  deleteCustomerRecord: () => Promise<void>;
+  deleteSavedData: () => Promise<void>;
   getAddress: (id: string) => Promise<AddressDto>;
   getCustomer: () => Promise<CustomerDto>;
   listAddresses: () => Promise<ListAddressesResponse>;

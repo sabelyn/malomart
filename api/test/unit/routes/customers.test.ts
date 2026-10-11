@@ -30,7 +30,11 @@ const paymentMethod: PaymentMethodDto = {
   isDefault: false
 };
 
-const customer: CustomerDto = { id: "9b1e4c2a-5d3f-4a6b-8c7d-1e2f3a4b5c6d", defaultAddress: address, defaultPaymentMethod: null };
+const customer: CustomerDto = {
+  id: "9b1e4c2a-5d3f-4a6b-8c7d-1e2f3a4b5c6d",
+  defaultAddress: address,
+  defaultPaymentMethod: null
+};
 
 const app = createTestApp(api);
 
@@ -41,6 +45,8 @@ beforeEach(() => {
   customerService = {
     createAddress: vi.fn<ICustomerService["createAddress"]>().mockResolvedValue(address),
     deleteAddress: vi.fn<ICustomerService["deleteAddress"]>().mockResolvedValue(),
+    deleteCustomerRecord: vi.fn<ICustomerService["deleteCustomerRecord"]>().mockResolvedValue(),
+    deleteSavedData: vi.fn<ICustomerService["deleteSavedData"]>().mockResolvedValue(),
     getAddress: vi.fn<ICustomerService["getAddress"]>().mockResolvedValue(address),
     getCustomer: vi.fn<ICustomerService["getCustomer"]>().mockResolvedValue(customer),
     listAddresses: vi.fn<ICustomerService["listAddresses"]>().mockResolvedValue([address]),
@@ -85,7 +91,7 @@ describe("GET /api/customers", () => {
 
   it("returns a 500 when the service returns an invalid customer", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
-    customerService.getCustomer.mockResolvedValue({ ...customer, id: "" } as unknown as CustomerDto);
+    customerService.getCustomer.mockResolvedValue({ ...customer, id: "" });
 
     const res = await request(app).get("/api/customers").set(asRegularUser);
 
@@ -140,10 +146,7 @@ describe("POST /api/customers/addresses", () => {
 
 describe("PUT /api/customers/addresses/:id", () => {
   it("updates the address", async () => {
-    const res = await request(app)
-      .put(`/api/customers/addresses/${ID}`)
-      .set(asRegularUser)
-      .send({ city: "Hateno" });
+    const res = await request(app).put(`/api/customers/addresses/${ID}`).set(asRegularUser).send({ city: "Hateno" });
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual(address);
@@ -177,10 +180,7 @@ describe("PUT /api/customers/addresses/:id", () => {
   it("passes through a 404 from the service", async () => {
     customerService.updateAddress.mockRejectedValue(new ApiError(404, "Address could not be found."));
 
-    const res = await request(app)
-      .put(`/api/customers/addresses/${ID}`)
-      .set(asRegularUser)
-      .send({ city: "Hateno" });
+    const res = await request(app).put(`/api/customers/addresses/${ID}`).set(asRegularUser).send({ city: "Hateno" });
 
     expect(res.status).toBe(404);
     expect(res.body).toEqual({ message: "Address could not be found." });

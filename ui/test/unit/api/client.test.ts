@@ -4,7 +4,7 @@ import { getProduct } from "@mm/lib/products";
 
 import { createApiCaller, isUnauthorized } from "@/api/client";
 
-const user = { id: "user-123", email: "link@hyrule.com", name: "Link", isAdmin: false };
+const user = { id: "user-123", email: "link@hyrule.com", name: "Link", isAdmin: false, signInMethod: "email" };
 
 const json = (status: number, body?: unknown) =>
   new Response(body === undefined ? null : JSON.stringify(body), {

@@ -25,7 +25,13 @@ const addressData: Omit<CreateAddressBody, "setAsDefault"> = {
 let customerId: string;
 
 const getPaymentMethod = vi.fn<IPaymentMethodService["getPaymentMethod"]>();
-const paymentMethodService = { getPaymentMethod } as unknown as IPaymentMethodService;
+const listPaymentMethods = vi.fn<IPaymentMethodService["listPaymentMethods"]>();
+const deletePaymentMethod = vi.fn<IPaymentMethodService["deletePaymentMethod"]>();
+const paymentMethodService = {
+  getPaymentMethod,
+  listPaymentMethods,
+  deletePaymentMethod
+} as unknown as IPaymentMethodService;
 
 const paymentMethodDto: PaymentMethodDto = {
   id: crypto.randomUUID(),
@@ -42,6 +48,7 @@ const makeService = (customerData: Omit<Customer, "id"> = {}) => {
     email: "link@hyrule.test",
     name: "Link",
     isAdmin: false,
+    signInMethod: "email",
     customerData
   };
   return new CustomerService(db, paymentMethodService, user);
@@ -64,6 +71,8 @@ const getRawCustomer = async (id: string) =>
 
 beforeEach(async () => {
   getPaymentMethod.mockReset();
+  listPaymentMethods.mockReset().mockResolvedValue([]);
+  deletePaymentMethod.mockReset().mockResolvedValue();
   customerId = crypto.randomUUID();
   await Promise.all([clearTable(db, AddressesTable, ["id"]), clearTable(db, CustomersTable, ["id"])]);
   await putItems(db, CustomersTable, [{ id: customerId }]);
@@ -345,5 +354,36 @@ describe("deleteAddress", () => {
 
   it("throws a 404 when the address does not exist", async () => {
     await expect(makeService().deleteAddress(crypto.randomUUID())).rejects.toMatchObject({ statusCode: 404 });
+  });
+});
+
+describe("deleteSavedData", () => {
+  it("deletes the customer's addresses and payment methods", async () => {
+    const own = [makeAddress(), makeAddress()];
+    const other = makeAddress({ customerId: crypto.randomUUID() });
+    await putItems(db, AddressesTable, [...own, other]);
+    listPaymentMethods.mockResolvedValue([paymentMethodDto]);
+
+    await makeService({ defaultAddressId: own[0].id }).deleteSavedData();
+
+    expect(await getRawAddress(own[0].id)).toBeUndefined();
+    expect(await getRawAddress(own[1].id)).toBeUndefined();
+    expect(await getRawAddress(other.id)).toEqual(other);
+    expect(deletePaymentMethod).toHaveBeenCalledWith(paymentMethodDto.id);
+  });
+
+  it("does nothing when there is no saved data", async () => {
+    await makeService().deleteSavedData();
+
+    expect(deletePaymentMethod).not.toHaveBeenCalled();
+    expect(await getRawCustomer(customerId)).toEqual({ id: customerId });
+  });
+});
+
+describe("deleteCustomerRecord", () => {
+  it("deletes the customer record", async () => {
+    await makeService().deleteCustomerRecord();
+
+    expect(await getRawCustomer(customerId)).toBeUndefined();
   });
 });

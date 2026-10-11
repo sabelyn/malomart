@@ -64,8 +64,7 @@ describe("AccountPage", () => {
 
   it("says when no defaults are set", async () => {
     stubApi({
-      "GET /api/customers": () =>
-        json(200, { ...customerData, defaultAddress: null, defaultPaymentMethod: null })
+      "GET /api/customers": () => json(200, { ...customerData, defaultAddress: null, defaultPaymentMethod: null })
     });
     renderAccount();
 

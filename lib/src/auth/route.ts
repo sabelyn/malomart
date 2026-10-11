@@ -1,5 +1,14 @@
 import { apiRoot, Endpoint, Route } from "../api";
-import { ConfirmSignUpBody, SignInBody, SignUpBody, VerifySignInBody } from "./requests";
+import {
+  ConfirmAccountDeletionBody,
+  ConfirmEmailChangeBody,
+  ConfirmSignUpBody,
+  RequestEmailChangeBody,
+  SignInBody,
+  SignUpBody,
+  UpdateProfileBody,
+  VerifySignInBody
+} from "./requests";
 import { ConfirmSignUpResponse, CurrentUser } from "./responses";
 
 export const auth = new Route("/auth", "public", ["Auth"], apiRoot);
@@ -100,4 +109,87 @@ export const getCurrentUser = new Endpoint(auth, {
   schemas: { response: CurrentUser },
   successDescription: "The signed-in user.",
   summary: "Get Current User"
+});
+
+export const updateProfile = new Endpoint(auth, {
+  access: "user",
+  description: "Updates the signed-in user's profile and renews the session so it reflects the change.",
+  errors: {
+    400: "The name was invalid."
+  },
+  id: "updateProfile",
+  method: "PUT",
+  path: "/me",
+  schemas: { body: UpdateProfileBody, response: CurrentUser },
+  successDescription: "The updated user.",
+  summary: "Update Profile"
+});
+
+export const requestEmailChange = new Endpoint(auth, {
+  access: "user",
+  description:
+    "Emails a confirmation code to a new address. The current email keeps working until the new one is confirmed.",
+  errors: {
+    400: "The email was invalid or is already the user's email.",
+    403: "The user signs in with Google and can't change their email here.",
+    409: "Another account already uses this email.",
+    429: "Too many attempts. Try again later."
+  },
+  id: "requestEmailChange",
+  method: "POST",
+  path: "/me/email",
+  schemas: { body: RequestEmailChangeBody },
+  successDescription: "A confirmation code was sent to the new email.",
+  successStatus: "202",
+  summary: "Request Email Change"
+});
+
+export const confirmEmailChange = new Endpoint(auth, {
+  access: "user",
+  description: "Confirms the new email with the emailed code and renews the session so it reflects the change.",
+  errors: {
+    400: "The code was invalid or expired.",
+    403: "The user signs in with Google and can't change their email here.",
+    409: "Another account already uses this email.",
+    429: "Too many attempts. Try again later."
+  },
+  id: "confirmEmailChange",
+  method: "POST",
+  path: "/me/email/confirm",
+  schemas: { body: ConfirmEmailChangeBody, response: CurrentUser },
+  successDescription: "The updated user.",
+  summary: "Confirm Email Change"
+});
+
+export const requestAccountDeletion = new Endpoint(auth, {
+  access: "user",
+  description: "Emails the user a one-time code to confirm deleting their account.",
+  errors: {
+    429: "Too many attempts. Try again later."
+  },
+  id: "requestAccountDeletion",
+  method: "POST",
+  path: "/me/deletion",
+  schemas: {},
+  successDescription: "A confirmation code was sent.",
+  successStatus: "202",
+  summary: "Request Account Deletion"
+});
+
+export const confirmAccountDeletion = new Endpoint(auth, {
+  access: "user",
+  description:
+    "Permanently deletes the account and its saved addresses and payment methods once the emailed code is confirmed. Clears the session cookies.",
+  errors: {
+    400: "The code was invalid or expired.",
+    401: "There is no deletion in progress, or it expired.",
+    429: "Too many attempts. Try again later."
+  },
+  id: "confirmAccountDeletion",
+  method: "POST",
+  path: "/me/deletion/confirm",
+  schemas: { body: ConfirmAccountDeletionBody },
+  successDescription: "The account was deleted.",
+  successStatus: "204",
+  summary: "Confirm Account Deletion"
 });

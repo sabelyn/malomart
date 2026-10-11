@@ -35,6 +35,7 @@ const regularUser = {
   email: "user@example.com",
   name: "Regular User",
   isAdmin: false,
+  signInMethod: "email",
   customerData: {}
 };
 
@@ -77,6 +78,14 @@ describe("identity", () => {
     await identity(req, res, vi.fn());
 
     expect(req.user).toEqual({ ...regularUser, isAdmin: true });
+  });
+
+  it("marks the user as a Google user when the token has the pool's Google group", async () => {
+    const req = mockRequest(signJwt({ "cognito:groups": ["us-east-1_TestPool_Google", "customer"] }));
+
+    await identity(req, res, vi.fn());
+
+    expect(req.user).toEqual({ ...regularUser, signInMethod: "google" });
   });
 
   it("registers the user in a child container scoped to the request", async () => {

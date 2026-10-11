@@ -60,6 +60,7 @@ describe("identity", () => {
       email: "user@example.com",
       name: "Regular User",
       isAdmin: false,
+      signInMethod: "email",
       customerData
     });
     expect(req.container.resolve(USER)).toBe(req.user);

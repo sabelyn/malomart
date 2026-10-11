@@ -51,7 +51,13 @@ const AccountCard = ({
           Edit
         </Button>
         {!isDefault && (
-          <Button size="xs" variant="subtle" aria-describedby={headingId} loading={makingDefault} onClick={onMakeDefault}>
+          <Button
+            size="xs"
+            variant="subtle"
+            aria-describedby={headingId}
+            loading={makingDefault}
+            onClick={onMakeDefault}
+          >
             Make default
           </Button>
         )}

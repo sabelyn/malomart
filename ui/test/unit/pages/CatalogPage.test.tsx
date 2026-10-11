@@ -17,10 +17,10 @@ const overview = (title: string, overrides: Partial<ProductOverview> = {}): Prod
 type Page = { data: ProductOverview[]; cursor?: string };
 
 const stubProducts = (respond: (query: URLSearchParams) => Page) => {
-  const fetch = vi.fn<typeof globalThis.fetch>(async input => {
+  const fetch = vi.fn<typeof globalThis.fetch>(input => {
     const url = new URL(String(input), "http://localhost");
     const { data, cursor } = respond(url.searchParams);
-    return json(200, { data, pagination: { limit: 24, hasNext: cursor !== undefined, cursor } });
+    return Promise.resolve(json(200, { data, pagination: { limit: 24, hasNext: cursor !== undefined, cursor } }));
   });
   vi.stubGlobal("fetch", fetch);
   return () => fetch.mock.calls.map(([input]) => new URL(String(input), "http://localhost").searchParams);

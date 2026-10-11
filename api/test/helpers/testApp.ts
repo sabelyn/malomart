@@ -14,6 +14,7 @@ export const asRegularUser = asUser({
   email: "user@example.com",
   name: "Regular User",
   isAdmin: false,
+  signInMethod: "email",
   customerData: {}
 });
 export const asAdmin = asUser({
@@ -21,6 +22,7 @@ export const asAdmin = asUser({
   email: "admin@example.com",
   name: "Admin User",
   isAdmin: true,
+  signInMethod: "email",
   customerData: {}
 });
 

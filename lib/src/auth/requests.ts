@@ -24,3 +24,23 @@ export const VerifySignInBody = strictObject({
   code: OtpCode
 }).meta({ id: "VerifySignInBody" });
 export type VerifySignInBody = zinfer<typeof VerifySignInBody>;
+
+export const UpdateProfileBody = strictObject({
+  name: DisplayName
+}).meta({ id: "UpdateProfileBody" });
+export type UpdateProfileBody = zinfer<typeof UpdateProfileBody>;
+
+export const RequestEmailChangeBody = strictObject({
+  email: Email
+}).meta({ id: "RequestEmailChangeBody" });
+export type RequestEmailChangeBody = zinfer<typeof RequestEmailChangeBody>;
+
+export const ConfirmEmailChangeBody = strictObject({
+  code: OtpCode
+}).meta({ id: "ConfirmEmailChangeBody" });
+export type ConfirmEmailChangeBody = zinfer<typeof ConfirmEmailChangeBody>;
+
+export const ConfirmAccountDeletionBody = strictObject({
+  code: OtpCode
+}).meta({ id: "ConfirmAccountDeletionBody" });
+export type ConfirmAccountDeletionBody = zinfer<typeof ConfirmAccountDeletionBody>;

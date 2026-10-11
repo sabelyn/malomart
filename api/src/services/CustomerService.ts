@@ -65,6 +65,21 @@ export class CustomerService implements ICustomerService {
     }
   };
 
+  deleteSavedData = async () => {
+    const [savedAddresses, paymentMethods] = await Promise.all([
+      this.listAddresses(),
+      this.paymentMethodService.listPaymentMethods()
+    ]);
+    await Promise.all([
+      ...savedAddresses.map(({ id }) => this.deleteAddress(id)),
+      ...paymentMethods.map(({ id }) => this.paymentMethodService.deletePaymentMethod(id))
+    ]);
+  };
+
+  deleteCustomerRecord = async () => {
+    await this.db.send(new DeleteCommand({ TableName: customers, Key: { id: this.user.id } }));
+  };
+
   getAddress = async (id: string) => {
     const item = await getItemById<{ customerId?: unknown }>(this.db, addresses, id);
     if (item?.customerId !== this.user.id) {

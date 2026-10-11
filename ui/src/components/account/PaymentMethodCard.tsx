@@ -14,7 +14,14 @@ type PaymentMethodCardProps = {
   onMakeDefault: (method: PaymentMethodDto) => void;
 };
 
-const PaymentMethodCard = ({ method, focusEdit, makingDefault, onEdit, onDelete, onMakeDefault }: PaymentMethodCardProps) => (
+const PaymentMethodCard = ({
+  method,
+  focusEdit,
+  makingDefault,
+  onEdit,
+  onDelete,
+  onMakeDefault
+}: PaymentMethodCardProps) => (
   <AccountCard
     id={method.id}
     title={paymentMethodName(method)}

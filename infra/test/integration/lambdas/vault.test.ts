@@ -19,7 +19,12 @@ const cardData = {
   expirationMonth: 4,
   expirationYear: 2030
 };
-const metadata: PaymentMethodMetadata = { brand: "Hyrulian Express", expirationMonth: 4, expirationYear: 2030, lastFour: "4242" };
+const metadata: PaymentMethodMetadata = {
+  brand: "Hyrulian Express",
+  expirationMonth: 4,
+  expirationYear: 2030,
+  lastFour: "4242"
+};
 
 let customerId: string;
 

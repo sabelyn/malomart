@@ -4,12 +4,15 @@ import type {
 } from "@aws-sdk/client-cognito-identity-provider";
 import {
   ConfirmSignUpCommand,
+  DeleteUserCommand,
   DescribeUserPoolClientCommand,
   GetTokensFromRefreshTokenCommand,
   InitiateAuthCommand,
   RespondToAuthChallengeCommand,
   RevokeTokenCommand,
-  SignUpCommand
+  SignUpCommand,
+  UpdateUserAttributesCommand,
+  VerifyUserAttributeCommand
 } from "@aws-sdk/client-cognito-identity-provider";
 import { createHmac } from "node:crypto";
 import { inject, injectable } from "tsyringe";
@@ -137,6 +140,28 @@ export class AuthService implements IAuthService {
         Token: refreshToken
       })
     );
+  };
+
+  updateName = async (accessToken: string, name: string) => {
+    await this.cognito.send(
+      new UpdateUserAttributesCommand({ AccessToken: accessToken, UserAttributes: [{ Name: "name", Value: name }] })
+    );
+  };
+
+  requestEmailChange = async (accessToken: string, email: string) => {
+    await this.cognito.send(
+      new UpdateUserAttributesCommand({ AccessToken: accessToken, UserAttributes: [{ Name: "email", Value: email }] })
+    );
+  };
+
+  confirmEmailChange = async (accessToken: string, code: string) => {
+    await this.cognito.send(
+      new VerifyUserAttributeCommand({ AccessToken: accessToken, AttributeName: "email", Code: code })
+    );
+  };
+
+  deleteUser = async (accessToken: string) => {
+    await this.cognito.send(new DeleteUserCommand({ AccessToken: accessToken }));
   };
 
   private secretHash = async (username: string) =>

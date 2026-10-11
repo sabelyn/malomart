@@ -1,12 +1,15 @@
 import {
   CognitoIdentityProviderClient,
   ConfirmSignUpCommand,
+  DeleteUserCommand,
   DescribeUserPoolClientCommand,
   GetTokensFromRefreshTokenCommand,
   InitiateAuthCommand,
   RespondToAuthChallengeCommand,
   RevokeTokenCommand,
-  SignUpCommand
+  SignUpCommand,
+  UpdateUserAttributesCommand,
+  VerifyUserAttributeCommand
 } from "@aws-sdk/client-cognito-identity-provider";
 import { mockClient } from "aws-sdk-client-mock";
 import { createHmac } from "node:crypto";
@@ -202,5 +205,55 @@ describe("signOut", () => {
       ClientSecret: CLIENT_SECRET,
       Token: "refresh"
     });
+  });
+});
+
+describe("updateName", () => {
+  it("updates the name attribute with the user's access token", async () => {
+    cognito.on(UpdateUserAttributesCommand).resolves({});
+
+    await service.updateName("access", "Sheik");
+
+    expect(cognito).toHaveReceivedCommandWith(UpdateUserAttributesCommand, {
+      AccessToken: "access",
+      UserAttributes: [{ Name: "name", Value: "Sheik" }]
+    });
+  });
+});
+
+describe("requestEmailChange", () => {
+  it("updates the email attribute so Cognito sends a code to the new address", async () => {
+    cognito.on(UpdateUserAttributesCommand).resolves({});
+
+    await service.requestEmailChange("access", "sheik@hyrule.com");
+
+    expect(cognito).toHaveReceivedCommandWith(UpdateUserAttributesCommand, {
+      AccessToken: "access",
+      UserAttributes: [{ Name: "email", Value: "sheik@hyrule.com" }]
+    });
+  });
+});
+
+describe("confirmEmailChange", () => {
+  it("verifies the email attribute with the code", async () => {
+    cognito.on(VerifyUserAttributeCommand).resolves({});
+
+    await service.confirmEmailChange("access", "123456");
+
+    expect(cognito).toHaveReceivedCommandWith(VerifyUserAttributeCommand, {
+      AccessToken: "access",
+      AttributeName: "email",
+      Code: "123456"
+    });
+  });
+});
+
+describe("deleteUser", () => {
+  it("deletes the user that owns the access token", async () => {
+    cognito.on(DeleteUserCommand).resolves({});
+
+    await service.deleteUser("access");
+
+    expect(cognito).toHaveReceivedCommandWith(DeleteUserCommand, { AccessToken: "access" });
   });
 });

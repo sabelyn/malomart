@@ -4,10 +4,10 @@ import request from "supertest";
 import type { Response } from "supertest";
 import { container } from "tsyringe";
 
-import type { AuthTokens, IAuthService } from "@/contracts";
-import { AUTH_SERVICE } from "@/contracts/tokens";
+import type { AuthTokens, IAuthService, ICustomerService } from "@/contracts";
+import { AUTH_SERVICE, CUSTOMER_SERVICE } from "@/contracts/tokens";
 import api from "@/routes";
-import { asRegularUser, createTestApp } from "../../helpers/testApp";
+import { asRegularUser, asUser, createTestApp } from "../../helpers/testApp";
 
 vi.mock("@/middleware/rateLimit", () => ({
   sendCodeLimit: (_req: unknown, _res: unknown, next: () => void) => next(),
@@ -32,7 +32,7 @@ const tokens = (overrides: Partial<AuthTokens> = {}): AuthTokens => ({
   ...overrides
 });
 
-const signedInUser = { id: "user-123", email: EMAIL, name: "Link", isAdmin: false };
+const signedInUser = { id: "user-123", email: EMAIL, name: "Link", isAdmin: false, signInMethod: "email" };
 
 const pendingCookie = (email = EMAIL, session = "pending-session") =>
   `${SessionCookie.Pending}=${encode({ email, session })}`;
@@ -51,16 +51,28 @@ const app = createTestApp(api);
 
 let service: { [K in keyof IAuthService]: ReturnType<typeof vi.fn<IAuthService[K]>> };
 
+type CleanupMethods = Pick<ICustomerService, "deleteSavedData" | "deleteCustomerRecord">;
+let customerService: { [K in keyof CleanupMethods]: ReturnType<typeof vi.fn<CleanupMethods[K]>> };
+
 beforeEach(() => {
   service = {
+    confirmEmailChange: vi.fn<IAuthService["confirmEmailChange"]>().mockResolvedValue(),
     confirmSignUp: vi.fn<IAuthService["confirmSignUp"]>().mockResolvedValue(tokens()),
+    deleteUser: vi.fn<IAuthService["deleteUser"]>().mockResolvedValue(),
     refresh: vi.fn<IAuthService["refresh"]>().mockResolvedValue(tokens()),
+    requestEmailChange: vi.fn<IAuthService["requestEmailChange"]>().mockResolvedValue(),
     signOut: vi.fn<IAuthService["signOut"]>().mockResolvedValue(),
     signUp: vi.fn<IAuthService["signUp"]>().mockResolvedValue({ email: EMAIL, session: "signup-session" }),
     startSignIn: vi.fn<IAuthService["startSignIn"]>().mockResolvedValue({ email: EMAIL, session: "signin-session" }),
+    updateName: vi.fn<IAuthService["updateName"]>().mockResolvedValue(),
     verifySignIn: vi.fn<IAuthService["verifySignIn"]>().mockResolvedValue(tokens())
   };
+  customerService = {
+    deleteSavedData: vi.fn<ICustomerService["deleteSavedData"]>().mockResolvedValue(),
+    deleteCustomerRecord: vi.fn<ICustomerService["deleteCustomerRecord"]>().mockResolvedValue()
+  };
   container.registerInstance(AUTH_SERVICE, service);
+  container.registerInstance(CUSTOMER_SERVICE, customerService as unknown as ICustomerService);
 });
 
 describe("POST /api/auth/sign-up", () => {
@@ -330,12 +342,253 @@ describe("GET /api/auth/me", () => {
     const res = await request(app).get("/api/auth/me").set(asRegularUser);
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ id: "user-123", email: "user@example.com", name: "Regular User", isAdmin: false });
+    expect(res.body).toEqual({
+      id: "user-123",
+      email: "user@example.com",
+      name: "Regular User",
+      isAdmin: false,
+      signInMethod: "email"
+    });
   });
 
   it("returns a 401 when signed out", async () => {
     const res = await request(app).get("/api/auth/me");
 
     expect(res.status).toBe(401);
+  });
+});
+
+const USER_EMAIL = "user@example.com";
+const sessionCookies = `${SessionCookie.Access}=current-access; ${SessionCookie.Refresh}=refresh`;
+const accessOnly = `${SessionCookie.Access}=current-access`;
+const asGoogleUser = asUser({
+  id: "user-123",
+  email: USER_EMAIL,
+  name: "Regular User",
+  isAdmin: false,
+  signInMethod: "google",
+  customerData: {}
+});
+
+describe("PUT /api/auth/me", () => {
+  it("updates the name and returns the user from the renewed session", async () => {
+    service.refresh.mockResolvedValue(tokens({ accessToken: accessToken({ email: USER_EMAIL, name: "Sheik" }) }));
+
+    const res = await request(app)
+      .put("/api/auth/me")
+      .set(asRegularUser)
+      .set("Cookie", sessionCookies)
+      .send({ name: " Sheik " });
+
+    expect(res.status).toBe(200);
+    expect(service.updateName).toHaveBeenCalledWith("current-access", "Sheik");
+    expect(service.refresh).toHaveBeenCalledWith("refresh");
+    expect(res.body).toEqual({ ...signedInUser, email: USER_EMAIL, name: "Sheik" });
+    expect(setCookies(res)[SessionCookie.Access]).toBeDefined();
+  });
+
+  it("returns the updated user without renewing when there is no refresh cookie", async () => {
+    const res = await request(app)
+      .put("/api/auth/me")
+      .set(asRegularUser)
+      .set("Cookie", accessOnly)
+      .send({ name: "Sheik" });
+
+    expect(res.status).toBe(200);
+    expect(service.refresh).not.toHaveBeenCalled();
+    expect(res.body).toEqual({ ...signedInUser, email: USER_EMAIL, name: "Sheik" });
+  });
+
+  it("still succeeds when renewing the session fails", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    service.refresh.mockRejectedValue(new Error("boom"));
+
+    const res = await request(app)
+      .put("/api/auth/me")
+      .set(asRegularUser)
+      .set("Cookie", sessionCookies)
+      .send({ name: "Sheik" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.name).toBe("Sheik");
+    expect(setCookies(res)[SessionCookie.Access]).toBeUndefined();
+  });
+
+  it("rejects a blank name", async () => {
+    const res = await request(app)
+      .put("/api/auth/me")
+      .set(asRegularUser)
+      .set("Cookie", sessionCookies)
+      .send({ name: " " });
+
+    expect(res.status).toBe(400);
+    expect(service.updateName).not.toHaveBeenCalled();
+  });
+
+  it("requires a user", async () => {
+    const res = await request(app).put("/api/auth/me").send({ name: "Sheik" });
+
+    expect(res.status).toBe(401);
+  });
+});
+
+describe("POST /api/auth/me/email", () => {
+  const requestChange = (email: string, user = asRegularUser) =>
+    request(app).post("/api/auth/me/email").set(user).set("Cookie", sessionCookies).send({ email });
+
+  it("asks Cognito to send a code to the new email", async () => {
+    const res = await requestChange("sheik@hyrule.com");
+
+    expect(res.status).toBe(202);
+    expect(service.requestEmailChange).toHaveBeenCalledWith("current-access", "sheik@hyrule.com");
+  });
+
+  it("rejects the user's current email", async () => {
+    const res = await requestChange("USER@example.com");
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("That's already your email.");
+    expect(service.requestEmailChange).not.toHaveBeenCalled();
+  });
+
+  it("forbids Google users from changing their email", async () => {
+    const res = await requestChange("sheik@hyrule.com", asGoogleUser);
+
+    expect(res.status).toBe(403);
+    expect(service.requestEmailChange).not.toHaveBeenCalled();
+  });
+
+  it("returns a 409 when another account uses the email", async () => {
+    service.requestEmailChange.mockRejectedValue(cognitoError("AliasExistsException"));
+
+    const res = await requestChange("sheik@hyrule.com");
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe(ErrorCode.AccountExists);
+  });
+});
+
+describe("POST /api/auth/me/email/confirm", () => {
+  const confirmChange = (user = asRegularUser) =>
+    request(app).post("/api/auth/me/email/confirm").set(user).set("Cookie", sessionCookies).send({ code: "123456" });
+
+  it("confirms the code and returns the user from the renewed session", async () => {
+    service.refresh.mockResolvedValue(tokens({ accessToken: accessToken({ email: "sheik@hyrule.com" }) }));
+
+    const res = await confirmChange();
+
+    expect(res.status).toBe(200);
+    expect(service.confirmEmailChange).toHaveBeenCalledWith("current-access", "123456");
+    expect(res.body.email).toBe("sheik@hyrule.com");
+  });
+
+  it("returns the invalid code error", async () => {
+    service.confirmEmailChange.mockRejectedValue(cognitoError("CodeMismatchException"));
+
+    const res = await confirmChange();
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe(ErrorCode.InvalidCode);
+    expect(service.refresh).not.toHaveBeenCalled();
+  });
+
+  it("forbids Google users", async () => {
+    const res = await confirmChange(asGoogleUser);
+
+    expect(res.status).toBe(403);
+    expect(service.confirmEmailChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/auth/me/deletion", () => {
+  it("emails a code to the user and stores the pending session", async () => {
+    service.startSignIn.mockResolvedValue({ email: USER_EMAIL, session: "delete-session" });
+
+    const res = await request(app).post("/api/auth/me/deletion").set(asRegularUser).set("Cookie", sessionCookies);
+
+    expect(res.status).toBe(202);
+    expect(service.startSignIn).toHaveBeenCalledWith(USER_EMAIL);
+    expect(setCookies(res)[SessionCookie.Pending]).toContain(encode({ email: USER_EMAIL, session: "delete-session" }));
+  });
+
+  it("requires a user", async () => {
+    const res = await request(app).post("/api/auth/me/deletion");
+
+    expect(res.status).toBe(401);
+    expect(service.startSignIn).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/auth/me/deletion/confirm", () => {
+  const confirmDeletion = (cookie = `${sessionCookies}; ${pendingCookie(USER_EMAIL)}`) =>
+    request(app)
+      .post("/api/auth/me/deletion/confirm")
+      .set(asRegularUser)
+      .set("Cookie", cookie)
+      .send({ code: "123456" });
+
+  it("verifies the code, removes saved data, deletes the user, and clears the session", async () => {
+    service.verifySignIn.mockResolvedValue(tokens({ accessToken: "fresh-access" }));
+
+    const res = await confirmDeletion();
+
+    expect(res.status).toBe(204);
+    expect(service.verifySignIn).toHaveBeenCalledWith({ email: USER_EMAIL, session: "pending-session" }, "123456");
+    expect(service.deleteUser).toHaveBeenCalledWith("fresh-access");
+    expect(customerService.deleteSavedData.mock.invocationCallOrder[0]).toBeLessThan(
+      service.deleteUser.mock.invocationCallOrder[0]
+    );
+    expect(service.deleteUser.mock.invocationCallOrder[0]).toBeLessThan(
+      customerService.deleteCustomerRecord.mock.invocationCallOrder[0]
+    );
+    const cookies = setCookies(res);
+    expect(isCleared(cookies[SessionCookie.Access])).toBe(true);
+    expect(isCleared(cookies[SessionCookie.Refresh])).toBe(true);
+    expect(isCleared(cookies[SessionCookie.Pending])).toBe(true);
+  });
+
+  it.each([
+    ["there is no pending deletion", sessionCookies],
+    ["the pending code was for another email", `${sessionCookies}; ${pendingCookie("other@example.com")}`]
+  ])("returns a 401 when %s", async (_, cookie) => {
+    const res = await confirmDeletion(cookie);
+
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe(ErrorCode.NoPendingSignIn);
+    expect(service.verifySignIn).not.toHaveBeenCalled();
+    expect(customerService.deleteSavedData).not.toHaveBeenCalled();
+  });
+
+  it("keeps the pending session and deletes nothing when the code is wrong", async () => {
+    service.verifySignIn.mockRejectedValue(cognitoError("CodeMismatchException"));
+
+    const res = await confirmDeletion();
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe(ErrorCode.InvalidCode);
+    expect(setCookies(res)[SessionCookie.Pending]).toBeUndefined();
+    expect(customerService.deleteSavedData).not.toHaveBeenCalled();
+    expect(service.deleteUser).not.toHaveBeenCalled();
+  });
+
+  it("keeps the account when removing saved data fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    customerService.deleteSavedData.mockRejectedValue(new Error("boom"));
+
+    const res = await confirmDeletion();
+
+    expect(res.status).toBe(500);
+    expect(service.deleteUser).not.toHaveBeenCalled();
+    expect(setCookies(res)[SessionCookie.Access]).toBeUndefined();
+  });
+
+  it("still succeeds when removing the customer record fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    customerService.deleteCustomerRecord.mockRejectedValue(new Error("boom"));
+
+    const res = await confirmDeletion();
+
+    expect(res.status).toBe(204);
+    expect(isCleared(setCookies(res)[SessionCookie.Access])).toBe(true);
   });
 });

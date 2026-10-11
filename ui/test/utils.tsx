@@ -7,8 +7,20 @@ import { MemoryRouter, useLocation } from "react-router";
 
 import { sessionKey } from "@/api";
 
-export const customer: CurrentUser = { id: "user-123", email: "link@hyrule.com", name: "Link", isAdmin: false };
-export const admin: CurrentUser = { id: "admin-123", email: "malo@malomart.com", name: "Malo", isAdmin: true };
+export const customer: CurrentUser = {
+  id: "user-123",
+  email: "link@hyrule.com",
+  name: "Link",
+  isAdmin: false,
+  signInMethod: "email"
+};
+export const admin: CurrentUser = {
+  id: "admin-123",
+  email: "malo@malomart.com",
+  name: "Malo",
+  isAdmin: true,
+  signInMethod: "email"
+};
 
 type RenderOptions = {
   route?: string;

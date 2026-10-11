@@ -25,11 +25,19 @@ const statusText = (count: number, hasMore: boolean, category?: string) => {
 };
 
 const CatalogResults = ({ category, inStock, onAddToCart }: CatalogResultsProps) => {
-  const { data, isPending, isPlaceholderData, hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage, refetch } =
-    useInfiniteQuery({
-      ...endpointInfiniteQuery(listProducts, { query: { category, inStock, limit: PAGE_SIZE } }),
-      placeholderData: keepPreviousData
-    });
+  const {
+    data,
+    isPending,
+    isPlaceholderData,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetchNextPageError,
+    fetchNextPage,
+    refetch
+  } = useInfiniteQuery({
+    ...endpointInfiniteQuery(listProducts, { query: { category, inStock, limit: PAGE_SIZE } }),
+    placeholderData: keepPreviousData
+  });
 
   const products = data?.pages.flatMap(page => page.data) ?? [];
 
@@ -50,7 +58,9 @@ const CatalogResults = ({ category, inStock, onAddToCart }: CatalogResultsProps)
     if (products.length === 0) {
       return (
         <MaloSays>
-          {inStock ? "Nothing on that shelf right now. Come back after restocking." : "Nothing on that shelf. Try another."}
+          {inStock
+            ? "Nothing on that shelf right now. Come back after restocking."
+            : "Nothing on that shelf. Try another."}
         </MaloSays>
       );
     }

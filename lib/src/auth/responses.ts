@@ -1,13 +1,14 @@
 import type { infer as zinfer } from "zod";
 import { boolean, strictObject, string } from "zod";
 
-import { DisplayName, Email } from "./types";
+import { DisplayName, Email, SignInMethod } from "./types";
 
 export const CurrentUser = strictObject({
   id: string().meta({ description: "The user's Cognito subject ID." }),
   email: Email,
   name: DisplayName,
-  isAdmin: boolean()
+  isAdmin: boolean(),
+  signInMethod: SignInMethod
 }).meta({ id: "CurrentUser", description: "The signed-in user." });
 export type CurrentUser = zinfer<typeof CurrentUser>;
 
