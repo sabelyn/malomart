@@ -54,18 +54,22 @@ const SiteHeader = ({ cartCount }: SiteHeaderProps) => (
   <header className={classes.header}>
     <Container size="lg">
       <Group justify="space-between" align="center" wrap="wrap" gap="md">
-        <Link to="/" className={classes.brand}>
-          <span className={classes.formerly}>
+        <div className={classes.brand}>
+          <Link to="/" className={classes.logo}>
+            Malo Mart
+          </Link>
+          <p className={classes.formerly}>
             <VisuallyHidden>Formerly </VisuallyHidden>
-            <s>Chudley's Fine Goods and Fancy Trinkets Emporium</s>
-          </span>
-          <span className={classes.logo}>Malo Mart</span>
-          <span className={classes.branch}>Castle Town branch</span>
-        </Link>
+            <span className={classes.struck}>Chudley's Fine Goods and Fancy Trinkets Emporium</span>
+          </p>
+          <p className={classes.branch}>Castle Town branch</p>
+        </div>
         <nav aria-label="Main" className={classes.nav}>
           <Group gap="lg">
             <NavLink to="/products">Shop</NavLink>
-            <NavLink to="/cart">Cart ({cartCount})</NavLink>
+            <NavLink to="/cart" aria-label={`Cart, ${cartCount} ${cartCount === 1 ? "item" : "items"}`}>
+              Cart ({cartCount})
+            </NavLink>
             <AccountLinks />
           </Group>
         </nav>

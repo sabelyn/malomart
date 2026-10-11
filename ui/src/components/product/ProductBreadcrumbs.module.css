@@ -1,0 +1,25 @@
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 var(--mantine-spacing-xl);
+  padding: 0;
+  list-style: none;
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-dark-2);
+}
+
+.breadcrumbs li + li::before {
+  content: "›" / "";
+  margin-right: 0.5rem;
+  color: var(--mantine-color-gilt-6);
+}
+
+.breadcrumbs a {
+  color: var(--mantine-color-gilt-3);
+  text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+  text-decoration: underline;
+}

@@ -6,6 +6,7 @@ import CatalogPage from "@/pages/CatalogPage";
 import HomePage from "@/pages/HomePage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import PlaceholderPage from "@/pages/PlaceholderPage";
+import ProductPage from "@/pages/ProductPage";
 import { GuestOnly, RequireAdmin, RequireUser } from "@/routes/guards";
 
 const AdminPage = lazy(() => import("@/pages/admin/AdminPage"));
@@ -18,7 +19,7 @@ const App = () => (
       <Route index element={<HomePage />} />
       <Route path="products">
         <Route index element={<CatalogPage />} />
-        <Route path=":id" element={<PlaceholderPage title="Product" />} />
+        <Route path=":id" element={<ProductPage />} />
       </Route>
       <Route path="cart" element={<PlaceholderPage title="Cart" />} />
       <Route path="auth" element={<GuestOnly />}>

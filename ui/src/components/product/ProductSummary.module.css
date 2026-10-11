@@ -1,0 +1,53 @@
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-md);
+}
+
+.description {
+  font-size: var(--mantine-font-size-lg);
+  color: var(--mantine-color-dark-1);
+  max-width: 60ch;
+}
+
+.purchase {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mantine-spacing-md);
+}
+
+.stock {
+  color: var(--mantine-color-dark-2);
+}
+
+.features {
+  margin-top: var(--mantine-spacing-lg);
+  padding-top: var(--mantine-spacing-lg);
+  border-top: var(--mm-rule);
+}
+
+.featuresHeading {
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mantine-color-gilt-2);
+  margin-bottom: var(--mantine-spacing-sm);
+}
+
+.features ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--mantine-color-dark-0);
+}
+
+.features li + li {
+  margin-top: 0.375rem;
+}
+
+.features li::marker {
+  content: "◆  ";
+  color: var(--mantine-color-gilt-5);
+  font-size: 0.75em;
+}
