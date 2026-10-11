@@ -6,6 +6,7 @@ import { sessionQuery, useSession } from "@/api";
 import PageLoader from "@/components/PageLoader";
 import NotFoundPage from "@/pages/NotFoundPage";
 import { signInPath } from "./paths";
+import { useSessionExiting } from "./sessionExit";
 
 const useRequiredSession = () => useQuery({ ...sessionQuery, throwOnError: true });
 
@@ -17,8 +18,9 @@ const useCurrentPath = () => {
 export const RequireUser = () => {
   const { data: user, isPending } = useRequiredSession();
   const currentPath = useCurrentPath();
+  const exiting = useSessionExiting();
 
-  if (isPending) {
+  if (isPending || (!user && exiting)) {
     return <PageLoader />;
   }
   if (!user) {
@@ -30,8 +32,9 @@ export const RequireUser = () => {
 export const RequireAdmin = () => {
   const { data: user, isPending } = useRequiredSession();
   const currentPath = useCurrentPath();
+  const exiting = useSessionExiting();
 
-  if (isPending) {
+  if (isPending || (!user && exiting)) {
     return <PageLoader />;
   }
   if (!user) {

@@ -1,5 +1,6 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router";
 
 import { sessionKey } from "@/api";
@@ -49,6 +50,34 @@ describe("sign out", () => {
     expect(screen.getByRole("link", { name: "Sign in" })).toBeTruthy();
     expect(queryClient.getQueryData(sessionKey)).toBeNull();
     expect(requestsTo(fetch, "POST /api/auth/sign-out")).toHaveLength(1);
+  });
+
+  it("lands on the home page even when it has to load first", async () => {
+    stubApi({ "POST /api/auth/sign-out": () => new Response(null, { status: 204 }) });
+    const user = userEvent.setup();
+    const LazyHome = lazy(async () => ({ default: () => <p>lazy home page</p> }));
+    renderWithProviders(
+      <>
+        <Suspense>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route index element={<LazyHome />} />
+              <Route path="auth/sign-in" element={<p>sign in form</p>} />
+              <Route element={<RequireUser />}>
+                <Route path="orders" element={<p>orders list</p>} />
+              </Route>
+            </Route>
+          </Routes>
+        </Suspense>
+        <LocationDisplay />
+      </>,
+      { route: "/orders", session: customer }
+    );
+
+    await user.click(signOutButton());
+
+    expect(await screen.findByText("lazy home page")).toBeTruthy();
+    expect(screen.getByTestId("location").textContent).toBe("/");
   });
 
   it("moves focus to the main content even when already on the home page", async () => {

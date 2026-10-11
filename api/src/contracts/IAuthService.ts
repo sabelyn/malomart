@@ -16,6 +16,7 @@ export interface IAuthService {
   refresh: (refreshToken: string) => Promise<AuthTokens>;
   requestEmailChange: (accessToken: string, email: string) => Promise<void>;
   signOut: (refreshToken: string) => Promise<void>;
+  signOutEverywhere: (accessToken: string) => Promise<void>;
   signUp: (email: string, name: string) => Promise<PendingAuth | undefined>;
   startSignIn: (email: string) => Promise<PendingAuth>;
   updateName: (accessToken: string, name: string) => Promise<void>;

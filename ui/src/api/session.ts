@@ -37,19 +37,26 @@ export const useSetSession = () => {
   return (user: CurrentUser | null) => queryClient.setQueryData(sessionQuery.queryKey, user);
 };
 
+export const useClearSession = () => {
+  const queryClient = useQueryClient();
+  return () => {
+    queryClient.setQueryData(sessionQuery.queryKey, null);
+    queryClient.removeQueries({ type: "inactive", predicate: isNotSession });
+    void queryClient.invalidateQueries({ predicate: isNotSession });
+  };
+};
+
 type SignOutOptions = {
   onSignedOut?: () => void;
 };
 
 export const useSignOut = ({ onSignedOut }: SignOutOptions = {}) => {
-  const queryClient = useQueryClient();
+  const clearSession = useClearSession();
 
   return useEndpointMutation(signOut, {
     onSuccess: () => {
       onSignedOut?.();
-      queryClient.setQueryData(sessionQuery.queryKey, null);
-      queryClient.removeQueries({ type: "inactive", predicate: isNotSession });
-      void queryClient.invalidateQueries({ predicate: isNotSession });
+      clearSession();
     }
   });
 };

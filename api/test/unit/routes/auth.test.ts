@@ -62,6 +62,7 @@ beforeEach(() => {
     refresh: vi.fn<IAuthService["refresh"]>().mockResolvedValue(tokens()),
     requestEmailChange: vi.fn<IAuthService["requestEmailChange"]>().mockResolvedValue(),
     signOut: vi.fn<IAuthService["signOut"]>().mockResolvedValue(),
+    signOutEverywhere: vi.fn<IAuthService["signOutEverywhere"]>().mockResolvedValue(),
     signUp: vi.fn<IAuthService["signUp"]>().mockResolvedValue({ email: EMAIL, session: "signup-session" }),
     startSignIn: vi.fn<IAuthService["startSignIn"]>().mockResolvedValue({ email: EMAIL, session: "signin-session" }),
     updateName: vi.fn<IAuthService["updateName"]>().mockResolvedValue(),
@@ -368,6 +369,34 @@ const asGoogleUser = asUser({
   isAdmin: false,
   signInMethod: "google",
   customerData: {}
+});
+
+describe("POST /api/auth/me/sign-out", () => {
+  it("signs the user out everywhere and clears cookies", async () => {
+    const res = await request(app).post("/api/auth/me/sign-out").set(asRegularUser).set("Cookie", sessionCookies);
+
+    expect(res.status).toBe(204);
+    expect(service.signOutEverywhere).toHaveBeenCalledWith("current-access");
+    const cookies = setCookies(res);
+    expect(isCleared(cookies[SessionCookie.Access])).toBe(true);
+    expect(isCleared(cookies[SessionCookie.Refresh])).toBe(true);
+  });
+
+  it("keeps the cookies when Cognito rejects the sign-out", async () => {
+    service.signOutEverywhere.mockRejectedValue(cognitoError("NotAuthorizedException"));
+
+    const res = await request(app).post("/api/auth/me/sign-out").set(asRegularUser).set("Cookie", sessionCookies);
+
+    expect(res.status).toBe(401);
+    expect(setCookies(res)[SessionCookie.Access]).toBeUndefined();
+  });
+
+  it("requires a user", async () => {
+    const res = await request(app).post("/api/auth/me/sign-out");
+
+    expect(res.status).toBe(401);
+    expect(service.signOutEverywhere).not.toHaveBeenCalled();
+  });
 });
 
 describe("PUT /api/auth/me", () => {

@@ -1,8 +1,9 @@
 import { Container, Group, UnstyledButton, VisuallyHidden } from "@mantine/core";
-import { Link, NavLink, useLocation, useNavigate } from "react-router";
+import { Link, NavLink, useLocation } from "react-router";
 
 import { useSession, useSignOut } from "@/api";
 import { signInPath } from "@/routes/paths";
+import { useExitSession } from "@/routes/sessionExit";
 import classes from "./SiteHeader.module.css";
 
 type SiteHeaderProps = {
@@ -10,10 +11,10 @@ type SiteHeaderProps = {
 };
 
 const SignOutButton = () => {
-  const navigate = useNavigate();
+  const exitSession = useExitSession();
   const signOut = useSignOut({
     onSignedOut: () => {
-      void navigate("/");
+      exitSession("/");
       document.getElementById("main")?.focus();
     }
   });

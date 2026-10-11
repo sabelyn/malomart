@@ -12,6 +12,7 @@ import { BrowserRouter } from "react-router";
 
 import { queryClient } from "@/api";
 import App from "@/App";
+import { SessionExitProvider } from "@/routes/sessionExit";
 import theme from "./theme";
 
 const root = createRoot(document.getElementById("root") as HTMLElement);
@@ -19,9 +20,11 @@ root.render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <MantineProvider theme={theme} forceColorScheme="dark">
-          <App />
-        </MantineProvider>
+        <SessionExitProvider>
+          <MantineProvider theme={theme} forceColorScheme="dark">
+            <App />
+          </MantineProvider>
+        </SessionExitProvider>
       </BrowserRouter>
       <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />
     </QueryClientProvider>

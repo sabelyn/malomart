@@ -12,8 +12,8 @@ import { SIGN_UP_PATH } from "@/routes/paths";
 import type { SignInState } from "@/routes/paths";
 import pages from "../pages.module.css";
 import classes from "./auth.module.css";
-import { authErrorMessage, SESSION_TIMED_OUT } from "./authErrors";
-import CodeForm from "./CodeForm";
+import { authErrorMessage, SESSION_TIMED_OUT } from "@/components/auth/authErrors";
+import CodeForm from "@/components/auth/CodeForm";
 
 const SignInPage = () => {
   useDocumentTitle("Sign in");
@@ -61,6 +61,7 @@ const SignInPage = () => {
 
       {pendingEmail ? (
         <CodeForm
+          className={classes.form}
           email={pendingEmail}
           submitLabel="Sign in"
           pending={verify.isPending}

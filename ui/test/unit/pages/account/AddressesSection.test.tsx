@@ -177,7 +177,7 @@ describe("AddressesSection", () => {
 
     await user.click(within(card("Home")).getByRole("button", { name: "Edit" }));
     expect(within(dialog()).getByRole("heading", { name: "Edit Home" })).toBeTruthy();
-    expect(screen.getByLabelText(/^Region/).value).toBe("Faron");
+    expect(screen.getByLabelText<HTMLSelectElement>(/^Region/).value).toBe("Faron");
     await user.clear(screen.getByLabelText("Label"));
     await user.clear(screen.getByLabelText(/^City/));
     await user.type(screen.getByLabelText(/^City/), "Hateno");

@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { MemoryRouter, useLocation } from "react-router";
 
 import { sessionKey } from "@/api";
+import { SessionExitProvider } from "@/routes/sessionExit";
 
 export const customer: CurrentUser = {
   id: "user-123",
@@ -41,7 +42,9 @@ export const renderWithProviders = (ui: ReactNode, { route = "/", session }: Ren
   const result = render(
     <QueryClientProvider client={queryClient}>
       <MantineProvider env="test">
-        <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+        <MemoryRouter initialEntries={[route]}>
+          <SessionExitProvider>{ui}</SessionExitProvider>
+        </MemoryRouter>
       </MantineProvider>
     </QueryClientProvider>
   );

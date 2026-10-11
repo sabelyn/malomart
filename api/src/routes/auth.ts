@@ -10,6 +10,7 @@ import {
   requestEmailChange,
   signIn,
   signOut,
+  signOutEverywhere,
   signUp,
   updateProfile,
   verifySignIn
@@ -185,6 +186,19 @@ router.post(...pathAndMiddleware(signOut), async (req, res, next) => {
 router.get(...pathAndMiddleware(getCurrentUser), (req, res, next) => {
   try {
     return respond(res, getCurrentUser, signedInUser(req));
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.post(...pathAndMiddleware(signOutEverywhere), async (req, res, next) => {
+  try {
+    signedInUser(req);
+
+    const service = req.container.resolve(AUTH_SERVICE);
+    await service.signOutEverywhere(accessTokenFor(req));
+    clearSessionCookies(res);
+    return respondEmpty(res, signOutEverywhere);
   } catch (err) {
     return next(err);
   }

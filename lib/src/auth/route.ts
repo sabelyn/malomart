@@ -111,6 +111,19 @@ export const getCurrentUser = new Endpoint(auth, {
   summary: "Get Current User"
 });
 
+export const signOutEverywhere = new Endpoint(auth, {
+  access: "user",
+  description:
+    "Revokes every refresh token the user has and clears the session cookies. Other devices stay signed in until their current access token expires.",
+  id: "signOutEverywhere",
+  method: "POST",
+  path: "/me/sign-out",
+  schemas: {},
+  successDescription: "The user was signed out on every device.",
+  successStatus: "204",
+  summary: "Sign Out Everywhere"
+});
+
 export const updateProfile = new Endpoint(auth, {
   access: "user",
   description: "Updates the signed-in user's profile and renews the session so it reflects the change.",

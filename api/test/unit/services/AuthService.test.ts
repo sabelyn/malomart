@@ -4,6 +4,7 @@ import {
   DeleteUserCommand,
   DescribeUserPoolClientCommand,
   GetTokensFromRefreshTokenCommand,
+  GlobalSignOutCommand,
   InitiateAuthCommand,
   RespondToAuthChallengeCommand,
   RevokeTokenCommand,
@@ -205,6 +206,16 @@ describe("signOut", () => {
       ClientSecret: CLIENT_SECRET,
       Token: "refresh"
     });
+  });
+});
+
+describe("signOutEverywhere", () => {
+  it("signs out every session for the access token's user", async () => {
+    cognito.on(GlobalSignOutCommand).resolves({});
+
+    await service.signOutEverywhere("access");
+
+    expect(cognito).toHaveReceivedCommandWith(GlobalSignOutCommand, { AccessToken: "access" });
   });
 });
 

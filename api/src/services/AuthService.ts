@@ -7,6 +7,7 @@ import {
   DeleteUserCommand,
   DescribeUserPoolClientCommand,
   GetTokensFromRefreshTokenCommand,
+  GlobalSignOutCommand,
   InitiateAuthCommand,
   RespondToAuthChallengeCommand,
   RevokeTokenCommand,
@@ -140,6 +141,10 @@ export class AuthService implements IAuthService {
         Token: refreshToken
       })
     );
+  };
+
+  signOutEverywhere = async (accessToken: string) => {
+    await this.cognito.send(new GlobalSignOutCommand({ AccessToken: accessToken }));
   };
 
   updateName = async (accessToken: string, name: string) => {

@@ -13,8 +13,8 @@ import { SIGN_IN_PATH } from "@/routes/paths";
 import type { SignInState } from "@/routes/paths";
 import pages from "../pages.module.css";
 import classes from "./auth.module.css";
-import { authErrorMessage } from "./authErrors";
-import CodeForm from "./CodeForm";
+import { authErrorMessage } from "@/components/auth/authErrors";
+import CodeForm from "@/components/auth/CodeForm";
 
 const isAccountExists = (error: unknown) => error instanceof ApiRequestError && error.code === ErrorCode.AccountExists;
 
@@ -62,6 +62,7 @@ const SignUpPage = () => {
 
       {pendingEmail ? (
         <CodeForm
+          className={classes.form}
           email={pendingEmail}
           submitLabel="Confirm account"
           pending={confirm.isPending}
