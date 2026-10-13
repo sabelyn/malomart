@@ -4,15 +4,23 @@ import { App, Stage } from "aws-cdk-lib";
 import { RemovalPolicies } from "aws-cdk-lib/core";
 
 import type { StageConfig } from "./stacks";
-import { configureStacks } from "./stacks";
+import { configureStacks, DomainStack, MailStack } from "./stacks";
+
+const DOMAIN_NAME = "malomart.link";
 
 const app = new App();
+const env: StackProps["env"] = { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION };
+
+const domainStack = new DomainStack(app, "MaloMartDomain", { env, domainName: DOMAIN_NAME });
+new MailStack(app, "MaloMartMail", { env, zone: domainStack.zone, inboxDomain: `inbox.${DOMAIN_NAME}` });
 
 const stages: Record<string, { env: StackProps["env"]; config: StageConfig }> = {
   Dev: {
-    env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+    env,
     config: {
-      apiTaskCount: Number(app.node.tryGetContext("apiTasks") ?? 0)
+      apiTaskCount: Number(app.node.tryGetContext("apiTasks") ?? 0),
+      siteDomain: { zoneName: DOMAIN_NAME, hostName: `dev.${DOMAIN_NAME}` },
+      emailDomain: DOMAIN_NAME
     }
   }
 };
@@ -23,7 +31,7 @@ for (const [stageName, { env, config }] of Object.entries(stages)) {
     stageName
   });
   configureStacks(stage, config);
+  RemovalPolicies.of(stage).destroy();
 }
 
-RemovalPolicies.of(app).destroy();
 app.synth();

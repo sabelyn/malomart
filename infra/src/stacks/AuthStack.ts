@@ -7,6 +7,7 @@ import {
   ResourceServerScope,
   UserPool,
   UserPoolClient,
+  UserPoolEmail,
   UserPoolOperation
 } from "aws-cdk-lib/aws-cognito";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
@@ -19,6 +20,7 @@ import type { DbStack } from "./DbStack";
 
 type Props = StackProps & {
   dbStack: DbStack;
+  emailDomain?: string;
 };
 
 const ADMIN_GROUP = "admin";
@@ -44,6 +46,14 @@ export class AuthStack extends Stack {
       },
       accountRecovery: AccountRecovery.EMAIL_ONLY,
       keepOriginal: { email: true },
+      email: props.emailDomain
+        ? UserPoolEmail.withSES({
+            fromEmail: `noreply@${props.emailDomain}`,
+            fromName: "Malo Mart",
+            sesVerifiedDomain: props.emailDomain,
+            sesRegion: this.region
+          })
+        : undefined,
       standardAttributes: {
         email: { required: true },
         fullname: { required: true }

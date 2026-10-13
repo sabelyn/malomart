@@ -1,12 +1,13 @@
 {
   "name": "@mm/tools",
   "version": "0.1.0",
-  "description": "Local developer utilities, such as slicing sprite sheets into individual images and seeding the Dev stage with data.",
+  "description": "Local developer utilities, such as slicing sprite sheets into individual images, seeding the Dev stage with data, and reading the test inbox.",
   "private": true,
   "type": "module",
   "scripts": {
     "seed": "node src/seed/index.ts",
     "dev:session": "node src/devSession.ts",
+    "inbox": "node src/inbox.ts",
     "sprites": "node src/sprites.ts",
     "check": "tsc --noEmit"
   },
@@ -17,10 +18,12 @@
     "@aws-sdk/lib-dynamodb": "^3.1138.0",
     "@mm/clients": "workspace:*",
     "@mm/lib": "workspace:*",
+    "mailparser": "^3.9.38",
     "sharp": "^0.34.4"
   },
   "devDependencies": {
     "@mm/config": "workspace:*",
+    "@types/mailparser": "^3.9.0",
     "@types/node": "^24.10.1",
     "typescript": "~6.0.3"
   }

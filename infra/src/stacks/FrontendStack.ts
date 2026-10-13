@@ -2,6 +2,7 @@ import type { BucketNames } from "@mm/clients/s3";
 import { IMAGE_KEY_PREFIX } from "@mm/clients/s3";
 import type { StackProps } from "aws-cdk-lib";
 import { CfnOutput, Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
+import { DnsValidatedCertificate } from "aws-cdk-lib/aws-certificatemanager";
 import {
   AllowedMethods,
   CachePolicy,
@@ -25,6 +26,8 @@ import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
 import { Architecture, Runtime } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
+import { AaaaRecord, ARecord, HostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
+import { CloudFrontTarget } from "aws-cdk-lib/aws-route53-targets";
 import { BlockPublicAccess, Bucket, BucketEncryption, HttpMethods } from "aws-cdk-lib/aws-s3";
 import { BucketDeployment, CacheControl, Source } from "aws-cdk-lib/aws-s3-deployment";
 import type { Construct } from "constructs";
@@ -33,9 +36,15 @@ import path from "node:path";
 import type { DbStack } from "./DbStack";
 import type { GatewayStack } from "./GatewayStack";
 
+export type SiteDomain = {
+  zoneName: string;
+  hostName: string;
+};
+
 type Props = StackProps & {
   dbStack: DbStack;
   gatewayStack: GatewayStack;
+  siteDomain?: SiteDomain;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -82,7 +91,22 @@ export class FrontendStack extends Stack {
       code: FunctionCode.fromInline(spaRewrite)
     });
 
+    const site = props.siteDomain && {
+      hostName: props.siteDomain.hostName,
+      zone: HostedZone.fromLookup(this, "HostedZone", { domainName: props.siteDomain.zoneName })
+    };
+    const certificate =
+      site &&
+      new DnsValidatedCertificate(this, "SiteCertificate", {
+        domainName: site.hostName,
+        hostedZone: site.zone,
+        region: "us-east-1",
+        cleanupRoute53Records: true
+      });
+
     this.distribution = new Distribution(this, "Distribution", {
+      domainNames: site && [site.hostName],
+      certificate,
       defaultBehavior: {
         origin: S3BucketOrigin.withOriginAccessControl(siteBucket),
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -122,7 +146,12 @@ export class FrontendStack extends Stack {
       httpVersion: HttpVersion.HTTP2_AND_3,
       priceClass: PriceClass.PRICE_CLASS_100
     });
-    this.appOrigin = `https://${this.distribution.distributionDomainName}`;
+    if (site) {
+      const target = RecordTarget.fromAlias(new CloudFrontTarget(this.distribution));
+      new ARecord(this, "SiteARecord", { zone: site.zone, recordName: site.hostName, target });
+      new AaaaRecord(this, "SiteAaaaRecord", { zone: site.zone, recordName: site.hostName, target });
+    }
+    this.appOrigin = `https://${site?.hostName ?? this.distribution.distributionDomainName}`;
 
     this.uploadBucket = new Bucket(this, "UploadBucket", {
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
