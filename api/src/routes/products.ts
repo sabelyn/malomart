@@ -3,6 +3,7 @@ import {
   deleteProduct,
   deleteProductImage,
   getProduct,
+  getProductsByIds,
   listProducts,
   requestImageUpload,
   setImageAsThumbnail,
@@ -22,6 +23,20 @@ router.get(...pathAndMiddleware(listProducts), async (req, res, next) => {
     const service = req.container.resolve(PRODUCT_SERVICE);
     const result = await service.listProducts(query);
     return respond(res, listProducts, result);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.get(...pathAndMiddleware(getProductsByIds), async (req, res, next) => {
+  try {
+    const {
+      query: { ids }
+    } = validateRequest(getProductsByIds, req);
+
+    const service = req.container.resolve(PRODUCT_SERVICE);
+    const products = await service.getProducts(ids);
+    return respond(res, getProductsByIds, products);
   } catch (err) {
     return next(err);
   }

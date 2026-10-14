@@ -176,13 +176,13 @@ describe("getProducts", () => {
   it.each([
     ["a single", 0],
     ["one of several", 2]
-  ])("throws a 404 when %s product does not exist", async (_, existing) => {
+  ])("leaves out %s product that does not exist", async (_, existing) => {
     const products = Array.from({ length: existing }, () => makeProduct());
     await putItems(db, TableName, products);
 
-    const result = service.getProducts([...products.map(p => p.id), crypto.randomUUID()]);
+    const result = await service.getProducts([...products.map(p => p.id), crypto.randomUUID()]);
 
-    await expect(result).rejects.toMatchObject({ statusCode: 404 });
+    expect(result.toSorted(byId)).toEqual(products.map(toOverview).toSorted(byId));
   });
 });
 
@@ -220,13 +220,13 @@ describe("getProductStocks", () => {
   it.each([
     ["a single", 0],
     ["one of several", 2]
-  ])("throws a 404 when %s product does not exist", async (_, existing) => {
-    const products = Array.from({ length: existing }, () => makeProduct());
+  ])("leaves out %s product that does not exist", async (_, existing) => {
+    const products = Array.from({ length: existing }, () => makeProduct({ stockCount: 3 }));
     await putItems(db, TableName, products);
 
-    const result = service.getProductStocks([...products.map(p => p.id), crypto.randomUUID()]);
+    const result = await service.getProductStocks([...products.map(p => p.id), crypto.randomUUID()]);
 
-    await expect(result).rejects.toMatchObject({ statusCode: 404 });
+    expect(result).toEqual(Object.fromEntries(products.map(p => [p.id, 3])));
   });
 });
 

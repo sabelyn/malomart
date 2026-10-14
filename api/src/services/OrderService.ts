@@ -88,6 +88,9 @@ export class OrderService implements IOrderService {
     }
 
     const products = await this.productService.getProducts(productIds);
+    if (products.length < productIds.length) {
+      throw notFound("Some items in the cart could not be found.");
+    }
     const orderEntries: Record<string, OrderItemEntry> = {};
     for (const { id, stockCount, price, title } of products) {
       const inCart = cart[id];

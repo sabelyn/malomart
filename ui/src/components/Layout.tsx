@@ -1,26 +1,21 @@
 import { Container } from "@mantine/core";
 import { useQueryErrorResetBoundary } from "@tanstack/react-query";
-import { Suspense, useEffect, useRef, useState } from "react";
-import { Outlet, useLocation, useOutletContext } from "react-router";
+import { Suspense, useEffect, useRef } from "react";
+import { Outlet, useLocation } from "react-router";
 
+import { useCart } from "@/cart/CartProvider";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import PageError from "@/components/PageError";
 import PageLoader from "@/components/PageLoader";
 import SiteHeader from "@/components/SiteHeader";
 import classes from "./Layout.module.css";
 
-export type LayoutContext = {
-  addToCart: () => void;
-};
-
-export const useLayoutContext = () => useOutletContext<LayoutContext>();
-
 const Layout = () => {
   const { pathname } = useLocation();
   const { reset } = useQueryErrorResetBoundary();
   const mainRef = useRef<HTMLElement>(null);
   const previousPathname = useRef(pathname);
-  const [cartCount, setCartCount] = useState(0);
+  const cart = useCart();
 
   useEffect(() => {
     if (previousPathname.current === pathname) {
@@ -31,18 +26,16 @@ const Layout = () => {
     mainRef.current?.focus();
   }, [pathname]);
 
-  const context: LayoutContext = { addToCart: () => setCartCount(count => count + 1) };
-
   return (
     <>
       <a href="#main" className={classes.skipLink}>
         Skip to content
       </a>
-      <SiteHeader cartCount={cartCount} />
+      <SiteHeader cartCount={cart.ready ? cart.count : undefined} />
       <main id="main" ref={mainRef} tabIndex={-1} className={classes.main}>
         <ErrorBoundary key={pathname} onReset={reset} fallback={retry => <PageError onRetry={retry} />}>
           <Suspense fallback={<PageLoader />}>
-            <Outlet context={context} />
+            <Outlet />
           </Suspense>
         </ErrorBoundary>
       </main>

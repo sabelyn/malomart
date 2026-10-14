@@ -32,6 +32,6 @@ export type CustomerDto = zinfer<typeof CustomerDto>;
 
 export const UpdateCartResponse = record(Id, NonnegativeInt).meta({
   id: "UpdateCartResponse",
-  description: "Quantities that were reduced to match available stock. Items reduced to 0 were removed from the cart."
+  description: "Quantities that were reduced to match available stock. Items reduced to 0, including products that no longer exist, were removed from the cart."
 });
 export type UpdateCartResponse = zinfer<typeof UpdateCartResponse>;

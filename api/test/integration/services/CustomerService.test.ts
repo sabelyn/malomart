@@ -330,14 +330,12 @@ describe("updateCart", () => {
     expect(await getRawCart(customerId)).toEqual({ customerId, items: {} });
   });
 
-  it("throws a 404 and keeps the saved cart when a product does not exist", async () => {
+  it("removes and reports products that no longer exist", async () => {
     const [productId] = await putProducts(5);
-    await putCart({ [productId]: 2 });
+    const missingId = crypto.randomUUID();
 
-    const result = makeService().updateCart({ [productId]: 1, [crypto.randomUUID()]: 1 });
-
-    await expect(result).rejects.toMatchObject({ statusCode: 404 });
-    expect(await getRawCart(customerId)).toEqual({ customerId, items: { [productId]: 2 } });
+    await expect(makeService().updateCart({ [productId]: 1, [missingId]: 2 })).resolves.toEqual({ [missingId]: 0 });
+    expect(await getRawCart(customerId)).toEqual({ customerId, items: { [productId]: 1 } });
   });
 });
 

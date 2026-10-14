@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
 
 import { endpointQuery } from "@/api";
-import { useLayoutContext } from "@/components/Layout";
+import { useCart } from "@/cart/CartProvider";
 import PageLoader from "@/components/PageLoader";
 import ProductBreadcrumbs from "@/components/product/ProductBreadcrumbs";
 import { percentOff } from "@/components/product/productDisplay";
@@ -20,7 +20,7 @@ const isMissing = (err: unknown) => err instanceof ApiRequestError && (err.statu
 
 const ProductPage = () => {
   const { id = "" } = useParams();
-  const { addToCart } = useLayoutContext();
+  const { add: addToCart } = useCart();
   const validId = Id.safeParse(id).success;
   const { data: product, error } = useQuery({
     ...endpointQuery(getProduct, { params: { id } }),

@@ -2,14 +2,28 @@ import { apiRoot, Endpoint, Route } from "../api";
 import { IdParams } from "../common";
 import {
   CreateProductBody,
+  GetProductsByIdsQuery,
   ListProductsQuery,
   ProductImageParams,
   RequestImageUploadPostQuery,
   UpdateProductBody
 } from "./requests";
-import { ListProductsResponse, PresignedPostResponse, ProductDto } from "./responses";
+import { GetProductsByIdsResponse, ListProductsResponse, PresignedPostResponse, ProductDto } from "./responses";
 
 export const products = new Route("/products", "public", ["Products"], apiRoot);
+
+export const getProductsByIds = new Endpoint(products, {
+  description: "Retrieves the overviews of several products by their IDs, such as the items in a shopping cart.",
+  errors: {
+    400: "The IDs were missing, invalid, or too many."
+  },
+  id: "getProductsByIds",
+  method: "GET",
+  path: "/batch",
+  schemas: { query: GetProductsByIdsQuery, response: GetProductsByIdsResponse },
+  successDescription: "The overviews of the products that exist. Missing products are omitted.",
+  summary: "Get Products by IDs"
+});
 
 export const getProduct = new Endpoint(products, {
   description: "Retrieves a single product by its ID.",

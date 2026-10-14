@@ -7,6 +7,7 @@ import {
   listAddresses,
   listPaymentMethods,
   updateAddress,
+  updateCart,
   updatePaymentMethod
 } from "@mm/lib/customers";
 import { Router } from "express";
@@ -123,6 +124,18 @@ router.delete(...pathAndMiddleware(deletePaymentMethod), async (req, res, next) 
     const service = req.container.resolve(PAYMENT_METHOD_SERVICE);
     await service.deletePaymentMethod(id);
     return respondEmpty(res, deletePaymentMethod);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.put(...pathAndMiddleware(updateCart), async (req, res, next) => {
+  try {
+    const { body } = validateRequest(updateCart, req);
+
+    const service = req.container.resolve(CUSTOMER_SERVICE);
+    const reduced = await service.updateCart(body);
+    return respond(res, updateCart, reduced);
   } catch (err) {
     return next(err);
   }

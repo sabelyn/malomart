@@ -205,8 +205,8 @@ export class CustomerService implements ICustomerService {
     const stocks = await this.productService.getProductStocks(productIds);
     const items: Record<string, number> = {};
     const changes: Record<string, number> = {};
-    for (const [id, stockCount] of Object.entries(stocks)) {
-      const inCart = body[id];
+    for (const [id, inCart] of Object.entries(body)) {
+      const stockCount = stocks[id] ?? 0;
       if (stockCount >= inCart) {
         items[id] = inCart;
         continue;

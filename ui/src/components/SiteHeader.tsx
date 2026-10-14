@@ -7,8 +7,17 @@ import { useExitSession } from "@/routes/sessionExit";
 import classes from "./SiteHeader.module.css";
 
 type SiteHeaderProps = {
-  cartCount: number;
+  cartCount?: number;
 };
+
+const CartLink = ({ count }: { count?: number }) =>
+  count === undefined ? (
+    <NavLink to="/cart">Cart</NavLink>
+  ) : (
+    <NavLink to="/cart" aria-label={`Cart, ${count} ${count === 1 ? "item" : "items"}`}>
+      Cart ({count})
+    </NavLink>
+  );
 
 const SignOutButton = () => {
   const exitSession = useExitSession();
@@ -68,9 +77,7 @@ const SiteHeader = ({ cartCount }: SiteHeaderProps) => (
         <nav aria-label="Main" className={classes.nav}>
           <Group gap="lg">
             <NavLink to="/products">Shop</NavLink>
-            <NavLink to="/cart" aria-label={`Cart, ${cartCount} ${cartCount === 1 ? "item" : "items"}`}>
-              Cart ({cartCount})
-            </NavLink>
+            <CartLink count={cartCount} />
             <AccountLinks />
           </Group>
         </nav>

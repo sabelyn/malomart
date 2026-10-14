@@ -1,7 +1,7 @@
 import type { ProductOverview } from "@mm/lib/products";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Outlet, Route, Routes } from "react-router";
+import { Route, Routes } from "react-router";
 
 import CatalogPage from "@/pages/CatalogPage";
 import { json, LocationDisplay, renderWithProviders } from "../../utils";
@@ -30,13 +30,11 @@ const renderCatalog = (route = "/products") =>
   renderWithProviders(
     <>
       <Routes>
-        <Route element={<Outlet context={{ addToCart: vi.fn() }} />}>
-          <Route path="/products" element={<CatalogPage />} />
-        </Route>
+        <Route path="/products" element={<CatalogPage />} />
       </Routes>
       <LocationDisplay />
     </>,
-    { route, session: null }
+    { route, session: null, withCart: true }
   );
 
 afterEach(() => {

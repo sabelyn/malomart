@@ -23,6 +23,12 @@ export const ListProductsResponse = strictObject({
 });
 export type ListProductsResponse = zinfer<typeof ListProductsResponse>;
 
+export const GetProductsByIdsResponse = ProductOverview.array().meta({
+  id: "GetProductsByIdsResponse",
+  description: "The products that were found. IDs that don't match a product are left out."
+});
+export type GetProductsByIdsResponse = zinfer<typeof GetProductsByIdsResponse>;
+
 export const ProductDto = strictObject({
   ...Product.omit({ imageKeys: true, inStock: true }).shape,
   imageKeys: string().nonempty().array().optional()

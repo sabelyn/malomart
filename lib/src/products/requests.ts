@@ -1,5 +1,5 @@
 import type { input, infer as zinfer } from "zod";
-import { number, object, strictObject, string } from "zod";
+import { number, object, preprocess, strictObject, string } from "zod";
 
 import { atLeastOneKeyRefinement, Id, PaginationQuery, QueryBool } from "../common";
 import { CategorySchema, Product } from "./types";
@@ -22,6 +22,16 @@ export const ListProductsQuery = object({
 }).meta({ id: "ListProductsQuery" });
 export type ListProductsQuery = zinfer<typeof ListProductsQuery>;
 export type ListProductsQueryInput = input<typeof ListProductsQuery>;
+
+export const MAX_BATCH_PRODUCTS = 100;
+
+export const GetProductsByIdsQuery = strictObject({
+  ids: preprocess(
+    value => (typeof value === "string" ? value.split(",") : value),
+    Id.array().min(1).max(MAX_BATCH_PRODUCTS)
+  ).meta({ description: "Comma-separated product IDs." })
+}).meta({ id: "GetProductsByIdsQuery" });
+export type GetProductsByIdsQuery = zinfer<typeof GetProductsByIdsQuery>;
 
 export const UpdateProductBody = Product.pick({
   title: true,

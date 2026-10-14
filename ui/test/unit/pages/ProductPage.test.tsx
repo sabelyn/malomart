@@ -1,8 +1,9 @@
 import type { ProductDto } from "@mm/lib/products";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Outlet, Route, Routes } from "react-router";
+import { Route, Routes } from "react-router";
 
+import { GUEST_CART_KEY } from "@/cart/guestCart";
 import ProductPage from "@/pages/ProductPage";
 import { json, renderWithProviders, stubApi } from "../../utils";
 
@@ -21,17 +22,13 @@ const product: ProductDto = {
   features: ["Fireproof", "Blocks Guardian lasers with good timing"]
 };
 
-const renderProduct = (id = ID, addToCart = vi.fn()) => {
-  const result = renderWithProviders(
+const renderProduct = (id = ID) =>
+  renderWithProviders(
     <Routes>
-      <Route element={<Outlet context={{ addToCart }} />}>
-        <Route path="/products/:id" element={<ProductPage />} />
-      </Route>
+      <Route path="/products/:id" element={<ProductPage />} />
     </Routes>,
-    { route: `/products/${id}`, session: null }
+    { route: `/products/${id}`, session: null, withCart: true }
   );
-  return { ...result, addToCart };
-};
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -66,14 +63,27 @@ describe("ProductPage", () => {
     expect(screen.getByRole("button", { name: "Show image 2 of 2" }).getAttribute("aria-pressed")).toBe("true");
   });
 
-  it("adds the product to the cart", async () => {
+  it("adds the product to the guest cart and announces it", async () => {
     stubApi({ [`GET /api/products/${ID}`]: () => json(200, product) });
     const user = userEvent.setup();
-    const { addToCart } = renderProduct();
+    renderProduct();
 
     await user.click(await screen.findByRole("button", { name: "Add to cart" }));
 
-    expect(addToCart).toHaveBeenCalledWith(product);
+    expect(JSON.parse(localStorage.getItem(GUEST_CART_KEY) ?? "{}")).toEqual({ [ID]: 1 });
+    expect(screen.getByText("Added Hylian Shield to your cart. 1 item in cart.")).toBeTruthy();
+  });
+
+  it("won't add more than the stock on hand", async () => {
+    localStorage.setItem(GUEST_CART_KEY, JSON.stringify({ [ID]: 2 }));
+    stubApi({ [`GET /api/products/${ID}`]: () => json(200, product) });
+    const user = userEvent.setup();
+    renderProduct();
+
+    await user.click(await screen.findByRole("button", { name: "Add to cart" }));
+
+    expect(JSON.parse(localStorage.getItem(GUEST_CART_KEY) ?? "{}")).toEqual({ [ID]: 2 });
+    expect(screen.getByText("Your cart already has every Hylian Shield in stock.")).toBeTruthy();
   });
 
   it("disables adding a sold-out product", async () => {

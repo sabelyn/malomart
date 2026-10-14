@@ -10,6 +10,13 @@ export type OutgoingRequest = {
   };
 };
 
+const serializeQueryValue = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return value.join(",");
+  }
+  return typeof value === "object" ? JSON.stringify(value) : String(value);
+};
+
 export class Endpoint<S extends Schemas> extends Route {
   readonly description: string;
   readonly errors: Record<number, string>;
@@ -47,7 +54,7 @@ export class Endpoint<S extends Schemas> extends Route {
     const search = new URLSearchParams();
     for (const [key, value] of Object.entries(query ?? {})) {
       if (value !== undefined && value !== null) {
-        search.append(key, typeof value === "object" ? JSON.stringify(value) : String(value));
+        search.append(key, serializeQueryValue(value));
       }
     }
     if (search.size > 0) {

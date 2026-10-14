@@ -5,7 +5,7 @@ import { Endpoint, Route } from "../../../src/api";
 const ID = "3f2a9c1e-7b4d-4e8a-9f6b-2c1d0e5a7b3c";
 
 const Params = strictObject({ id: uuid() });
-const Query = object({ limit: coerce.number().optional(), name: string().optional() });
+const Query = object({ limit: coerce.number().optional(), name: string().optional(), tags: string().array().optional() });
 const Body = strictObject({ name: string(), price: number() });
 
 const baseConfig = {
@@ -116,6 +116,12 @@ describe("Endpoint", () => {
       const { url } = listThings.request({ query: { limit: 25, name: "sword & shield" } });
 
       expect(url).toBe("/things?limit=25&name=sword+%26+shield");
+    });
+
+    it("joins array query values with commas", () => {
+      const { url } = listThings.request({ query: { tags: ["sword", "shield"] } });
+
+      expect(url).toBe("/things?tags=sword%2Cshield");
     });
 
     it("skips undefined query values and omits an empty query string", () => {

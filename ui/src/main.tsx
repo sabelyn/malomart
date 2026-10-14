@@ -12,6 +12,7 @@ import { BrowserRouter } from "react-router";
 
 import { queryClient } from "@/api";
 import App from "@/App";
+import { CartProvider } from "@/cart/CartProvider";
 import { SessionExitProvider } from "@/routes/sessionExit";
 import theme from "./theme";
 
@@ -22,7 +23,9 @@ root.render(
       <BrowserRouter>
         <SessionExitProvider>
           <MantineProvider theme={theme} forceColorScheme="dark">
-            <App />
+            <CartProvider>
+              <App />
+            </CartProvider>
           </MantineProvider>
         </SessionExitProvider>
       </BrowserRouter>

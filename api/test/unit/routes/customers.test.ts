@@ -79,7 +79,8 @@ describe("authorization", () => {
     ["get", "/api/customers/payment-methods"],
     ["post", "/api/customers/payment-methods"],
     ["put", `/api/customers/payment-methods/${ID}`],
-    ["delete", `/api/customers/payment-methods/${ID}`]
+    ["delete", `/api/customers/payment-methods/${ID}`],
+    ["put", "/api/customers/cart"]
   ] as const)("%s %s requires a user", async (method, path) => {
     const res = await request(app)[method](path);
 
@@ -299,4 +300,38 @@ describe("DELETE /api/customers/payment-methods/:id", () => {
     expect(res.status).toBe(400);
     expect(paymentMethodService.deletePaymentMethod).not.toHaveBeenCalled();
   });
+});
+
+describe("PUT /api/customers/cart", () => {
+  it("updates the cart and returns any reduced quantities", async () => {
+    customerService.updateCart.mockResolvedValue({ [ID]: 1 });
+
+    const res = await request(app)
+      .put("/api/customers/cart")
+      .set(asRegularUser)
+      .send({ [ID]: 3 });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ [ID]: 1 });
+    expect(customerService.updateCart).toHaveBeenCalledWith({ [ID]: 3 });
+  });
+
+  it("accepts an empty cart", async () => {
+    const res = await request(app).put("/api/customers/cart").set(asRegularUser).send({});
+
+    expect(res.status).toBe(200);
+    expect(customerService.updateCart).toHaveBeenCalledWith({});
+  });
+
+  it.each([
+    ["a non-UUID product id", { nope: 1 }],
+    ["a zero quantity", { [ID]: 0 }],
+    ["a fractional quantity", { [ID]: 1.5 }]
+  ])("rejects %s with a 400", async (_, body) => {
+    const res = await request(app).put("/api/customers/cart").set(asRegularUser).send(body);
+
+    expect(res.status).toBe(400);
+    expect(customerService.updateCart).not.toHaveBeenCalled();
+  });
+
 });

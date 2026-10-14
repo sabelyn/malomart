@@ -7,8 +7,8 @@ import bombsImage from "@/assets/items/bombs.png";
 import hylianShieldImage from "@/assets/items/hylian-shield.png";
 import magicArmorImage from "@/assets/items/magic-armor.png";
 import redPotionImage from "@/assets/items/red-potion.png";
+import { useCart } from "@/cart/CartProvider";
 import ChudleyHype from "@/components/ChudleyHype";
-import { useLayoutContext } from "@/components/Layout";
 import MaloSays from "@/components/MaloSays";
 import ProductPlacard from "@/components/ProductPlacard";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
@@ -84,7 +84,7 @@ const sampleShelf: ShelfItem[] = [
 ];
 
 const HomePage = () => {
-  const { addToCart } = useLayoutContext();
+  const { add: addToCart } = useCart();
   useDocumentTitle();
 
   return (

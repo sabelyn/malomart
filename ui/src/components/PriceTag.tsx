@@ -8,7 +8,7 @@ type PriceTagProps = {
   chudleyPrice?: number;
 };
 
-const formatRupees = (amount: number) => amount.toLocaleString("en-US");
+export const formatRupees = (amount: number) => amount.toLocaleString("en-US");
 
 const PriceTag = ({ price, chudleyPrice }: PriceTagProps) => (
   <div className={classes.tag}>
@@ -19,8 +19,7 @@ const PriceTag = ({ price, chudleyPrice }: PriceTagProps) => (
     )}
     <p className={classes.now}>
       <img src={rupeeImage} alt="" width={23} height={44} className={classes.rupee} />
-      {formatRupees(price)}
-      <VisuallyHidden>rupees</VisuallyHidden>
+      {formatRupees(price)} <VisuallyHidden>rupees</VisuallyHidden>
     </p>
   </div>
 );

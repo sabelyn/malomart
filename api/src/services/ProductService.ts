@@ -125,33 +125,17 @@ export class ProductService implements IProductService {
     const select = Object.keys(ProductOverview.shape).join(", ");
     if (ids.length === 1) {
       const product = await getItemById<ProductOverview>(this.db, TableName, ids[0], "id", select);
-      if (!product) {
-        throw notFound("Product could not be found.");
-      }
-
-      return [product];
+      return product ? [product] : [];
     }
 
-    const results = await getItemsByIds<ProductOverview>(this.db, TableName, ids, select);
-    if (results.length < new Set(ids).size) {
-      throw notFound("Some products could not be found.");
-    }
-    return results;
+    return getItemsByIds<ProductOverview>(this.db, TableName, ids, select);
   };
 
   getProductStocks = async (ids: string[]) => {
     if (ids.length === 0) {
       return {};
     }
-    if (ids.length === 1) {
-      const product = await this.getProduct(ids[0]);
-      return { [product.id]: product.stockCount };
-    }
-
     const results = await getItemsByIds<{ id: string; stockCount: number }>(this.db, TableName, ids, "id, stockCount");
-    if (results.length < new Set(ids).size) {
-      throw notFound("Some products could not be found.");
-    }
     return Object.fromEntries(results.map(({ id, stockCount }) => [id, stockCount]));
   };
 

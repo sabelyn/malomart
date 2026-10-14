@@ -2,6 +2,7 @@ import { lazy } from "react";
 import { Navigate, Route, Routes } from "react-router";
 
 import Layout from "@/components/Layout";
+import CartPage from "@/pages/CartPage";
 import CatalogPage from "@/pages/CatalogPage";
 import HomePage from "@/pages/HomePage";
 import NotFoundPage from "@/pages/NotFoundPage";
@@ -26,7 +27,7 @@ const App = () => (
         <Route index element={<CatalogPage />} />
         <Route path=":id" element={<ProductPage />} />
       </Route>
-      <Route path="cart" element={<PlaceholderPage title="Cart" />} />
+      <Route path="cart" element={<CartPage />} />
       <Route path="auth" element={<GuestOnly />}>
         <Route index element={<Navigate to="sign-in" replace />} />
         <Route path="sign-in" element={<SignInPage />} />
@@ -39,6 +40,7 @@ const App = () => (
           <Route path="payment-methods" element={<PaymentMethodsSection />} />
           <Route path="orders" element={<AccountPlaceholder title="Orders" />} />
         </Route>
+        <Route path="checkout" element={<PlaceholderPage title="Checkout" />} />
         <Route path="orders" element={<Navigate to="/account/orders" replace />} />
         <Route path="orders/:id" element={<PlaceholderPage title="Order" />} />
       </Route>

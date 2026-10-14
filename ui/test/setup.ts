@@ -20,3 +20,7 @@ class ResizeObserverStub {
   disconnect() {}
 }
 Object.defineProperty(window, "ResizeObserver", { writable: true, value: ResizeObserverStub });
+
+afterEach(() => {
+  localStorage.clear();
+});

@@ -161,8 +161,7 @@ export const deletePaymentMethod = new Endpoint(customers, {
 export const updateCart = new Endpoint(customers, {
   description: "Replace the customer's current shopping cart.",
   errors: {
-    400: "Invalid request body.",
-    404: "An item in the cart could not be found."
+    400: "Invalid request body."
   },
   id: "updateCart",
   method: "PUT",

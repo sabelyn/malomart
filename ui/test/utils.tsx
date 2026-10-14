@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { MemoryRouter, useLocation } from "react-router";
 
 import { sessionKey } from "@/api";
+import { CartProvider } from "@/cart/CartProvider";
 import { SessionExitProvider } from "@/routes/sessionExit";
 
 export const customer: CurrentUser = {
@@ -26,6 +27,7 @@ export const admin: CurrentUser = {
 type RenderOptions = {
   route?: string;
   session?: CurrentUser | null;
+  withCart?: boolean;
 };
 
 export const LocationDisplay = () => {
@@ -33,7 +35,7 @@ export const LocationDisplay = () => {
   return <p data-testid="location">{`${pathname}${search}`}</p>;
 };
 
-export const renderWithProviders = (ui: ReactNode, { route = "/", session }: RenderOptions = {}) => {
+export const renderWithProviders = (ui: ReactNode, { route = "/", session, withCart = false }: RenderOptions = {}) => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   if (session !== undefined) {
     queryClient.setQueryData(sessionKey, session);
@@ -43,7 +45,7 @@ export const renderWithProviders = (ui: ReactNode, { route = "/", session }: Ren
     <QueryClientProvider client={queryClient}>
       <MantineProvider env="test">
         <MemoryRouter initialEntries={[route]}>
-          <SessionExitProvider>{ui}</SessionExitProvider>
+          <SessionExitProvider>{withCart ? <CartProvider>{ui}</CartProvider> : ui}</SessionExitProvider>
         </MemoryRouter>
       </MantineProvider>
     </QueryClientProvider>
