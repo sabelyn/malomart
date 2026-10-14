@@ -1,4 +1,4 @@
-import { Button, Text } from "@mantine/core";
+import { Button, Text, Title, VisuallyHidden } from "@mantine/core";
 import { listProducts } from "@mm/lib/products";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
@@ -78,12 +78,17 @@ const CatalogResults = ({ category, inStock, onAddToCart }: CatalogResultsProps)
   };
 
   return (
-    <>
+    <section aria-labelledby="products-heading">
+      <VisuallyHidden>
+        <Title order={2} id="products-heading">
+          Products
+        </Title>
+      </VisuallyHidden>
       <Text role="status" className={classes.count}>
         {data && statusText(products.length, hasNextPage, category)}
       </Text>
       {renderContent()}
-    </>
+    </section>
   );
 };
 

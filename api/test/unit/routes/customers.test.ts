@@ -333,5 +333,4 @@ describe("PUT /api/customers/cart", () => {
     expect(res.status).toBe(400);
     expect(customerService.updateCart).not.toHaveBeenCalled();
   });
-
 });

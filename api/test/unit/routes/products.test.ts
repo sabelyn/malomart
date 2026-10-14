@@ -104,7 +104,9 @@ describe("GET /api/products/batch", () => {
   const OTHER_ID = "8c1e2d3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f";
 
   it("returns the requested products without requiring auth", async () => {
-    const res = await request(app).get("/api/products/batch").query({ ids: `${ID},${OTHER_ID}` });
+    const res = await request(app)
+      .get("/api/products/batch")
+      .query({ ids: `${ID},${OTHER_ID}` });
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual(listResult.data);

@@ -14,6 +14,7 @@ import CartSummary from "@/components/cart/CartSummary";
 import MaloSays from "@/components/MaloSays";
 import PageLoader from "@/components/PageLoader";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { notify } from "@/notifications/notify";
 import classes from "./pages.module.css";
 
 const byTitle = (a: ProductOverview, b: ProductOverview) => a.title.localeCompare(b.title);
@@ -75,7 +76,7 @@ const CartPage = () => {
 
   const remove = (product: ProductOverview) => {
     cart.remove(product.id);
-    cart.announce(`Removed ${product.title} from your cart.`);
+    notify({ message: `Removed ${product.title} from your cart.` });
     headingRef.current?.focus();
   };
 
@@ -154,11 +155,6 @@ const CartPage = () => {
               <li key={notice}>{notice}</li>
             ))}
           </ul>
-        </Alert>
-      )}
-      {cart.saveFailed && (
-        <Alert mt="xl" variant="light" color="red">
-          Couldn't save that change. Your cart is back to how it was.
         </Alert>
       )}
       {renderContent()}

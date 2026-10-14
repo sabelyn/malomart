@@ -47,7 +47,10 @@ describe("sign out", () => {
   });
 
   it("signs out from a protected page and lands on the home page, not sign in", async () => {
-    const fetch = stubApi({ ...customerHandlers, "POST /api/auth/sign-out": () => new Response(null, { status: 204 }) });
+    const fetch = stubApi({
+      ...customerHandlers,
+      "POST /api/auth/sign-out": () => new Response(null, { status: 204 })
+    });
     const user = userEvent.setup();
     const { queryClient } = renderWithProviders(app, { route: "/orders", session: customer, withCart: true });
 

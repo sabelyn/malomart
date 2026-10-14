@@ -5,7 +5,11 @@ import { Endpoint, Route } from "../../../src/api";
 const ID = "3f2a9c1e-7b4d-4e8a-9f6b-2c1d0e5a7b3c";
 
 const Params = strictObject({ id: uuid() });
-const Query = object({ limit: coerce.number().optional(), name: string().optional(), tags: string().array().optional() });
+const Query = object({
+  limit: coerce.number().optional(),
+  name: string().optional(),
+  tags: string().array().optional()
+});
 const Body = strictObject({ name: string(), price: number() });
 
 const baseConfig = {

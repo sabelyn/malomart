@@ -4,7 +4,6 @@ import { Navigate, Route, Routes } from "react-router";
 import Layout from "@/components/Layout";
 import CartPage from "@/pages/CartPage";
 import CatalogPage from "@/pages/CatalogPage";
-import HomePage from "@/pages/HomePage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import PlaceholderPage from "@/pages/PlaceholderPage";
 import ProductPage from "@/pages/ProductPage";
@@ -22,7 +21,7 @@ const SignUpPage = lazy(() => import("@/pages/auth/SignUpPage"));
 const App = () => (
   <Routes>
     <Route element={<Layout />}>
-      <Route index element={<HomePage />} />
+      <Route index element={<Navigate to="/products" replace />} />
       <Route path="products">
         <Route index element={<CatalogPage />} />
         <Route path=":id" element={<ProductPage />} />

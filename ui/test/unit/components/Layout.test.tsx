@@ -49,7 +49,8 @@ describe("Layout", () => {
 
   it("marks the current page in the main navigation", () => {
     stubApi({
-      "GET /api/customers": () => json(200, { id: CUSTOMER_ID, defaultAddress: null, defaultPaymentMethod: null, cart: {} })
+      "GET /api/customers": () =>
+        json(200, { id: CUSTOMER_ID, defaultAddress: null, defaultPaymentMethod: null, cart: {} })
     });
     renderWithProviders(app, { route: "/products", session: customer, withCart: true });
 

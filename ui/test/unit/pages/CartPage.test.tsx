@@ -5,7 +5,7 @@ import { Route, Routes } from "react-router";
 
 import { GUEST_CART_KEY } from "@/cart/guestCart";
 import CartPage from "@/pages/CartPage";
-import { customer, json, renderWithProviders } from "../../utils";
+import { announced, customer, json, renderWithProviders, toasts } from "../../utils";
 
 const CUSTOMER_ID = "9b1e4c2a-5d3f-4a6b-8c7d-1e2f3a4b5c6d";
 const MISSING_ID = "0f0e0d0c-0b0a-4908-8706-050403020100";
@@ -34,25 +34,29 @@ type StubOptions = {
 
 const stubCartApi = ({ serverCart = {}, onSave = () => json(200, {}) }: StubOptions = {}) => {
   const saves: Cart[] = [];
-  const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+  const fetch = vi.fn<typeof globalThis.fetch>((input, init) => {
     const url = new URL(String(input), "http://localhost");
     const method = init?.method ?? "GET";
     if (method === "GET" && url.pathname === "/api/products/batch") {
       const ids = url.searchParams.get("ids")?.split(",") ?? [];
-      return json(
-        200,
-        catalog.filter(product => ids.includes(product.id))
+      return Promise.resolve(
+        json(
+          200,
+          catalog.filter(product => ids.includes(product.id))
+        )
       );
     }
     if (method === "GET" && url.pathname === "/api/customers") {
-      return json(200, { id: CUSTOMER_ID, defaultAddress: null, defaultPaymentMethod: null, cart: serverCart });
+      return Promise.resolve(
+        json(200, { id: CUSTOMER_ID, defaultAddress: null, defaultPaymentMethod: null, cart: serverCart })
+      );
     }
     if (method === "PUT" && url.pathname === "/api/customers/cart") {
       const body = JSON.parse(String(init?.body)) as Cart;
       saves.push(body);
-      return onSave(body);
+      return Promise.resolve(onSave(body));
     }
-    throw new Error(`Unexpected request: ${method} ${String(input)}`);
+    return Promise.reject(new Error(`Unexpected request: ${method} ${String(input)}`));
   });
   vi.stubGlobal("fetch", fetch);
   return { fetch, saves };
@@ -77,7 +81,7 @@ afterEach(() => {
 });
 
 describe("CartPage", () => {
-  it("sends shoppers back to the shelves when the cart is empty", async () => {
+  it("sends shoppers back to the shelves when the cart is empty", () => {
     const { fetch } = stubCartApi();
     renderCart();
 
@@ -165,7 +169,7 @@ describe("CartPage", () => {
 
     expect(screen.queryByRole("heading", { level: 2, name: "Red Potion" })).toBeNull();
     expect(guestCart()).toEqual({ [shield.id]: 1 });
-    expect(screen.getByText("Removed Red Potion from your cart.")).toBeTruthy();
+    expect(announced()).toBe("Removed Red Potion from your cart.");
     expect(document.activeElement).toBe(screen.getByRole("heading", { level: 1, name: "Your cart" }));
   });
 
@@ -222,7 +226,10 @@ describe("CartPage", () => {
     await screen.findByRole("heading", { level: 2, name: "Hylian Shield" });
     await user.selectOptions(quantity("Hylian Shield"), "3");
 
-    expect(await screen.findByText("Couldn't save that change. Your cart is back to how it was.")).toBeTruthy();
+    await waitFor(() =>
+      expect(announced("assertive")).toBe("Couldn't save your cart. It's back to how it was. Try again.")
+    );
+    expect(toasts()).toHaveLength(1);
     await waitFor(() => expect((quantity("Hylian Shield") as HTMLSelectElement).value).toBe("1"));
   });
 });

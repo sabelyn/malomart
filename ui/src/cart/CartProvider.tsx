@@ -1,10 +1,10 @@
-import { VisuallyHidden } from "@mantine/core";
 import { customers, getCustomer, updateCart } from "@mm/lib/customers";
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { apiCall, routeKey, useSession } from "@/api";
+import { notify } from "@/notifications/notify";
 import { addItems, applyQuantities, countItems, isEmptyCart } from "./cartItems";
 import type { CartItems } from "./guestCart";
 import { readGuestCart, subscribeGuestCart, writeGuestCart } from "./guestCart";
@@ -18,7 +18,6 @@ type CartContextValue = {
   count: number;
   ready: boolean;
   loadFailed: boolean;
-  saveFailed: boolean;
   adjustments: Quantities;
   add: (product: CartProduct) => void;
   setQuantity: (productId: string, amount: number) => void;
@@ -26,7 +25,6 @@ type CartContextValue = {
   adjust: (quantities: Quantities) => void;
   clearAdjustments: () => void;
   retryLoad: () => void;
-  announce: (message: string) => void;
 };
 
 type SaveInput = { userId: string; items: CartItems; mergedGuestCart?: boolean };
@@ -60,8 +58,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const guestItems = useSyncExternalStore(subscribeGuestCart, readGuestCart);
   const serverCart = useQuery({ ...serverCartQuery(userId ?? ""), enabled: !!userId });
   const [adjusted, setAdjusted] = useState<{ userId?: string; quantities: Quantities }>({ quantities: {} });
-  const [saveFailed, setSaveFailed] = useState(false);
-  const [announcement, setAnnouncement] = useState({ id: 0, message: "" });
   const mergedFor = useRef<string>(undefined);
 
   const adjustments = adjusted.userId === userId ? adjusted.quantities : EMPTY;
@@ -71,8 +67,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       userId: forUser,
       quantities: current.userId === forUser ? { ...current.quantities, ...quantities } : quantities
     }));
-
-  const announce = (message: string) => setAnnouncement(current => ({ id: current.id + 1, message }));
 
   const save = useMutation({
     mutationKey: CART_MUTATION_KEY,
@@ -91,7 +85,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       addAdjustments(savedFor, reduced);
     },
     onError: async (_, { userId: savedFor }) => {
-      setSaveFailed(true);
+      notify({ tone: "error", title: "Couldn't save your cart", message: "It's back to how it was. Try again." });
       if (queryClient.isMutating({ mutationKey: CART_MUTATION_KEY }) === 1) {
         await queryClient.invalidateQueries({ queryKey: serverCartQuery(savedFor).queryKey });
       }
@@ -106,7 +100,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const update = (updater: (items: CartItems) => CartItems) => {
-    setSaveFailed(false);
     if (!userId) {
       writeGuestCart(updater(readGuestCart()));
       return true;
@@ -134,11 +127,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const add = (product: CartProduct) => {
     if (!ready) {
-      announce("Your cart is still loading. Try again in a moment.");
+      notify({ tone: "info", message: "Your cart is still loading. Try again in a moment." });
       return;
     }
     if ((items[product.id] ?? 0) >= product.stockCount) {
-      announce(`Your cart already has every ${product.title} in stock.`);
+      notify({ tone: "info", message: `Your cart already has every ${product.title} in stock.` });
       return;
     }
     const added = update(current => ({
@@ -146,7 +139,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       [product.id]: Math.min((current[product.id] ?? 0) + 1, product.stockCount)
     }));
     if (added) {
-      announce(`Added ${product.title} to your cart. ${count + 1} ${itemsWord(count + 1)} in cart.`);
+      notify({ message: `Added ${product.title} to your cart. ${count + 1} ${itemsWord(count + 1)} in cart.` });
     }
   };
 
@@ -155,7 +148,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     count,
     ready,
     loadFailed: !!userId && serverCart.isError,
-    saveFailed,
     adjustments,
     add,
     setQuantity: (productId, amount) => update(current => ({ ...current, [productId]: amount })),
@@ -166,16 +158,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       }
     },
     clearAdjustments: () => setAdjusted({ quantities: {} }),
-    retryLoad: () => void serverCart.refetch(),
-    announce
+    retryLoad: () => void serverCart.refetch()
   };
 
-  return (
-    <CartContext.Provider value={value}>
-      {children}
-      <VisuallyHidden aria-live="polite" aria-atomic="true">
-        <span key={announcement.id}>{announcement.message}</span>
-      </VisuallyHidden>
-    </CartContext.Provider>
-  );
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };

@@ -6,14 +6,19 @@ import voices from "@/styles/voices.module.css";
 
 type ChudleyHypeProps = {
   children: ReactNode;
+  heading?: boolean;
 };
 
-const ChudleyHype = ({ children }: ChudleyHypeProps) => (
+const ChudleyHype = ({ children, heading = true }: ChudleyHypeProps) => (
   <div className={voices.hypeRow}>
     <img src={chudleyImage} alt="" className={voices.chudley} />
-    <Title order={1} className={voices.hype}>
-      {children}
-    </Title>
+    {heading ? (
+      <Title order={1} className={voices.hype}>
+        {children}
+      </Title>
+    ) : (
+      <p className={voices.hype}>{children}</p>
+    )}
   </div>
 );
 

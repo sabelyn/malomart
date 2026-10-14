@@ -11,15 +11,14 @@ export type PlacardProduct = ProductOverview & Partial<Pick<Product, "category" 
 
 type ProductPlacardProps = {
   product: PlacardProduct;
-  image?: string;
   onAddToCart: (product: PlacardProduct) => void;
 };
 
 const THUMBNAIL_WIDTH = 320;
 
-const ProductPlacard = ({ product, image, onAddToCart }: ProductPlacardProps) => {
+const ProductPlacard = ({ product, onAddToCart }: ProductPlacardProps) => {
   const originalPrice = product.originalPrice ?? undefined;
-  const src = image ?? (product.thumbnailKey && productImageSrc(product.thumbnailKey, THUMBNAIL_WIDTH));
+  const src = product.thumbnailKey && productImageSrc(product.thumbnailKey, THUMBNAIL_WIDTH);
 
   return (
     <article className={classes.placard} aria-labelledby={`product-${product.id}`}>

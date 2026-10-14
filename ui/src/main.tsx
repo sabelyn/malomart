@@ -1,6 +1,7 @@
 import "@fontsource-variable/inter/index.css";
 import "@fontsource/shrikhand/400.css";
 import "@mantine/core/styles.css";
+import "@mantine/notifications/styles.css";
 import "@/styles/global.css";
 
 import { MantineProvider } from "@mantine/core";
@@ -13,6 +14,7 @@ import { BrowserRouter } from "react-router";
 import { queryClient } from "@/api";
 import App from "@/App";
 import { CartProvider } from "@/cart/CartProvider";
+import AppNotifications from "@/notifications/AppNotifications";
 import { SessionExitProvider } from "@/routes/sessionExit";
 import theme from "./theme";
 
@@ -23,6 +25,7 @@ root.render(
       <BrowserRouter>
         <SessionExitProvider>
           <MantineProvider theme={theme} forceColorScheme="dark">
+            <AppNotifications />
             <CartProvider>
               <App />
             </CartProvider>

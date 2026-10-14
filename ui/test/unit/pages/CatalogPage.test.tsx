@@ -51,6 +51,13 @@ describe("CatalogPage", () => {
     expect(link.getAttribute("href")).toMatch(/^\/products\/[\w-]+$/);
     expect(screen.getByRole("status").textContent).toBe("Showing 2 products.");
     expect(screen.queryByRole("button", { name: "Show more" })).toBeNull();
+    expect(screen.getByRole("region", { name: "Products" })).toBeTruthy();
+    expect(screen.getAllByRole("heading").map(heading => `${heading.tagName} ${heading.textContent}`)).toEqual([
+      "H1 Catalog",
+      "H2 Products",
+      "H3 Hylian Shield",
+      "H3 Red Potion"
+    ]);
   });
 
   it("filters by category and stock through the URL", async () => {

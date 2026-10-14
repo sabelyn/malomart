@@ -1,3 +1,5 @@
+import { clearNotifications } from "@/notifications/notify";
+
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: (query: string) => ({
@@ -23,4 +25,5 @@ Object.defineProperty(window, "ResizeObserver", { writable: true, value: ResizeO
 
 afterEach(() => {
   localStorage.clear();
+  clearNotifications();
 });

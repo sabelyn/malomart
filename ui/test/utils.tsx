@@ -7,6 +7,7 @@ import { MemoryRouter, useLocation } from "react-router";
 
 import { sessionKey } from "@/api";
 import { CartProvider } from "@/cart/CartProvider";
+import AppNotifications from "@/notifications/AppNotifications";
 import { SessionExitProvider } from "@/routes/sessionExit";
 
 export const customer: CurrentUser = {
@@ -44,6 +45,7 @@ export const renderWithProviders = (ui: ReactNode, { route = "/", session, withC
   const result = render(
     <QueryClientProvider client={queryClient}>
       <MantineProvider env="test">
+        <AppNotifications />
         <MemoryRouter initialEntries={[route]}>
           <SessionExitProvider>{withCart ? <CartProvider>{ui}</CartProvider> : ui}</SessionExitProvider>
         </MemoryRouter>
@@ -52,6 +54,12 @@ export const renderWithProviders = (ui: ReactNode, { route = "/", session, withC
   );
   return { ...result, queryClient };
 };
+
+export const announced = (urgency: "polite" | "assertive" = "polite") =>
+  document.querySelector(`[aria-live="${urgency}"]`)?.textContent ?? "";
+
+export const toasts = () =>
+  [...document.querySelectorAll(".mantine-Notification-root")].map(toast => toast.textContent);
 
 export const neverResolvingFetch = () =>
   vi.stubGlobal(

@@ -5,7 +5,7 @@ import { Route, Routes } from "react-router";
 
 import { GUEST_CART_KEY } from "@/cart/guestCart";
 import ProductPage from "@/pages/ProductPage";
-import { json, renderWithProviders, stubApi } from "../../utils";
+import { announced, json, renderWithProviders, stubApi, toasts } from "../../utils";
 
 const ID = "5d0a4c1e-3b1f-4c55-9a51-7f3c2e1b8a01";
 
@@ -71,7 +71,8 @@ describe("ProductPage", () => {
     await user.click(await screen.findByRole("button", { name: "Add to cart" }));
 
     expect(JSON.parse(localStorage.getItem(GUEST_CART_KEY) ?? "{}")).toEqual({ [ID]: 1 });
-    expect(screen.getByText("Added Hylian Shield to your cart. 1 item in cart.")).toBeTruthy();
+    expect(announced()).toBe("Added Hylian Shield to your cart. 1 item in cart.");
+    expect(toasts()).toEqual(["Added Hylian Shield to your cart. 1 item in cart."]);
   });
 
   it("won't add more than the stock on hand", async () => {
@@ -83,7 +84,7 @@ describe("ProductPage", () => {
     await user.click(await screen.findByRole("button", { name: "Add to cart" }));
 
     expect(JSON.parse(localStorage.getItem(GUEST_CART_KEY) ?? "{}")).toEqual({ [ID]: 2 });
-    expect(screen.getByText("Your cart already has every Hylian Shield in stock.")).toBeTruthy();
+    expect(announced()).toBe("Your cart already has every Hylian Shield in stock.");
   });
 
   it("disables adding a sold-out product", async () => {
