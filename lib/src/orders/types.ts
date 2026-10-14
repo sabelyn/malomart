@@ -23,7 +23,7 @@ export type OrderItemEntry = zinfer<typeof OrderItemEntry>;
 export const Order = strictObject({
   id: Id,
   customerId: Id,
-  address: Address.omit({ id: true, customerId: true }),
+  address: Address.omit({ id: true, customerId: true, label: true }),
   paymentMethod: PaymentMethod.omit({ id: true, customerId: true }),
   orderDate: iso.datetime(),
   status: OrderStatusSchema,

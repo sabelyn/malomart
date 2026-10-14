@@ -2,13 +2,9 @@ import type { infer as zinfer } from "zod";
 import { object, strictObject } from "zod";
 
 import { Id, PaginationQuery } from "../common";
-import { Order, OrderStatusSchema } from "./types";
+import { OrderStatusSchema } from "./types";
 
 export const CreateOrderBody = strictObject({
-  ...Order.pick({
-    customerId: true,
-    items: true
-  }).shape,
   addressId: Id,
   paymentMethodId: Id
 });

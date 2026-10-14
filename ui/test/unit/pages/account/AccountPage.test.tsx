@@ -27,7 +27,8 @@ const customerData: CustomerDto = {
     expirationMonth: 4,
     expirationYear: 2030,
     isDefault: true
-  }
+  },
+  cart: {}
 };
 
 const renderAccount = (route = "/account") =>

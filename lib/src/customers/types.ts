@@ -1,5 +1,5 @@
 import type { infer as zinfer } from "zod";
-import { number, strictObject, string, enum as zenum } from "zod";
+import { number, record, strictObject, string, enum as zenum } from "zod";
 
 import { Id, PositiveInt } from "../common";
 
@@ -61,3 +61,9 @@ export const PaymentMethod = strictObject({
   token: string().nonempty()
 });
 export type PaymentMethod = zinfer<typeof PaymentMethod>;
+
+export const Cart = strictObject({
+  customerId: Id,
+  items: record(Id, PositiveInt)
+});
+export type Cart = zinfer<typeof Cart>;

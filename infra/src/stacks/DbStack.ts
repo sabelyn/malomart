@@ -10,7 +10,8 @@ export const INDEXES: TableIndexes = {
   ordersByCustomerStatus: "IDX_ORDERS_CUSTOMER_STATUS",
   ordersByStatus: "IDX_ORDERS_STATUS",
   paymentMethodsByCustomer: "IDX_PAYMENT_METHODS_CUSTOMER",
-  productsByCategory: "IDX_PRODUCTS_CATEGORY"
+  productsByCategory: "IDX_PRODUCTS_CATEGORY",
+  productsByCategoryInStock: "IDX_PRODUCTS_CATEGORY_IN_STOCK"
 };
 
 export class DbStack extends Stack {
@@ -31,6 +32,11 @@ export class DbStack extends Stack {
 
     const customersTable = new Table(this, "CustomersTable", {
       partitionKey: { name: "id", type: AttributeType.STRING },
+      billingMode: BillingMode.PAY_PER_REQUEST
+    });
+
+    const cartsTable = new Table(this, "CartsTable", {
+      partitionKey: { name: "customerId", type: AttributeType.STRING },
       billingMode: BillingMode.PAY_PER_REQUEST
     });
 
@@ -85,9 +91,18 @@ export class DbStack extends Stack {
       partitionKey: { name: "category", type: AttributeType.STRING },
       sortKey: { name: "id", type: AttributeType.STRING }
     });
+    productsTable.addGlobalSecondaryIndex({
+      indexName: INDEXES.productsByCategoryInStock,
+      partitionKeys: [
+        { name: "category", type: AttributeType.STRING },
+        { name: "inStock", type: AttributeType.NUMBER }
+      ],
+      sortKey: { name: "id", type: AttributeType.STRING }
+    });
 
     this.tables = {
       addresses: addressesTable,
+      carts: cartsTable,
       customers: customersTable,
       orders: ordersTable,
       paymentMethods: paymentMethodsTable,

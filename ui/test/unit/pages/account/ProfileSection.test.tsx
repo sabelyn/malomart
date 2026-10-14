@@ -14,7 +14,8 @@ import { customer, json, LocationDisplay, renderWithProviders, requestsTo, stubA
 const customerData: CustomerDto = {
   id: "9b1e4c2a-5d3f-4a6b-8c7d-1e2f3a4b5c6d",
   defaultAddress: null,
-  defaultPaymentMethod: null
+  defaultPaymentMethod: null,
+  cart: {}
 };
 
 const GET_CUSTOMER = { "GET /api/customers": () => json(200, customerData) };

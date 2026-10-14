@@ -12,7 +12,7 @@ export const products: SeedProduct[] = [
     description: "Green tunic. Pointy hat. Heroism sold separately.",
     category: "Armor",
     price: 150,
-    inStock: 6,
+    stockCount: 6,
     features: ["Breathable linen", "Hat included", "Machine washable"],
     images: ["tp-items/equipment/heros-clothes.png"]
   },
@@ -23,7 +23,7 @@ export const products: SeedProduct[] = [
     category: "Armor",
     price: 250,
     originalPrice: 300,
-    inStock: 2,
+    stockCount: 2,
     features: ["Underwater breathing", "Cold-water rated", "Fish-scale finish"],
     images: ["tp-items/equipment/zora-armor.png"]
   },
@@ -34,7 +34,7 @@ export const products: SeedProduct[] = [
       "Damage costs rupees instead of hearts. Also costs rupees while you stand around. Malo Mart accepts rupees.",
     category: "Armor",
     price: 598,
-    inStock: 1,
+    stockCount: 1,
     features: ["Converts damage into rupee loss", "Drains rupees while worn", "Polished brass finish"],
     images: ["tp-items/equipment/magic-armor.png"]
   },
@@ -44,7 +44,7 @@ export const products: SeedProduct[] = [
     description: "Heavy. You will not blow away. You will not float either. Choose carefully.",
     category: "Armor",
     price: 120,
-    inStock: 4,
+    stockCount: 4,
     features: ["Magnetic soles", "Holds firm in strong currents", "Doubles as a doorstop"],
     images: ["tp-items/inventory/iron-boots.png"]
   },
@@ -54,7 +54,7 @@ export const products: SeedProduct[] = [
     description: "Thirty arrows. Pointy end goes forward.",
     category: "Arrows",
     price: 30,
-    inStock: 99,
+    stockCount: 99,
     features: ["Bundle of 30", "Fits any quiver"],
     images: ["tp-items/collectibles/arrows.png"]
   },
@@ -64,7 +64,7 @@ export const products: SeedProduct[] = [
     description: "Holds arrows. Thirty of them.",
     category: "Arrows",
     price: 50,
-    inStock: 10,
+    stockCount: 10,
     features: ["Holds 30 arrows"],
     images: ["tp-items/upgrades/quiver.png"]
   },
@@ -74,7 +74,7 @@ export const products: SeedProduct[] = [
     description: "Holds more arrows. Sixty of them.",
     category: "Arrows",
     price: 120,
-    inStock: 5,
+    stockCount: 5,
     features: ["Holds 60 arrows"],
     images: ["tp-items/upgrades/big-quiver.png"]
   },
@@ -85,7 +85,7 @@ export const products: SeedProduct[] = [
     category: "Arrows",
     price: 250,
     originalPrice: 300,
-    inStock: 2,
+    stockCount: 2,
     features: ["Holds 100 arrows", "Reinforced strap"],
     images: ["tp-items/upgrades/giant-quiver.png"]
   },
@@ -95,7 +95,7 @@ export const products: SeedProduct[] = [
     description: "They explode. Do not hold them for long.",
     category: "Bombs",
     price: 50,
-    inStock: 40,
+    stockCount: 40,
     features: ["Pack of 10", "Short fuse", "Clears cracked walls"],
     images: ["tp-items/inventory/bombs.png"]
   },
@@ -105,7 +105,7 @@ export const products: SeedProduct[] = [
     description: "Explodes underwater. Also above water. Mostly underwater.",
     category: "Bombs",
     price: 60,
-    inStock: 20,
+    stockCount: 20,
     features: ["Pack of 5", "Waterproof fuse"],
     images: ["tp-items/inventory/water-bombs.png"]
   },
@@ -116,7 +116,7 @@ export const products: SeedProduct[] = [
     category: "Bombs",
     price: 70,
     originalPrice: 90,
-    inStock: 15,
+    stockCount: 15,
     features: ["Self-propelled", "Pack of 10", "Climbs gentle slopes"],
     images: ["tp-items/inventory/bomblings.png"]
   },
@@ -126,7 +126,7 @@ export const products: SeedProduct[] = [
     description: "Holds bombs. Two styles. Same bombs.",
     category: "Bombs",
     price: 100,
-    inStock: 8,
+    stockCount: 8,
     features: ["Holds 30 bombs", "Available in round or sack"],
     images: ["tp-items/upgrades/bomb-bag-round.png", "tp-items/upgrades/bomb-bag-sack.png"]
   },
@@ -136,7 +136,7 @@ export const products: SeedProduct[] = [
     description: "From Ordon goats. Drink half now. Drink half later.",
     category: "Food",
     price: 10,
-    inStock: 24,
+    stockCount: 24,
     features: ["Two servings per bottle", "Restores a little health"],
     images: ["tp-items/bottles/milk.png"]
   },
@@ -146,7 +146,7 @@ export const products: SeedProduct[] = [
     description: "Big. Orange. Good in soup.",
     category: "Food",
     price: 25,
-    inStock: 12,
+    stockCount: 12,
     features: ["Locally grown", "Soup-grade"],
     images: ["tp-items/quest/ordon-pumpkin.png"]
   },
@@ -156,7 +156,7 @@ export const products: SeedProduct[] = [
     description: "Plant them. Wait. Get pumpkins. Or eat them now.",
     category: "Food",
     price: 5,
-    inStock: 50,
+    stockCount: 50,
     features: [],
     images: ["tp-items/collectibles/pumpkin-seeds.png"]
   },
@@ -166,7 +166,7 @@ export const products: SeedProduct[] = [
     description: "Technically food. Fish agree.",
     category: "Food",
     price: 10,
-    inStock: 18,
+    stockCount: 18,
     features: ["Restores a little health", "Doubles as bait"],
     images: ["tp-items/bottles/bee-larva.png"]
   },
@@ -176,7 +176,7 @@ export const products: SeedProduct[] = [
     description: "Shoots a claw. Pulls you to whatever it grabs. Grab something good.",
     category: "Gadgets",
     price: 300,
-    inStock: 3,
+    stockCount: 3,
     features: ["Spring-loaded chain", "Latches onto mesh and vines"],
     images: ["tp-items/inventory/clawshot.png"]
   },
@@ -187,7 +187,7 @@ export const products: SeedProduct[] = [
     category: "Gadgets",
     price: 550,
     originalPrice: 600,
-    inStock: 1,
+    stockCount: 1,
     features: ["One for each hand", "Chain-to-chain transfers"],
     images: ["tp-items/inventory/double-clawshots.png"]
   },
@@ -197,7 +197,7 @@ export const products: SeedProduct[] = [
     description: "Stand on it. Spin. Ride the grooves in the wall. Get dizzy.",
     category: "Gadgets",
     price: 200,
-    inStock: 2,
+    stockCount: 2,
     features: ["Rides wall tracks", "Crosses quicksand"],
     images: ["tp-items/inventory/spinner.png"]
   },
@@ -207,7 +207,7 @@ export const products: SeedProduct[] = [
     description: "Throw it. Wind does the rest. It comes back. Usually.",
     category: "Gadgets",
     price: 150,
-    inStock: 4,
+    stockCount: 4,
     features: ["Lock onto up to five targets", "Spins windmills", "Fairy not included"],
     images: ["tp-items/inventory/gale-boomerang.png"]
   },
@@ -217,7 +217,7 @@ export const products: SeedProduct[] = [
     description: "Moves statues. Statues not included.",
     category: "Gadgets",
     price: 400,
-    inStock: 0,
+    stockCount: 0,
     features: ["Animates ancient statues"],
     images: ["tp-items/inventory/dominion-rod.png"]
   },
@@ -227,7 +227,7 @@ export const products: SeedProduct[] = [
     description: "Lights torches. Lights dark rooms. Needs oil. Sold here.",
     category: "Gadgets",
     price: 80,
-    inStock: 9,
+    stockCount: 9,
     features: ["Refillable", "Burns away cobwebs"],
     images: ["tp-items/inventory/lantern.png"]
   },
@@ -237,7 +237,7 @@ export const products: SeedProduct[] = [
     description: "See far things up close. Wear it with a bow for long shots.",
     category: "Gadgets",
     price: 100,
-    inStock: 5,
+    stockCount: 5,
     features: ["Telescopic lens", "Pairs with any bow"],
     images: ["tp-items/inventory/hawkeye.png"]
   },
@@ -247,7 +247,7 @@ export const products: SeedProduct[] = [
     description: "Blow into it. Your horse comes. Horse not included.",
     category: "Gadgets",
     price: 40,
-    inStock: 7,
+    stockCount: 7,
     features: [],
     images: ["tp-items/inventory/horse-call.png"]
   },
@@ -257,7 +257,7 @@ export const products: SeedProduct[] = [
     description: "Gets you out of dungeons fast. Talks the whole time. Son included.",
     category: "Gadgets",
     price: 350,
-    inStock: 1,
+    stockCount: 1,
     features: ["Instant dungeon exit", "Return trip via son", "Chatty"],
     images: ["tp-items/inventory/ooccoo.png", "tp-items/inventory/ooccoo-jr.png"]
   },
@@ -267,7 +267,7 @@ export const products: SeedProduct[] = [
     description: "For fish. Works with worms, bee larva, or a coral earring. Bait sold separately.",
     category: "Gadgets",
     price: 40,
-    inStock: 14,
+    stockCount: 14,
     features: ["Hand-carved", "Accepts most bait", "Lure-compatible"],
     images: [
       "tp-items/fishing/rod.png",
@@ -284,7 +284,7 @@ export const products: SeedProduct[] = [
     description: "Restores eight hearts. Tastes red.",
     category: "Potions",
     price: 30,
-    inStock: 30,
+    stockCount: 30,
     features: ["Restores 8 hearts"],
     images: ["tp-items/bottles/red-potion.png"]
   },
@@ -294,7 +294,7 @@ export const products: SeedProduct[] = [
     description: "Restores all hearts. Costs more. That is how it works.",
     category: "Potions",
     price: 100,
-    inStock: 8,
+    stockCount: 8,
     features: ["Restores all hearts"],
     images: ["tp-items/bottles/light-blue.png"]
   },
@@ -305,7 +305,7 @@ export const products: SeedProduct[] = [
     category: "Potions",
     price: 15,
     originalPrice: 20,
-    inStock: 11,
+    stockCount: 11,
     features: ["Effect varies", "No refunds"],
     images: ["tp-items/bottles/purple.png"]
   },
@@ -315,7 +315,7 @@ export const products: SeedProduct[] = [
     description: "Not recommended. We sell it anyway.",
     category: "Potions",
     price: 5,
-    inStock: 40,
+    stockCount: 40,
     features: ["Restores nothing", "Strong aftertaste"],
     images: ["tp-items/bottles/black.png"]
   },
@@ -325,7 +325,7 @@ export const products: SeedProduct[] = [
     description: "Rare. Heals a lot. Do not ask where we got it.",
     category: "Potions",
     price: 150,
-    inStock: 1,
+    stockCount: 1,
     features: ["Restores all hearts", "Limited supply"],
     images: ["tp-items/bottles/orange-spotted.png"]
   },
@@ -335,7 +335,7 @@ export const products: SeedProduct[] = [
     description: "Fills your lantern. Do not drink it.",
     category: "Potions",
     price: 20,
-    inStock: 25,
+    stockCount: 25,
     features: ["Full refill", "Not for drinking"],
     images: ["tp-items/bottles/lantern-oil.png"]
   },
@@ -346,7 +346,7 @@ export const products: SeedProduct[] = [
     category: "Potions",
     price: 200,
     originalPrice: 250,
-    inStock: 3,
+    stockCount: 3,
     features: ["Automatic revive", "Restores 8 hearts"],
     images: ["tp-items/bottles/fairy.png"]
   },
@@ -356,7 +356,7 @@ export const products: SeedProduct[] = [
     description: "Metal. Does not burn. Malo Mart exclusive.",
     category: "Shields",
     price: 200,
-    inStock: 5,
+    stockCount: 5,
     features: ["Fireproof", "Royal crest", "Blocks most projectiles"],
     images: ["tp-items/equipment/hylian-shield.png"]
   },
@@ -367,7 +367,7 @@ export const products: SeedProduct[] = [
     category: "Shields",
     price: 50,
     originalPrice: 80,
-    inStock: 6,
+    stockCount: 6,
     features: ["Locally made", "Flammable"],
     images: ["tp-items/equipment/ordon-shield.png"]
   },
@@ -377,7 +377,7 @@ export const products: SeedProduct[] = [
     description: "Wood. Burns. Cheap.",
     category: "Shields",
     price: 30,
-    inStock: 20,
+    stockCount: 20,
     features: ["Flammable"],
     images: ["tp-items/equipment/wooden-shield.png"]
   },
@@ -387,7 +387,7 @@ export const products: SeedProduct[] = [
     description: "Blade of evil's bane. Currently in a pedestal. Ask about the waiting list.",
     category: "Weapons",
     price: 9999,
-    inStock: 0,
+    stockCount: 0,
     features: ["Repels evil", "Pedestal sold separately"],
     images: ["tp-items/equipment/master-sword.png"]
   },
@@ -397,7 +397,7 @@ export const products: SeedProduct[] = [
     description: "Made by the Ordon blacksmith. Sharp.",
     category: "Weapons",
     price: 100,
-    inStock: 4,
+    stockCount: 4,
     features: ["Forged in Ordon", "Comes with sheath"],
     images: ["tp-items/equipment/ordon-sword.png"]
   },
@@ -407,7 +407,7 @@ export const products: SeedProduct[] = [
     description: "Practice sword. Hits like a stick. Is a stick.",
     category: "Weapons",
     price: 20,
-    inStock: 15,
+    stockCount: 15,
     features: [],
     images: ["tp-items/equipment/wooden-sword.png"]
   },
@@ -417,7 +417,7 @@ export const products: SeedProduct[] = [
     description: "Shoots arrows. Arrows sold separately. See Arrows.",
     category: "Weapons",
     price: 150,
-    inStock: 6,
+    stockCount: 6,
     features: ["Pairs with Hawkeye", "Bomb-arrow compatible"],
     images: ["tp-items/inventory/heros-bow.png"]
   },
@@ -428,7 +428,7 @@ export const products: SeedProduct[] = [
     category: "Weapons",
     price: 30,
     originalPrice: 40,
-    inStock: 10,
+    stockCount: 10,
     features: ["Uses seeds as ammo"],
     images: ["tp-items/inventory/slingshot.png"]
   },
@@ -438,7 +438,7 @@ export const products: SeedProduct[] = [
     description: "Very heavy. Very effective. Swing it and hope.",
     category: "Weapons",
     price: 450,
-    inStock: 1,
+    stockCount: 1,
     features: ["Breaks ice and armor", "Two-handed"],
     images: ["tp-items/inventory/ball-and-chain.png"]
   },
@@ -448,7 +448,7 @@ export const products: SeedProduct[] = [
     description: "Holds 300 rupees. Spend them here.",
     category: "Misc",
     price: 30,
-    inStock: 20,
+    stockCount: 20,
     features: ["Holds 300 rupees"],
     images: ["tp-items/upgrades/wallet.png"]
   },
@@ -458,7 +458,7 @@ export const products: SeedProduct[] = [
     description: "Holds 600 rupees. Spend them here too.",
     category: "Misc",
     price: 120,
-    inStock: 6,
+    stockCount: 6,
     features: ["Holds 600 rupees"],
     images: ["tp-items/upgrades/big-wallet.png"]
   },
@@ -468,7 +468,7 @@ export const products: SeedProduct[] = [
     description: "Holds 1,000 rupees. Now you can afford the Magic Armor.",
     category: "Misc",
     price: 300,
-    inStock: 2,
+    stockCount: 2,
     features: ["Holds 1,000 rupees"],
     images: ["tp-items/upgrades/giant-wallet.png"]
   },
@@ -478,7 +478,7 @@ export const products: SeedProduct[] = [
     description: "A bottle. Empty. Very useful. Very rare.",
     category: "Misc",
     price: 50,
-    inStock: 0,
+    stockCount: 0,
     features: ["Holds potions, fairies, bait, soup"],
     images: ["tp-items/bottles/empty.png"]
   },
@@ -488,7 +488,7 @@ export const products: SeedProduct[] = [
     description: "Bait. Not food. Please.",
     category: "Misc",
     price: 5,
-    inStock: 60,
+    stockCount: 60,
     features: ["Fish love it"],
     images: ["tp-items/bottles/worm.png"]
   },
@@ -498,7 +498,7 @@ export const products: SeedProduct[] = [
     description: "Fancy lure. Also an earring. Fish like it more than people do.",
     category: "Misc",
     price: 80,
-    inStock: 3,
+    stockCount: 3,
     features: ["Catches rare fish", "Wearable, technically"],
     images: ["tp-items/fishing/coral-earring.png"]
   },
@@ -508,7 +508,7 @@ export const products: SeedProduct[] = [
     description: "Adds one heart. Permanently.",
     category: "Misc",
     price: 500,
-    inStock: 3,
+    stockCount: 3,
     features: ["+1 maximum heart", "Full heal on use"],
     images: ["tp-items/collectibles/heart-container.png"]
   },
@@ -518,7 +518,7 @@ export const products: SeedProduct[] = [
     description: "Collect five. Get one heart. Math.",
     category: "Misc",
     price: 120,
-    inStock: 10,
+    stockCount: 10,
     features: ["Five pieces make a Heart Container"],
     images: [
       "tp-items/collectibles/heart-piece-1.png",
@@ -534,7 +534,7 @@ export const products: SeedProduct[] = [
     description: "Ghost fragment. A family in Kakariko wants sixty. We have some.",
     category: "Misc",
     price: 20,
-    inStock: 13,
+    stockCount: 13,
     features: ["Ethically haunted"],
     images: ["tp-items/collectibles/poe-soul.png"]
   },
@@ -544,7 +544,7 @@ export const products: SeedProduct[] = [
     description: "Opens one door. Just one.",
     category: "Misc",
     price: 10,
-    inStock: 35,
+    stockCount: 35,
     features: ["Single use", "Dungeon-specific"],
     images: ["tp-items/dungeon/key-blue.png"]
   },
@@ -554,7 +554,7 @@ export const products: SeedProduct[] = [
     description: "Three pieces of a boss key. Assembly required.",
     category: "Misc",
     price: 180,
-    inStock: 2,
+    stockCount: 2,
     features: ["Three-piece set", "Assembly required"],
     images: [
       "tp-items/dungeon/key-shards-combined-b.png",
@@ -570,7 +570,7 @@ export const products: SeedProduct[] = [
     description: "Know where you are. Know where the treasure is. Still have to walk there.",
     category: "Misc",
     price: 60,
-    inStock: 9,
+    stockCount: 9,
     features: ["Shows every room", "Points to treasure"],
     images: ["tp-items/dungeon/dungeon-map.png", "tp-items/dungeon/compass.png"]
   },
@@ -580,7 +580,7 @@ export const products: SeedProduct[] = [
     description: "Teaches a sword technique. Ghost wolf not included.",
     category: "Misc",
     price: 250,
-    inStock: 4,
+    stockCount: 4,
     features: ["One technique per scroll"],
     images: ["tp-items/upgrades/scroll.png"]
   }

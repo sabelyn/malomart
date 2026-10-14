@@ -1,10 +1,10 @@
 import type { S3Client } from "@aws-sdk/client-s3";
 import { DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import type { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-import { DeleteCommand, GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { DeleteCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import type { PaginatedQueryOptions } from "@mm/clients";
-import { getPaginatedResults, IMAGE_WIDTHS, imageVariantKey, InvalidCursorError, productImageKey } from "@mm/clients";
-import type { CreateProductBody, ListProductsQuery, UpdateProductBody } from "@mm/lib";
+import { getItemById, getItemsByIds, getPaginatedResults, IMAGE_WIDTHS, imageVariantKey, InvalidCursorError, productImageKey } from "@mm/clients";
+import type { CreateProductBody, ListProductsQuery, ProductDto, UpdateProductBody } from "@mm/lib";
 import { isDefined, Product, ProductOverview } from "@mm/lib";
 import { inject, injectable } from "tsyringe";
 
@@ -16,7 +16,7 @@ import { parseStored } from "@/utils/parsing";
 import { getPresignedPost } from "@/utils/uploads";
 
 const TableName = env.TABLE_NAMES.products;
-const categoryIndex = env.TABLE_INDEXES.productsByCategory;
+const { productsByCategory, productsByCategoryInStock } = env.TABLE_INDEXES;
 const { image, uploadStaging } = env.BUCKET_NAMES;
 
 @injectable()
@@ -24,12 +24,13 @@ export class ProductService implements IProductService {
   constructor(
     @inject(DB) private readonly db: DynamoDBDocumentClient,
     @inject(S3) private readonly s3: S3Client
-  ) {}
+  ) { }
 
   createProduct = async (data: CreateProductBody) => {
     const Item: Product = {
       id: crypto.randomUUID(),
-      ...data
+      ...data,
+      inStock: data.stockCount > 0 ? 1 : 0
     };
 
     const command = new PutCommand({
@@ -88,17 +89,12 @@ export class ProductService implements IProductService {
   };
 
   getProduct = async (id: string) => {
-    const command = new GetCommand({
-      TableName,
-      Key: { id }
-    });
-
-    const response = await this.db.send(command);
-    if (!response.Item) {
+    const result = await getItemById<ProductDto>(this.db, TableName, id);
+    if (!result) {
       throw notFound("Product could not be found.");
     }
 
-    return this.toProductDto(response.Item);
+    return this.toProductDto(result);
   };
 
   getProductImageUploadPost = async (id: string, contentType?: string) => {
@@ -113,6 +109,44 @@ export class ProductService implements IProductService {
     };
   };
 
+  getProducts = async (ids: string[]) => {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    const select = Object.keys(ProductOverview.shape).join(", ");
+    if (ids.length === 1) {
+      const product = await getItemById<ProductOverview>(this.db, TableName, ids[0], "id", select);
+      if (!product) {
+        throw notFound("Product could not be found.");
+      }
+
+      return [product];
+    }
+
+    const results = await getItemsByIds<ProductOverview>(this.db, TableName, ids, select);
+    if (results.length < new Set(ids).size) {
+      throw notFound("Some products could not be found.");
+    }
+    return results;
+  }
+
+  getProductStocks = async (ids: string[]) => {
+    if (ids.length === 0) {
+      return {};
+    }
+    if (ids.length === 1) {
+      const product = await this.getProduct(ids[0]);
+      return { [product.id]: product.stockCount };
+    }
+
+    const results = await getItemsByIds<{ id: string; stockCount: number; }>(this.db, TableName, ids, "id, stockCount");
+    if (results.length < new Set(ids).size) {
+      throw notFound("Some products could not be found.");
+    }
+    return Object.fromEntries(results.map(({ id, stockCount }) => [id, stockCount]));
+  }
+
   listProducts = async (query: ListProductsQuery) => {
     const { cursor, category, inStock, limit } = query;
 
@@ -124,16 +158,22 @@ export class ProductService implements IProductService {
       select: Object.keys(ProductOverview.shape)
     };
     const attributeValues: Record<string, unknown> = {};
-    if (category) {
-      options.indexName = categoryIndex;
+    if (category && inStock) {
+      options.indexName = productsByCategoryInStock;
+      options.keys = ["category", "inStock", "id"];
+      options.keyCondition = "category = :cat AND inStock = :inStock";
+      attributeValues[":cat"] = category;
+      attributeValues[":inStock"] = 1;
+    } else if (category) {
+      options.indexName = productsByCategory;
       options.keys = ["category", "id"];
       options.keyCondition = "category = :cat";
       attributeValues[":cat"] = category;
+    } else if (inStock) {
+      options.filter = "inStock = :one";
+      attributeValues[":one"] = 1;
     }
-    if (inStock) {
-      options.filter = "inStock > :zero";
-      attributeValues[":zero"] = 0;
-    }
+
     if (Object.keys(attributeValues).length > 0) {
       options.attributeValues = attributeValues;
     }
@@ -222,7 +262,7 @@ export class ProductService implements IProductService {
   };
 
   private toProductDto = (data: unknown) => {
-    const product = parseStored(data, Product);
+    const { inStock: _, ...product } = parseStored(data, Product);
     return {
       ...product,
       imageKeys: [...(product.imageKeys ?? [])]

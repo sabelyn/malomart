@@ -1,5 +1,8 @@
+import { dbClient } from "@mm/clients";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+
+import { deleteTracked } from "../helpers/db";
 
 const OUTPUTS_FILE = path.resolve(__dirname, "../../../local/cdk-outputs.json");
 const DB_STACK = "Dev-MaloMartDbStack";
@@ -33,3 +36,5 @@ Object.assign(process.env, {
   TABLE_NAMES: db.TableNames,
   TABLE_INDEXES: db.TableIndexes
 });
+
+afterEach(() => deleteTracked(dbClient()));

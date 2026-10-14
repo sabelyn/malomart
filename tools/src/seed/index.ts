@@ -162,7 +162,7 @@ const main = async () => {
       const { slug, images: files, ...data } = seed;
       const id = uuidV5(slug);
       const images = withImages ? await loadImages(id, slug, files) : [];
-      const item = Product.parse({ id, ...data, ...(images.length ? { thumbnailKey: images[0].key } : {}) });
+      const item = Product.parse({ id, ...data, inStock: data.stockCount > 0 ? 1 : 0, ...(images.length ? { thumbnailKey: images[0].key } : {}) });
       return { item, images };
     })
   );

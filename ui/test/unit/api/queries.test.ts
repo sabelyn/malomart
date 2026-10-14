@@ -24,7 +24,7 @@ const product = {
   description: "Allows you to see into the minds of others.",
   category: "Masks",
   price: 80,
-  inStock: 2,
+  stockCount: 2,
   features: ["Reveals hidden truths"]
 };
 
@@ -128,7 +128,7 @@ describe("endpointQuery", () => {
 
 describe("endpointInfiniteQuery", () => {
   const page = (id: string, pagination: { hasNext: boolean; cursor?: string }) => ({
-    data: [{ id, title: product.title, price: product.price, inStock: product.inStock }],
+    data: [{ id, title: product.title, price: product.price, stockCount: product.stockCount }],
     pagination: { limit: 20, ...pagination }
   });
 

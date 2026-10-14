@@ -1,6 +1,6 @@
-import { boolean, literal, strictObject, string, infer as zinfer } from "zod";
+import { boolean, literal, record, strictObject, string, infer as zinfer } from "zod";
 
-import { atLeastOneKeyRefinement } from "../common";
+import { atLeastOneKeyRefinement, Id, PositiveInt } from "../common";
 import { Address, PaymentMethod } from "./types";
 
 export const CreateAddressBody = strictObject({
@@ -25,3 +25,6 @@ export const UpdatePaymentMethodBody = strictObject({
   setAsDefault: literal(true).optional()
 }).refine(atLeastOneKeyRefinement);
 export type UpdatePaymentMethodBody = zinfer<typeof UpdatePaymentMethodBody>;
+
+export const UpdateCartBody = record(Id, PositiveInt);
+export type UpdateCartBody = zinfer<typeof UpdateCartBody>;

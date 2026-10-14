@@ -1,16 +1,22 @@
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
-import { dbClient } from "@mm/clients";
-import type { Address, CreateAddressBody, Customer, PaymentMethodDto } from "@mm/lib";
+import { dbClient, s3Client } from "@mm/clients";
+import type { Address, CreateAddressBody, Customer, PaymentMethodDto, Product } from "@mm/lib";
+import { Category } from "@mm/lib";
 
 import type { IPaymentMethodService } from "@/contracts";
 import env from "@/env";
 import { ApiError } from "@/errors/ApiError";
 import { internal, notFound } from "@/errors/helpers";
-import { CustomerService } from "@/services";
+import { CustomerService, ProductService } from "@/services";
 import type { User } from "@/types/user";
-import { clearTable, putItems } from "../../helpers/db";
+import { putItems, track, trackWhere } from "../../helpers/db";
 
-const { addresses: AddressesTable, customers: CustomersTable } = env.TABLE_NAMES;
+const {
+  addresses: AddressesTable,
+  carts: CartsTable,
+  customers: CustomersTable,
+  products: ProductsTable
+} = env.TABLE_NAMES;
 const db = dbClient();
 
 const addressData: Omit<CreateAddressBody, "setAsDefault"> = {
@@ -33,6 +39,8 @@ const paymentMethodService = {
   deletePaymentMethod
 } as unknown as IPaymentMethodService;
 
+const productService = new ProductService(db, s3Client());
+
 const paymentMethodDto: PaymentMethodDto = {
   id: crypto.randomUUID(),
   brand: "Hyrulian Express",
@@ -51,7 +59,7 @@ const makeService = (customerData: Omit<Customer, "id"> = {}) => {
     signInMethod: "email",
     customerData
   };
-  return new CustomerService(db, paymentMethodService, user);
+  return new CustomerService(db, paymentMethodService, productService, user);
 };
 
 const makeAddress = (overrides: Partial<Address> = {}): Address => ({
@@ -69,13 +77,37 @@ const getRawAddress = async (id: string) =>
 const getRawCustomer = async (id: string) =>
   (await db.send(new GetCommand({ TableName: CustomersTable, Key: { id } }))).Item;
 
+const getRawCart = async (id: string) =>
+  (await db.send(new GetCommand({ TableName: CartsTable, Key: { customerId: id } }))).Item;
+
+const putCart = (items: Record<string, number>) => putItems(db, CartsTable, [{ customerId, items }], ["customerId"]);
+
+const putProducts = async (...stockCounts: number[]) => {
+  const products: Product[] = stockCounts.map(stockCount => ({
+    id: crypto.randomUUID(),
+    title: "Mask of Truth",
+    description: "Allows you to see into the minds of others.",
+    category: Category.Masks,
+    price: 80,
+    stockCount,
+    inStock: stockCount > 0 ? 1 : 0,
+    features: []
+  }));
+  await putItems(db, ProductsTable, products);
+  return products.map(p => p.id);
+};
+
 beforeEach(async () => {
   getPaymentMethod.mockReset();
   listPaymentMethods.mockReset().mockResolvedValue([]);
   deletePaymentMethod.mockReset().mockResolvedValue();
   customerId = crypto.randomUUID();
-  await Promise.all([clearTable(db, AddressesTable, ["id"]), clearTable(db, CustomersTable, ["id"])]);
   await putItems(db, CustomersTable, [{ id: customerId }]);
+});
+
+afterEach(async () => {
+  track(CartsTable, { customerId });
+  await trackWhere(db, AddressesTable, "customerId", customerId);
 });
 
 describe("createAddress", () => {
@@ -159,9 +191,17 @@ describe("getCustomer", () => {
   it("returns the customer with no defaults", async () => {
     await expect(makeService().getCustomer()).resolves.toEqual({
       id: customerId,
+      cart: {},
       defaultAddress: null,
       defaultPaymentMethod: null
     });
+  });
+
+  it("includes the saved cart", async () => {
+    const [productId] = await putProducts(5);
+    await putCart({ [productId]: 2 });
+
+    await expect(makeService().getCustomer()).resolves.toMatchObject({ cart: { [productId]: 2 } });
   });
 
   it("includes the default address", async () => {
@@ -170,6 +210,7 @@ describe("getCustomer", () => {
 
     await expect(makeService({ defaultAddressId: address.id }).getCustomer()).resolves.toEqual({
       id: customerId,
+      cart: {},
       defaultAddress: toDto(address, true),
       defaultPaymentMethod: null
     });
@@ -180,6 +221,7 @@ describe("getCustomer", () => {
 
     await expect(makeService({ defaultPaymentMethodId: paymentMethodDto.id }).getCustomer()).resolves.toEqual({
       id: customerId,
+      cart: {},
       defaultAddress: null,
       defaultPaymentMethod: paymentMethodDto
     });
@@ -193,6 +235,7 @@ describe("getCustomer", () => {
 
     await expect(service.getCustomer()).resolves.toEqual({
       id: customerId,
+      cart: {},
       defaultAddress: null,
       defaultPaymentMethod: null
     });
@@ -204,6 +247,97 @@ describe("getCustomer", () => {
     await expect(makeService({ defaultPaymentMethodId: crypto.randomUUID() }).getCustomer()).rejects.toMatchObject({
       statusCode: 500
     });
+  });
+});
+
+describe("getCustomerCart", () => {
+  it("returns an empty cart when the customer has none saved", async () => {
+    await expect(makeService().getCustomerCart()).resolves.toEqual({});
+  });
+
+  it("returns the saved cart items", async () => {
+    const [first, second] = await putProducts(5, 5);
+    await putCart({ [first]: 1, [second]: 3 });
+
+    await expect(makeService().getCustomerCart()).resolves.toEqual({ [first]: 1, [second]: 3 });
+  });
+
+  it("does not return another customer's cart", async () => {
+    const [productId] = await putProducts(5);
+    await putItems(db, CartsTable, [{ customerId: crypto.randomUUID(), items: { [productId]: 1 } }], ["customerId"]);
+
+    await expect(makeService().getCustomerCart()).resolves.toEqual({});
+  });
+});
+
+describe("updateCart", () => {
+  it("saves the cart and reports no changes when everything is in stock", async () => {
+    const [first, second] = await putProducts(5, 2);
+
+    const changes = await makeService().updateCart({ [first]: 3, [second]: 2 });
+
+    expect(changes).toEqual({});
+    expect(await getRawCart(customerId)).toEqual({ customerId, items: { [first]: 3, [second]: 2 } });
+  });
+
+  it("reduces quantities that exceed the available stock and reports them", async () => {
+    const [plenty, scarce] = await putProducts(10, 2);
+
+    const changes = await makeService().updateCart({ [plenty]: 4, [scarce]: 5 });
+
+    expect(changes).toEqual({ [scarce]: 2 });
+    expect(await getRawCart(customerId)).toEqual({ customerId, items: { [plenty]: 4, [scarce]: 2 } });
+  });
+
+  it("removes sold-out items and reports them as 0", async () => {
+    const [available, soldOut] = await putProducts(3, 0);
+
+    const changes = await makeService().updateCart({ [available]: 1, [soldOut]: 2 });
+
+    expect(changes).toEqual({ [soldOut]: 0 });
+    expect(await getRawCart(customerId)).toEqual({ customerId, items: { [available]: 1 } });
+  });
+
+  it("leaves a cart the customer can still read when every item is sold out", async () => {
+    const [soldOut] = await putProducts(0);
+
+    await makeService().updateCart({ [soldOut]: 1 });
+
+    await expect(makeService().getCustomer()).resolves.toMatchObject({ cart: {} });
+  });
+
+  it("handles a single item", async () => {
+    const [productId] = await putProducts(1);
+
+    await expect(makeService().updateCart({ [productId]: 2 })).resolves.toEqual({ [productId]: 1 });
+    expect(await getRawCart(customerId)).toEqual({ customerId, items: { [productId]: 1 } });
+  });
+
+  it("replaces the previously saved cart", async () => {
+    const [old, current] = await putProducts(5, 5);
+    await putCart({ [old]: 2 });
+
+    await makeService().updateCart({ [current]: 1 });
+
+    expect(await getRawCart(customerId)).toEqual({ customerId, items: { [current]: 1 } });
+  });
+
+  it("clears the cart when given no items", async () => {
+    const [productId] = await putProducts(5);
+    await putCart({ [productId]: 2 });
+
+    await expect(makeService().updateCart({})).resolves.toEqual({});
+    expect(await getRawCart(customerId)).toEqual({ customerId, items: {} });
+  });
+
+  it("throws a 404 and keeps the saved cart when a product does not exist", async () => {
+    const [productId] = await putProducts(5);
+    await putCart({ [productId]: 2 });
+
+    const result = makeService().updateCart({ [productId]: 1, [crypto.randomUUID()]: 1 });
+
+    await expect(result).rejects.toMatchObject({ statusCode: 404 });
+    expect(await getRawCart(customerId)).toEqual({ customerId, items: { [productId]: 2 } });
   });
 });
 

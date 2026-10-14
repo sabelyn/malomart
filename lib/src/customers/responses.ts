@@ -1,7 +1,7 @@
 import type { infer as zinfer } from "zod";
-import { boolean, strictObject } from "zod";
+import { boolean, record, strictObject } from "zod";
 
-import { Id } from "../common/types";
+import { Id, NonnegativeInt, PositiveInt } from "../common/types";
 import { Address, PaymentMethod } from "./types";
 
 export const AddressDto = strictObject({
@@ -25,6 +25,13 @@ export type ListPaymentMethodsResponse = zinfer<typeof ListPaymentMethodsRespons
 export const CustomerDto = strictObject({
   id: Id,
   defaultAddress: AddressDto.nullable(),
-  defaultPaymentMethod: PaymentMethodDto.nullable()
+  defaultPaymentMethod: PaymentMethodDto.nullable(),
+  cart: record(Id, PositiveInt)
 });
 export type CustomerDto = zinfer<typeof CustomerDto>;
+
+export const UpdateCartResponse = record(Id, NonnegativeInt).meta({
+  id: "UpdateCartResponse",
+  description: "Quantities that were reduced to match available stock. Items reduced to 0 were removed from the cart."
+});
+export type UpdateCartResponse = zinfer<typeof UpdateCartResponse>;

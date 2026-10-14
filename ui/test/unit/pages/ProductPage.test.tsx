@@ -15,7 +15,7 @@ const product: ProductDto = {
   category: "Shields",
   price: 200,
   originalPrice: 250,
-  inStock: 2,
+  stockCount: 2,
   thumbnailKey: `products/${ID}/front`,
   imageKeys: [`products/${ID}/back`, `products/${ID}/front`],
   features: ["Fireproof", "Blocks Guardian lasers with good timing"]
@@ -77,7 +77,7 @@ describe("ProductPage", () => {
   });
 
   it("disables adding a sold-out product", async () => {
-    stubApi({ [`GET /api/products/${ID}`]: () => json(200, { ...product, inStock: 0 }) });
+    stubApi({ [`GET /api/products/${ID}`]: () => json(200, { ...product, stockCount: 0 }) });
     renderProduct();
 
     const button = await screen.findByRole("button", { name: "Add to cart" });

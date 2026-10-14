@@ -21,10 +21,12 @@ Object.assign(process.env, {
     ordersByCustomerStatus: "orders-by-customer-status",
     ordersByStatus: "orders-by-status",
     paymentMethodsByCustomer: "payment-methods-by-customer",
-    productsByCategory: "products-by-category"
+    productsByCategory: "products-by-category",
+    productsByCategoryInStock: "products-by-category-in-stock"
   }),
   TABLE_NAMES: JSON.stringify({
     addresses: "addresses",
+    carts: "carts",
     customers: "customers",
     orders: "orders",
     paymentMethods: "payment-methods",

@@ -1,19 +1,19 @@
 import type { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { DeleteCommand, PutCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { getItemById } from "@mm/clients";
-import type { CreateAddressBody, UpdateAddressBody } from "@mm/lib";
+import type { Cart, CreateAddressBody, UpdateAddressBody, UpdateCartBody } from "@mm/lib";
 import { Address } from "@mm/lib";
 import { inject, injectable } from "tsyringe";
 
-import type { ICustomerService, IPaymentMethodService } from "@/contracts";
-import { DB, PAYMENT_METHOD_SERVICE, USER } from "@/contracts/tokens";
+import type { ICustomerService, IPaymentMethodService, IProductService } from "@/contracts";
+import { DB, PAYMENT_METHOD_SERVICE, PRODUCT_SERVICE, USER } from "@/contracts/tokens";
 import env from "@/env";
 import { ApiError } from "@/errors/ApiError";
 import { mapConditionFailure, notFound } from "@/errors/helpers";
 import type { User } from "@/types/user";
 import { parseStored } from "@/utils/parsing";
 
-const { addresses, customers } = env.TABLE_NAMES;
+const { addresses, carts, customers } = env.TABLE_NAMES;
 const { addressesByCustomer } = env.TABLE_INDEXES;
 
 @injectable()
@@ -21,8 +21,9 @@ export class CustomerService implements ICustomerService {
   constructor(
     @inject(DB) private readonly db: DynamoDBDocumentClient,
     @inject(PAYMENT_METHOD_SERVICE) private readonly paymentMethodService: IPaymentMethodService,
+    @inject(PRODUCT_SERVICE) private readonly productService: IProductService,
     @inject(USER) private readonly user: User
-  ) {}
+  ) { }
 
   createAddress = async (body: CreateAddressBody) => {
     const customerId = this.user.id;
@@ -100,17 +101,24 @@ export class CustomerService implements ICustomerService {
       throw result.reason;
     };
 
-    const [address, paymentMethod] = await Promise.allSettled([
+    const [address, cart, paymentMethod] = await Promise.allSettled([
       defaultAddressId ? this.getAddress(defaultAddressId) : null,
+      this.getCustomerCart(),
       defaultPaymentMethodId ? this.paymentMethodService.getPaymentMethod(defaultPaymentMethodId) : null
     ]);
 
     return {
       id: this.user.id,
+      cart: valueOrNull(cart) ?? {},
       defaultAddress: valueOrNull(address),
       defaultPaymentMethod: valueOrNull(paymentMethod)
     };
   };
+
+  getCustomerCart = async () => {
+    const result = await getItemById<Cart>(this.db, carts, this.user.id, "customerId");
+    return result ? result.items : {};
+  }
 
   listAddresses = async () => {
     const result = await this.db.send(
@@ -177,6 +185,48 @@ export class CustomerService implements ICustomerService {
 
     return dto;
   };
+
+  updateCart = async (body: UpdateCartBody) => {
+    const productIds = Object.keys(body);
+    if (productIds.length === 0) {
+      await this.db.send(new UpdateCommand({
+        TableName: carts,
+        Key: { customerId: this.user.id },
+        UpdateExpression: "SET #items = :empty",
+        ExpressionAttributeNames: { "#items": "items" },
+        ExpressionAttributeValues: { ":empty": {} }
+      }));
+
+      return {};
+    }
+
+    const stocks = await this.productService.getProductStocks(productIds);
+    const items: Record<string, number> = {};
+    const changes: Record<string, number> = {};
+    for (const [id, stockCount] of Object.entries(stocks)) {
+      const inCart = body[id];
+      if (stockCount >= inCart) {
+        items[id] = inCart;
+        continue;
+      }
+      changes[id] = stockCount;
+      if (stockCount > 0) {
+        items[id] = stockCount;
+      }
+    }
+
+    await this.db.send(new UpdateCommand({
+      TableName: carts,
+      Key: {
+        customerId: this.user.id
+      },
+      UpdateExpression: "SET #items = :items",
+      ExpressionAttributeNames: { "#items": "items" },
+      ExpressionAttributeValues: { ":items": items }
+    }));
+
+    return changes;
+  }
 
   private setDefaultAddress = async (id: string | null) => {
     await this.db.send(

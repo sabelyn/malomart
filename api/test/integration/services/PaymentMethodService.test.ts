@@ -1,4 +1,4 @@
-import { DeleteCommand, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { dbClient, lambdaClient } from "@mm/clients";
 import type { Customer, PaymentMethod } from "@mm/lib";
 import type { PaymentMethodMetadata, VaultCard } from "@mm/lib/lambdas";
@@ -7,10 +7,10 @@ import env from "@/env";
 import { ApiError } from "@/errors/ApiError";
 import { PaymentMethodService } from "@/services";
 import type { User } from "@/types/user";
-import { clearTable, putItems } from "../../helpers/db";
+import { putItems, track, trackWhere } from "../../helpers/db";
 
 const { customers: CustomersTable, paymentMethods: PaymentMethodsTable } = env.TABLE_NAMES;
-const { VAULT_CARD_TABLE_NAME } = process.env;
+const VAULT_CARD_TABLE_NAME = process.env.VAULT_CARD_TABLE_NAME!;
 const db = dbClient();
 const lambda = lambdaClient();
 
@@ -25,7 +25,6 @@ const metadata: PaymentMethodMetadata = {
 };
 
 let customerId: string;
-let vaultTokens: string[];
 
 const makeService = (customerData: Omit<Customer, "id"> = {}) => {
   const user: User = {
@@ -47,7 +46,7 @@ const putVaultCard = async (overrides: Partial<VaultCard> = {}) => {
     ...metadata,
     ...overrides
   };
-  vaultTokens.push(card.token);
+  track(VAULT_CARD_TABLE_NAME, { token: card.token });
   await db.send(new PutCommand({ TableName: VAULT_CARD_TABLE_NAME, Item: card }));
   return card;
 };
@@ -76,15 +75,14 @@ const getRawVaultCard = async (token: string) =>
 
 beforeEach(async () => {
   customerId = crypto.randomUUID();
-  vaultTokens = [];
-  await Promise.all([clearTable(db, PaymentMethodsTable, ["id"]), clearTable(db, CustomersTable, ["id"])]);
   await putItems(db, CustomersTable, [{ id: customerId }]);
 });
 
 afterEach(async () => {
-  await Promise.all(
-    vaultTokens.map(token => db.send(new DeleteCommand({ TableName: VAULT_CARD_TABLE_NAME, Key: { token } })))
-  );
+  await Promise.all([
+    trackWhere(db, PaymentMethodsTable, "customerId", customerId),
+    trackWhere(db, VAULT_CARD_TABLE_NAME, "customerId", customerId, ["token"])
+  ]);
 });
 
 describe("createPaymentMethod", () => {

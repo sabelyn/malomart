@@ -16,10 +16,10 @@ const ProductSummary = ({ product, onAddToCart }: ProductSummaryProps) => (
     <Text className={classes.description}>{product.description}</Text>
     <PriceTag price={product.price} chudleyPrice={product.originalPrice ?? undefined} />
     <div className={classes.purchase}>
-      <Button size="lg" disabled={product.inStock === 0} onClick={() => onAddToCart(product)}>
+      <Button size="lg" disabled={product.stockCount === 0} onClick={() => onAddToCart(product)}>
         Add to cart
       </Button>
-      <Text className={classes.stock}>{stockLine(product.inStock)}</Text>
+      <Text className={classes.stock}>{stockLine(product.stockCount)}</Text>
     </div>
     {product.features.length > 0 && (
       <section aria-labelledby="features-heading" className={classes.features}>

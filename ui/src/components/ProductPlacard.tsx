@@ -39,11 +39,11 @@ const ProductPlacard = ({ product, image, onAddToCart }: ProductPlacardProps) =>
       <div className={classes.footer}>
         <PriceTag price={product.price} chudleyPrice={originalPrice} />
         <Group justify="space-between" align="center">
-          <Text className={classes.stock}>{stockLine(product.inStock)}</Text>
+          <Text className={classes.stock}>{stockLine(product.stockCount)}</Text>
           <Button
             className={classes.action}
             aria-describedby={`product-${product.id}`}
-            disabled={product.inStock === 0}
+            disabled={product.stockCount === 0}
             onClick={() => onAddToCart(product)}
           >
             Add to cart

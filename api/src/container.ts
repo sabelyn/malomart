@@ -16,5 +16,6 @@ export const registerDependencies = () => {
 
   // Services that depend on the per-request user identity
   container.register(tokens.CUSTOMER_SERVICE, services.CustomerService);
+  container.register(tokens.ORDER_SERVICE, services.OrderService);
   container.register(tokens.PAYMENT_METHOD_SERVICE, services.PaymentMethodService);
 };

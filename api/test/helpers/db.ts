@@ -18,32 +18,71 @@ const batchWrite = async (db: DynamoDBDocumentClient, tableName: string, request
   }
 };
 
-export const putItems = (db: DynamoDBDocumentClient, tableName: string, items: Record<string, unknown>[]) =>
-  batchWrite(
+const tracked = new Map<string, Map<string, Record<string, unknown>>>();
+
+export const track = (tableName: string, ...keys: Record<string, unknown>[]) => {
+  const table = tracked.get(tableName) ?? new Map<string, Record<string, unknown>>();
+  for (const key of keys) {
+    table.set(JSON.stringify(key), key);
+  }
+  tracked.set(tableName, table);
+};
+
+const pickKey = (item: Record<string, unknown>, keyNames: string[]) =>
+  Object.fromEntries(keyNames.map(name => [name, item[name]]));
+
+export const putItems = async (
+  db: DynamoDBDocumentClient,
+  tableName: string,
+  items: Record<string, unknown>[],
+  keyNames = ["id"]
+) => {
+  track(tableName, ...items.map(item => pickKey(item, keyNames)));
+  await batchWrite(
     db,
     tableName,
     items.map(Item => ({ PutRequest: { Item } }))
   );
+};
 
-export const clearTable = async (db: DynamoDBDocumentClient, tableName: string, keys: string[]) => {
-  const keyItems: Record<string, unknown>[] = [];
+export const trackWhere = async (
+  db: DynamoDBDocumentClient,
+  tableName: string,
+  attribute: string,
+  value: unknown,
+  keyNames = ["id"]
+) => {
   let lastKey: Record<string, unknown> | undefined;
   do {
     const result = await db.send(
       new ScanCommand({
         TableName: tableName,
-        ProjectionExpression: keys.map((_, i) => `#k${i}`).join(", "),
-        ExpressionAttributeNames: Object.fromEntries(keys.map((key, i) => [`#k${i}`, key])),
+        ConsistentRead: true,
+        FilterExpression: "#attr = :value",
+        ProjectionExpression: keyNames.map((_, i) => `#k${i}`).join(", "),
+        ExpressionAttributeNames: {
+          "#attr": attribute,
+          ...Object.fromEntries(keyNames.map((key, i) => [`#k${i}`, key]))
+        },
+        ExpressionAttributeValues: { ":value": value },
         ExclusiveStartKey: lastKey
       })
     );
-    keyItems.push(...(result.Items ?? []));
+    track(tableName, ...(result.Items ?? []));
     lastKey = result.LastEvaluatedKey;
   } while (lastKey);
+};
 
-  await batchWrite(
-    db,
-    tableName,
-    keyItems.map(Key => ({ DeleteRequest: { Key } }))
+export const deleteTracked = async (db: DynamoDBDocumentClient) => {
+  const tables = [...tracked.entries()];
+  tracked.clear();
+  await Promise.all(
+    tables.map(([tableName, keys]) =>
+      batchWrite(
+        db,
+        tableName,
+        [...keys.values()].map(Key => ({ DeleteRequest: { Key } }))
+      )
+    )
   );
 };

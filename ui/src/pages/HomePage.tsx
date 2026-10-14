@@ -1,6 +1,6 @@
 import { Container, SimpleGrid, Title } from "@mantine/core";
 import { Category } from "@mm/lib/products";
-import type { Product } from "@mm/lib/products";
+import type { ProductDto } from "@mm/lib/products";
 
 import arrowsImage from "@/assets/items/arrows.png";
 import bombsImage from "@/assets/items/bombs.png";
@@ -14,7 +14,7 @@ import ProductPlacard from "@/components/ProductPlacard";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import classes from "./pages.module.css";
 
-type ShelfItem = { product: Product; image: string };
+type ShelfItem = { product: ProductDto; image: string };
 
 const sampleShelf: ShelfItem[] = [
   {
@@ -24,7 +24,7 @@ const sampleShelf: ShelfItem[] = [
       description: "Take no damage. Your rupees take it instead. Keep your wallet full.",
       category: Category.Armor,
       price: 598,
-      inStock: 1,
+      stockCount: 1,
       originalPrice: 1000000,
       features: ["Damage drains rupees instead of hearts", "Stops working when your wallet hits zero"]
     },
@@ -37,7 +37,7 @@ const sampleShelf: ShelfItem[] = [
       description: "Sturdy, fireproof, and no longer priced like a castle.",
       category: Category.Shields,
       price: 200,
-      inStock: 2,
+      stockCount: 2,
       originalPrice: 20000,
       features: ["Fireproof", "Blocks Guardian lasers with good timing"]
     },
@@ -50,7 +50,7 @@ const sampleShelf: ShelfItem[] = [
       description: "Restores eight hearts. Tastes like it.",
       category: Category.Potions,
       price: 30,
-      inStock: 14,
+      stockCount: 14,
       originalPrice: 300,
       features: ["Restores eight hearts", "Bottle not included"]
     },
@@ -63,7 +63,7 @@ const sampleShelf: ShelfItem[] = [
       description: "Thirty arrows. Pointy end goes toward the Bulblin.",
       category: Category.Arrows,
       price: 40,
-      inStock: 0,
+      stockCount: 0,
       features: ["Bundle of thirty", "Fits any standard quiver"]
     },
     image: arrowsImage
@@ -75,7 +75,7 @@ const sampleShelf: ShelfItem[] = [
       description: "Handle with care. No refunds on detonated goods.",
       category: Category.Bombs,
       price: 50,
-      inStock: 6,
+      stockCount: 6,
       originalPrice: 1000,
       features: ["Bundle of ten", "Lit fuse not included"]
     },

@@ -1,19 +1,21 @@
 import type { infer as zinfer } from "zod";
 import { strictObject } from "zod";
 
-import { PositiveInt, PaginationData } from "../common";
-import { Address } from "../customers/types";
-import { Order, OrderStatusSchema } from "./types";
+import { PaginationData, PositiveInt } from "../common";
+import { Address, PaymentMethod } from "../customers/types";
+import { Order } from "./types";
 
 export const OrderDto = strictObject({
   ...Order.pick({
     id: true,
     customerId: true,
     items: true,
+    status: true,
     statusUpdates: true,
-    orderDate: true
+    orderDate: true,
+    address: true
   }).shape,
-  shippingAddress: Address
+  paymentMethod: PaymentMethod.pick({ brand: true, lastFour: true }).optional(),
 });
 export type OrderDto = zinfer<typeof OrderDto>;
 
@@ -21,9 +23,9 @@ export const OrderOverview = strictObject({
   ...Order.pick({
     id: true,
     customerId: true,
-    orderDate: true
+    orderDate: true,
+    status: true
   }).shape,
-  currentStatus: OrderStatusSchema,
   total: PositiveInt
 });
 export type OrderOverview = zinfer<typeof OrderOverview>;

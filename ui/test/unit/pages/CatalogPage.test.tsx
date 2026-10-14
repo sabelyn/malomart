@@ -10,7 +10,7 @@ const overview = (title: string, overrides: Partial<ProductOverview> = {}): Prod
   id: crypto.randomUUID(),
   title,
   price: 50,
-  inStock: 5,
+  stockCount: 5,
   ...overrides
 });
 

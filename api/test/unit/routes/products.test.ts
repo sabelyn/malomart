@@ -16,7 +16,7 @@ const product: ProductDto = {
   description: "Allows you to see into the minds of others.",
   category: "Masks",
   price: 80,
-  inStock: 2,
+  stockCount: 2,
   features: ["Reveals hidden truths"]
 };
 
@@ -25,12 +25,12 @@ const productData = {
   description: product.description,
   category: product.category,
   price: product.price,
-  inStock: product.inStock,
+  stockCount: product.stockCount,
   features: product.features
 };
 
 const listResult: ListProductsResponse = {
-  data: [{ id: ID, title: product.title, price: product.price, inStock: product.inStock }],
+  data: [{ id: ID, title: product.title, price: product.price, stockCount: product.stockCount }],
   pagination: { hasNext: false, limit: 20 }
 };
 
@@ -52,6 +52,8 @@ beforeEach(() => {
     deleteProductImage: vi.fn<IProductService["deleteProductImage"]>().mockResolvedValue(product),
     getProduct: vi.fn<IProductService["getProduct"]>().mockResolvedValue(product),
     getProductImageUploadPost: vi.fn<IProductService["getProductImageUploadPost"]>().mockResolvedValue(uploadPost),
+    getProducts: vi.fn<IProductService["getProducts"]>().mockResolvedValue(listResult.data),
+    getProductStocks: vi.fn<IProductService["getProductStocks"]>().mockResolvedValue({ [ID]: product.stockCount }),
     listProducts: vi.fn<IProductService["listProducts"]>().mockResolvedValue(listResult),
     setImageAsThumbnail: vi.fn<IProductService["setImageAsThumbnail"]>().mockResolvedValue(product),
     updateProduct: vi.fn<IProductService["updateProduct"]>().mockResolvedValue(product)

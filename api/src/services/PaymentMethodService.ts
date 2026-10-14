@@ -23,7 +23,7 @@ export class PaymentMethodService implements IPaymentMethodService {
     @inject(DB) private readonly db: DynamoDBDocumentClient,
     @inject(LAMBDA) private readonly lambda: LambdaClient,
     @inject(USER) private readonly user: User
-  ) {}
+  ) { }
 
   createPaymentMethod = async (body: CreatePaymentMethodWithTokenBody) => {
     const { token, setAsDefault } = body;
@@ -99,6 +99,17 @@ export class PaymentMethodService implements IPaymentMethodService {
     const card = await getItemById<PaymentMethod>(this.db, paymentMethods, id);
     if (card && card.customerId === this.user.id) {
       return this.toPaymentMethodDto(card);
+    }
+    throw notFound("Payment method not found.");
+  };
+
+  getPaymentMethodWithToken = async (id: string) => {
+    const card = await getItemById<PaymentMethod>(this.db, paymentMethods, id);
+    if (card && card.customerId === this.user.id) {
+      return {
+        ...this.toPaymentMethodDto(card),
+        token: card.token
+      };
     }
     throw notFound("Payment method not found.");
   };

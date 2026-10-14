@@ -1,10 +1,10 @@
 import { apiRoot, Endpoint, Route } from "../api";
 import { IdParams } from "../common";
-import { ListOrdersResponse } from "../orders/responses";
 import {
   CreateAddressBody,
   CreatePaymentMethodWithTokenBody,
   UpdateAddressBody,
+  UpdateCartBody,
   UpdatePaymentMethodBody
 } from "./requests";
 import {
@@ -12,7 +12,8 @@ import {
   CustomerDto,
   ListAddressesResponse,
   ListPaymentMethodsResponse,
-  PaymentMethodDto
+  PaymentMethodDto,
+  UpdateCartResponse
 } from "./responses";
 
 export const customers = new Route("/customers", "user", ["Customers"], apiRoot);
@@ -157,14 +158,19 @@ export const deletePaymentMethod = new Endpoint(customers, {
   summary: "Delete a Payment Method"
 });
 
-export const listCustomerOrders = new Endpoint(customers, {
-  description: "List all the orders for the currently logged-in customer.",
-  id: "listCustomerOrders",
-  method: "GET",
-  path: "/orders",
-  schemas: {
-    response: ListOrdersResponse
+export const updateCart = new Endpoint(customers, {
+  description: "Replace the customer's current shopping cart.",
+  errors: {
+    400: "Invalid request body.",
+    404: "An item in the cart could not be found."
   },
-  successDescription: "All past orders placed by this customer.",
-  summary: "List Customer Orders"
+  id: "updateCart",
+  method: "PUT",
+  path: "/cart",
+  schemas: {
+    body: UpdateCartBody,
+    response: UpdateCartResponse
+  },
+  successDescription: "The cart was synced to the server. Any quantities reduced to match available stock are returned.",
+  summary: "Update Cart"
 });

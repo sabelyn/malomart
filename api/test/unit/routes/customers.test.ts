@@ -33,7 +33,8 @@ const paymentMethod: PaymentMethodDto = {
 const customer: CustomerDto = {
   id: "9b1e4c2a-5d3f-4a6b-8c7d-1e2f3a4b5c6d",
   defaultAddress: address,
-  defaultPaymentMethod: null
+  defaultPaymentMethod: null,
+  cart: {}
 };
 
 const app = createTestApp(api);
@@ -49,13 +50,18 @@ beforeEach(() => {
     deleteSavedData: vi.fn<ICustomerService["deleteSavedData"]>().mockResolvedValue(),
     getAddress: vi.fn<ICustomerService["getAddress"]>().mockResolvedValue(address),
     getCustomer: vi.fn<ICustomerService["getCustomer"]>().mockResolvedValue(customer),
+    getCustomerCart: vi.fn<ICustomerService["getCustomerCart"]>().mockResolvedValue({}),
     listAddresses: vi.fn<ICustomerService["listAddresses"]>().mockResolvedValue([address]),
-    updateAddress: vi.fn<ICustomerService["updateAddress"]>().mockResolvedValue(address)
+    updateAddress: vi.fn<ICustomerService["updateAddress"]>().mockResolvedValue(address),
+    updateCart: vi.fn<ICustomerService["updateCart"]>().mockResolvedValue({})
   };
   paymentMethodService = {
     createPaymentMethod: vi.fn<IPaymentMethodService["createPaymentMethod"]>().mockResolvedValue(paymentMethod),
     deletePaymentMethod: vi.fn<IPaymentMethodService["deletePaymentMethod"]>().mockResolvedValue(),
     getPaymentMethod: vi.fn<IPaymentMethodService["getPaymentMethod"]>().mockResolvedValue(paymentMethod),
+    getPaymentMethodWithToken: vi
+      .fn<IPaymentMethodService["getPaymentMethodWithToken"]>()
+      .mockResolvedValue({ ...paymentMethod, token: "tok" }),
     listPaymentMethods: vi.fn<IPaymentMethodService["listPaymentMethods"]>().mockResolvedValue([paymentMethod]),
     updatePaymentMethod: vi.fn<IPaymentMethodService["updatePaymentMethod"]>().mockResolvedValue(paymentMethod)
   };

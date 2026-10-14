@@ -7,7 +7,7 @@ import { mockClient } from "aws-sdk-client-mock";
 import env from "@/env";
 import { ApiError } from "@/errors/ApiError";
 import { ProductService } from "@/services";
-import { clearTable, putItems } from "../../helpers/db";
+import { putItems, track } from "../../helpers/db";
 
 const TableName = env.TABLE_NAMES.products;
 const db = dbClient();
@@ -19,34 +19,53 @@ const productData: CreateProductBody = {
   description: "Allows you to see into the minds of others.",
   category: Category.Masks,
   price: 80,
-  inStock: 2,
+  stockCount: 2,
   features: ["Reveals hidden truths"]
 };
 
 const makeProduct = (overrides: Partial<Product> = {}): Product => ({
   id: crypto.randomUUID(),
   ...productData,
+  inStock: (overrides.stockCount ?? productData.stockCount) > 0 ? 1 : 0,
   ...overrides
 });
 
+const toDto = ({ inStock: _, imageKeys, ...product }: Product) => ({ ...product, imageKeys: [...(imageKeys ?? [])] });
+
+const toOverview = ({ id, title, price, stockCount }: Product) => ({ id, title, price, stockCount });
+
+const byId = (a: { id: string }, b: { id: string }) => a.id.localeCompare(b.id);
+
 const getRawItem = async (id: string) => (await db.send(new GetCommand({ TableName, Key: { id } }))).Item;
 
-beforeEach(async () => {
+const createProduct = async (data: CreateProductBody) => {
+  const created = await service.createProduct(data);
+  track(TableName, { id: created.id });
+  return created;
+};
+
+beforeEach(() => {
   s3.reset();
-  await clearTable(db, TableName, ["id"]);
 });
 
 describe("createProduct", () => {
   it("stores the product with a generated id and returns it", async () => {
-    const created = await service.createProduct(productData);
+    const created = await createProduct(productData);
 
-    expect(created).toEqual({ id: expect.any(String), ...productData });
-    expect(await getRawItem(created.id)).toEqual(created);
+    expect(created).toEqual({ id: expect.any(String), ...productData, imageKeys: [] });
+    expect(await getRawItem(created.id)).toEqual({ id: created.id, ...productData, inStock: 1 });
+  });
+
+  it("marks a product with no stock as out of stock", async () => {
+    const created = await createProduct({ ...productData, stockCount: 0 });
+
+    expect(created).not.toHaveProperty("inStock");
+    expect(await getRawItem(created.id)).toMatchObject({ stockCount: 0, inStock: 0 });
   });
 
   it("generates a unique id for each product", async () => {
-    const first = await service.createProduct(productData);
-    const second = await service.createProduct(productData);
+    const first = await createProduct(productData);
+    const second = await createProduct(productData);
 
     expect(first.id).not.toBe(second.id);
   });
@@ -57,7 +76,7 @@ describe("getProduct", () => {
     const product = makeProduct();
     await putItems(db, TableName, [product]);
 
-    await expect(service.getProduct(product.id)).resolves.toEqual(product);
+    await expect(service.getProduct(product.id)).resolves.toEqual(toDto(product));
   });
 
   it("throws a 404 when the product does not exist", async () => {
@@ -85,7 +104,7 @@ describe("updateProduct", () => {
 
     const updated = await service.updateProduct(product.id, { price: 120 });
 
-    expect(updated).toEqual({ ...product, price: 120 });
+    expect(updated).toEqual({ ...toDto(product), price: 120 });
     expect(await getRawItem(product.id)).toEqual({ ...product, price: 120 });
   });
 
@@ -94,7 +113,7 @@ describe("updateProduct", () => {
     await putItems(db, TableName, [product]);
     const changes = { title: "Mask of Lies", description: "Hides your thoughts from others.", price: 90 };
 
-    await expect(service.updateProduct(product.id, changes)).resolves.toEqual({ ...product, ...changes });
+    await expect(service.updateProduct(product.id, changes)).resolves.toEqual({ ...toDto(product), ...changes });
   });
 
   it("throws a 404 and does not create the product when it does not exist", async () => {
@@ -122,11 +141,99 @@ describe("deleteProduct", () => {
   });
 });
 
-describe("listProducts", () => {
-  const toOverview = ({ id, title, price, inStock }: Product) => ({ id, title, price, inStock });
-  const byId = (a: { id: string }, b: { id: string }) => a.id.localeCompare(b.id);
+describe("getProducts", () => {
+  it("returns an empty list when given no ids", async () => {
+    await expect(service.getProducts([])).resolves.toEqual([]);
+  });
 
-  const listAll = async (query: Omit<Parameters<typeof service.listProducts>[0], "cursor">) => {
+  it("returns the overview of a single product", async () => {
+    const product = makeProduct({ originalPrice: 100, thumbnailKey: "products/x/thumb" });
+    await putItems(db, TableName, [product]);
+
+    await expect(service.getProducts([product.id])).resolves.toEqual([
+      { ...toOverview(product), originalPrice: 100, thumbnailKey: "products/x/thumb" }
+    ]);
+  });
+
+  it("returns the overviews of multiple products", async () => {
+    const products = [makeProduct(), makeProduct({ stockCount: 0 }), makeProduct({ price: 5 })];
+    await putItems(db, TableName, products);
+
+    const result = await service.getProducts(products.map(p => p.id));
+
+    expect(result.toSorted(byId)).toEqual(products.map(toOverview).toSorted(byId));
+  });
+
+  it("returns each product once when ids are repeated", async () => {
+    const products = [makeProduct(), makeProduct()];
+    await putItems(db, TableName, products);
+
+    const result = await service.getProducts([products[0].id, products[1].id, products[0].id]);
+
+    expect(result.toSorted(byId)).toEqual(products.map(toOverview).toSorted(byId));
+  });
+
+  it.each([
+    ["a single", 0],
+    ["one of several", 2]
+  ])("throws a 404 when %s product does not exist", async (_, existing) => {
+    const products = Array.from({ length: existing }, () => makeProduct());
+    await putItems(db, TableName, products);
+
+    const result = service.getProducts([...products.map(p => p.id), crypto.randomUUID()]);
+
+    await expect(result).rejects.toMatchObject({ statusCode: 404 });
+  });
+});
+
+describe("getProductStocks", () => {
+  it("returns an empty map when given no ids", async () => {
+    await expect(service.getProductStocks([])).resolves.toEqual({});
+  });
+
+  it("returns the stock of a single product", async () => {
+    const product = makeProduct({ stockCount: 7 });
+    await putItems(db, TableName, [product]);
+
+    await expect(service.getProductStocks([product.id])).resolves.toEqual({ [product.id]: 7 });
+  });
+
+  it("returns the stock of multiple products by id", async () => {
+    const products = [makeProduct({ stockCount: 3 }), makeProduct({ stockCount: 0 }), makeProduct({ stockCount: 12 })];
+    await putItems(db, TableName, products);
+
+    await expect(service.getProductStocks(products.map(p => p.id))).resolves.toEqual(
+      Object.fromEntries(products.map(p => [p.id, p.stockCount]))
+    );
+  });
+
+  it("returns each product once when ids are repeated", async () => {
+    const products = [makeProduct({ stockCount: 3 }), makeProduct({ stockCount: 4 })];
+    await putItems(db, TableName, products);
+
+    await expect(service.getProductStocks([products[0].id, products[1].id, products[1].id])).resolves.toEqual({
+      [products[0].id]: 3,
+      [products[1].id]: 4
+    });
+  });
+
+  it.each([
+    ["a single", 0],
+    ["one of several", 2]
+  ])("throws a 404 when %s product does not exist", async (_, existing) => {
+    const products = Array.from({ length: existing }, () => makeProduct());
+    await putItems(db, TableName, products);
+
+    const result = service.getProductStocks([...products.map(p => p.id), crypto.randomUUID()]);
+
+    await expect(result).rejects.toMatchObject({ statusCode: 404 });
+  });
+});
+
+describe("listProducts", () => {
+  type ListQuery = Omit<Parameters<typeof service.listProducts>[0], "cursor">;
+
+  const listAll = async (query: ListQuery) => {
     const pages = [];
     let cursor: string | undefined;
     do {
@@ -137,71 +244,80 @@ describe("listProducts", () => {
     return pages;
   };
 
-  it("returns an empty page when there are no products", async () => {
-    await expect(service.listProducts({ limit: 20 })).resolves.toEqual({
-      data: [],
-      pagination: { limit: 20, hasNext: false, cursor: undefined }
-    });
-  });
+  const listOwn = async (products: Product[], query: ListQuery) => {
+    const ids = new Set(products.map(p => p.id));
+    const pages = await listAll(query);
+    return pages.flatMap(page => page.data).filter(item => ids.has(item.id));
+  };
 
   it("returns overviews of all products", async () => {
     const products = [makeProduct(), makeProduct({ category: Category.Weapons })];
     await putItems(db, TableName, products);
 
-    const result = await service.listProducts({ limit: 20 });
+    const result = await listOwn(products, { limit: 100 });
 
-    expect(result.data.toSorted(byId)).toEqual(products.map(toOverview).toSorted(byId));
-    expect(result.pagination).toEqual({ limit: 20, hasNext: false, cursor: undefined });
+    expect(result.toSorted(byId)).toEqual(products.map(toOverview).toSorted(byId));
   });
 
   it("filters by category using the category index", async () => {
     const masks = [makeProduct(), makeProduct()];
-    await putItems(db, TableName, [...masks, makeProduct({ category: Category.Weapons })]);
+    const products = [...masks, makeProduct({ category: Category.Weapons })];
+    await putItems(db, TableName, products);
 
-    const result = await service.listProducts({ limit: 20, category: Category.Masks });
+    const result = await listOwn(products, { limit: 100, category: Category.Masks });
 
-    expect(result.data).toEqual(masks.map(toOverview).toSorted(byId));
+    expect(result).toEqual(masks.map(toOverview).toSorted(byId));
   });
 
   it("filters out products that are out of stock", async () => {
-    const inStock = makeProduct({ inStock: 1 });
-    await putItems(db, TableName, [inStock, makeProduct({ inStock: 0 })]);
+    const inStock = makeProduct({ stockCount: 1 });
+    const products = [inStock, makeProduct({ stockCount: 0 })];
+    await putItems(db, TableName, products);
 
-    const result = await service.listProducts({ limit: 20, inStock: true });
+    const result = await listOwn(products, { limit: 100, inStock: true });
 
-    expect(result.data).toEqual([toOverview(inStock)]);
+    expect(result).toEqual([toOverview(inStock)]);
   });
 
-  it("combines the category and stock filters", async () => {
-    const match = makeProduct({ inStock: 3 });
-    await putItems(db, TableName, [
-      match,
-      makeProduct({ inStock: 0 }),
-      makeProduct({ category: Category.Weapons, inStock: 3 })
-    ]);
+  it("combines the category and stock filters using the category stock index", async () => {
+    const matches = [makeProduct({ stockCount: 3 }), makeProduct({ stockCount: 1 })];
+    const products = [
+      ...matches,
+      makeProduct({ stockCount: 0 }),
+      makeProduct({ category: Category.Weapons, stockCount: 3 })
+    ];
+    await putItems(db, TableName, products);
 
-    const result = await service.listProducts({ limit: 20, category: Category.Masks, inStock: true });
+    const result = await listOwn(products, { limit: 100, category: Category.Masks, inStock: true });
 
-    expect(result.data).toEqual([toOverview(match)]);
+    expect(result).toEqual(matches.map(toOverview).toSorted(byId));
   });
 
   it.each([
     ["all products", {}, () => true],
     ["a category", { category: Category.Masks }, (p: Product) => p.category === Category.Masks],
-    ["in-stock products", { inStock: true }, (p: Product) => p.inStock > 0]
+    ["in-stock products", { inStock: true }, (p: Product) => p.stockCount > 0],
+    [
+      "in-stock products in a category",
+      { category: Category.Masks, inStock: true },
+      (p: Product) => p.category === Category.Masks && p.stockCount > 0
+    ]
   ])("paginates through %s without duplicates or gaps", async (_, filters, predicate) => {
     const products = Array.from({ length: 25 }, (_, i) =>
-      makeProduct({ category: i % 2 ? Category.Masks : Category.Potions, inStock: i % 3 })
+      makeProduct({ category: i % 2 ? Category.Masks : Category.Potions, stockCount: i % 3 })
     );
     await putItems(db, TableName, products);
 
     const pages = await listAll({ limit: 10, ...filters });
+    const all = pages.flatMap(page => page.data);
+    const ids = new Set(products.map(p => p.id));
 
     for (const page of pages) {
       expect(page.data.length).toBeLessThanOrEqual(10);
     }
     expect(pages.at(-1)!.pagination.hasNext).toBe(false);
-    expect(pages.flatMap(page => page.data).toSorted(byId)).toEqual(
+    expect(new Set(all.map(item => item.id)).size).toBe(all.length);
+    expect(all.filter(item => ids.has(item.id)).toSorted(byId)).toEqual(
       products.filter(predicate).map(toOverview).toSorted(byId)
     );
   });

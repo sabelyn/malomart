@@ -9,7 +9,7 @@ export const CreateProductBody = Product.pick({
   description: true,
   category: true,
   price: true,
-  inStock: true,
+  stockCount: true,
   originalPrice: true,
   features: true
 }).meta({ id: "CreateProductData" });

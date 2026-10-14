@@ -15,7 +15,7 @@ const productData = {
   description: "Allows you to see into the minds of others.",
   category: "Masks" as const,
   price: 80,
-  inStock: 2,
+  stockCount: 2,
   features: ["Reveals hidden truths"]
 };
 

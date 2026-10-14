@@ -7,7 +7,7 @@ import { container } from "tsyringe";
 import { DB, USER } from "@/contracts/tokens";
 import env from "@/env";
 import { identity } from "@/middleware/identity";
-import { clearTable, putItems } from "../../helpers/db";
+import { putItems } from "../../helpers/db";
 import { cacheTestJwks, signJwt } from "../../helpers/jwt";
 
 const captured = vi.hoisted(() => ({ verifiers: [] as unknown[] }));
@@ -42,10 +42,9 @@ beforeAll(() => {
   cacheTestJwks(captured.verifiers[0] as ReturnType<typeof CognitoJwtVerifier.create>);
 });
 
-beforeEach(async () => {
+beforeEach(() => {
   customerId = crypto.randomUUID();
   container.registerInstance(DB, db);
-  await clearTable(db, CustomersTable, ["id"]);
 });
 
 describe("identity", () => {
