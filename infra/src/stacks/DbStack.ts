@@ -54,7 +54,7 @@ export class DbStack extends Stack {
     });
     ordersTable.addGlobalSecondaryIndex({
       indexName: INDEXES.ordersByStatus,
-      partitionKey: { name: "status", type: AttributeType.STRING },
+      partitionKey: { name: "currentStatus", type: AttributeType.STRING },
       sortKeys: [
         { name: "orderDate", type: AttributeType.STRING },
         { name: "id", type: AttributeType.STRING }
@@ -64,7 +64,7 @@ export class DbStack extends Stack {
       indexName: INDEXES.ordersByCustomerStatus,
       partitionKeys: [
         { name: "customerId", type: AttributeType.STRING },
-        { name: "status", type: AttributeType.STRING }
+        { name: "currentStatus", type: AttributeType.STRING }
       ],
       sortKeys: [
         { name: "orderDate", type: AttributeType.STRING },

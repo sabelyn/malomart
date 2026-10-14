@@ -1,6 +1,6 @@
 import type { Order } from "./types";
 
-type OrderItems = Order["items"];
+type OrderItems = Order["products"];
 
 // Prices on this website are whole numbers, so no need to account for floating point addition
 export const getOrderTotal = (items: OrderItems): number => {

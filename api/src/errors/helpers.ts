@@ -1,5 +1,5 @@
 import { CognitoIdentityProviderServiceException } from "@aws-sdk/client-cognito-identity-provider";
-import { ConditionalCheckFailedException, DynamoDBServiceException } from "@aws-sdk/client-dynamodb";
+import { ConditionalCheckFailedException, DynamoDBServiceException, TransactionCanceledException } from "@aws-sdk/client-dynamodb";
 import { ErrorCode } from "@mm/lib";
 import { treeifyError, ZodError } from "zod";
 
@@ -24,7 +24,21 @@ export const unavailable = (message: string, cause: unknown) => new ApiError(503
 export const internal = (cause: unknown, details?: unknown) =>
   new ApiError(500, "Something went wrong handling this request.", { cause, details });
 
+const fromCancelledTransaction = (err: TransactionCanceledException): ApiError => {
+  const codes = new Set(err.CancellationReasons?.map(r => r.Code));
+  if (codes.has("ThrottlingError") || codes.has("ProvisionedThroughputExceeded") || codes.has("RequestLimitExceeded")) {
+    return unavailable("The data store is busy. Please retry shortly.", err);
+  }
+  if (codes.has("TransactionConflict") || codes.has("ConditionalCheckFailed")) {
+    return conflict("The item was modified by another request. Please retry.", err);
+  }
+  return internal(err, { cancellationReasons: err.CancellationReasons?.map(r => r.Code) });
+};
+
 const fromDynamoDb = (err: DynamoDBServiceException): ApiError => {
+  if (err instanceof TransactionCanceledException) {
+    return fromCancelledTransaction(err);
+  }
   switch (err.name) {
     case "ConditionalCheckFailedException":
     case "TransactionConflictException":
@@ -106,13 +120,13 @@ export const describeError = (err: ApiError) => {
     cause:
       cause instanceof Error
         ? {
-            name: cause.name,
-            message: cause.message,
-            stack: cause.stack,
-            requestId: isService ? cause.$metadata.requestId : undefined,
-            httpStatusCode: isService ? cause.$metadata.httpStatusCode : undefined,
-            attempts: isService ? cause.$metadata.attempts : undefined
-          }
+          name: cause.name,
+          message: cause.message,
+          stack: cause.stack,
+          requestId: isService ? cause.$metadata.requestId : undefined,
+          httpStatusCode: isService ? cause.$metadata.httpStatusCode : undefined,
+          attempts: isService ? cause.$metadata.attempts : undefined
+        }
         : cause
   };
 };

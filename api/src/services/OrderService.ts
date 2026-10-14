@@ -1,5 +1,6 @@
+import { ConditionalCheckFailedException, TransactionCanceledException } from "@aws-sdk/client-dynamodb";
 import type { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-import { PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { TransactWriteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import type { PaginatedQueryOptions } from "@mm/clients";
 import { getItemById, getPaginatedResults, InvalidCursorError } from "@mm/clients";
 import type { CreateOrderBody, ListOrdersQuery, OrderItemEntry } from "@mm/lib";
@@ -16,10 +17,10 @@ import { parseStored } from "@/utils/parsing";
 
 const SelectedOrder = strictObject({
   ...OrderOverview.omit({ total: true }).shape,
-  items: Order.shape.items
+  products: Order.shape.products
 });
 
-const { orders } = env.TABLE_NAMES;
+const { carts, orders, products: productsTable } = env.TABLE_NAMES;
 const { ordersByCustomer, ordersByStatus, ordersByCustomerStatus } = env.TABLE_INDEXES;
 
 @injectable()
@@ -33,8 +34,8 @@ export class OrderService implements IOrderService {
   ) { }
 
   cancelOrder = async (id: string) => {
-    const ExpressionAttributeValues: Record<string, string> = { ":placed": OrderStatus.Placed, ":confirmed": OrderStatus.Confirmed, ":cancelled": OrderStatus.Cancelled };
-    let ConditionExpression = "status = :placed OR status = :confirmed";
+    const ExpressionAttributeValues: Record<string, string> = { ":placed": OrderStatus.Placed, ":confirmed": OrderStatus.Confirmed, ":cancelled": OrderStatus.Cancelled, ":now": new Date().toISOString() };
+    let ConditionExpression = "currentStatus = :placed OR currentStatus = :confirmed";
     if (!this.user.isAdmin) {
       ConditionExpression = `customerId = :customerId AND (${ConditionExpression})`;
       ExpressionAttributeValues[":customerId"] = this.user.id
@@ -45,10 +46,17 @@ export class OrderService implements IOrderService {
         TableName: orders,
         Key: { id },
         ConditionExpression,
-        UpdateExpression: "SET status = :cancelled",
-        ExpressionAttributeValues
+        UpdateExpression: "SET currentStatus = :cancelled, statusUpdates.#cancelled = :now",
+        ExpressionAttributeNames: { "#cancelled": OrderStatus.Cancelled },
+        ExpressionAttributeValues,
+        ReturnValuesOnConditionCheckFailure: "ALL_OLD"
       }));
     } catch (err) {
+      const cancellable: string[] = [OrderStatus.Placed, OrderStatus.Confirmed];
+      const isUncancellableOrder = err instanceof ConditionalCheckFailedException && err.Item && (this.user.isAdmin || err.Item.customerId?.S === this.user.id) && !cancellable.includes(err.Item.currentStatus?.S ?? "");
+      if (isUncancellableOrder) {
+        throw conflict("Order can no longer be cancelled.");
+      }
       throw mapConditionFailure(err, "Order");
     }
   }
@@ -85,26 +93,65 @@ export class OrderService implements IOrderService {
       id: crypto.randomUUID(),
       customerId,
       orderDate,
-      status: OrderStatus.Placed,
+      currentStatus: OrderStatus.Placed,
       statusUpdates: {
         [OrderStatus.Placed]: orderDate
       },
-      items: orderEntries,
+      products: orderEntries,
       address: { recipient, street, city, region, postalCode },
       paymentMethod: { brand, lastFour, expirationMonth, expirationYear, token }
     };
 
-    const result = await this.db.send(new PutCommand({
-      TableName: orders,
-      Item: order
-    }));
+    try {
+      await this.db.send(new TransactWriteCommand({
+        TransactItems: [
+          ...products.map(({ id }) => ({
+            Update: {
+              TableName: productsTable,
+              Key: { id },
+              ConditionExpression: "stockCount >= :amount",
+              UpdateExpression: "SET stockCount = stockCount - :amount",
+              ExpressionAttributeValues: { ":amount": orderEntries[id].amount },
+              ReturnValuesOnConditionCheckFailure: "ALL_OLD" as const
+            }
+          })),
+          {
+            Put: {
+              TableName: orders,
+              Item: order
+            }
+          },
+          {
+            Update: {
+              TableName: carts,
+              Key: { customerId },
+              UpdateExpression: "SET #items = :empty",
+              ExpressionAttributeNames: { "#items": "items" },
+              ExpressionAttributeValues: { ":empty": {} }
+            }
+          }
+        ]
+      }));
+    } catch (err) {
+      if (err instanceof TransactionCanceledException) {
+        const reasons = err.CancellationReasons ?? [];
+        const failedIndex = reasons.findIndex(r => r.Code === "ConditionalCheckFailed");
+        const product = products[failedIndex];
+        if (product) {
+          throw reasons[failedIndex].Item
+            ? conflict(`Not enough ${product.title} in stock.`, err)
+            : notFound(`${product.title} is no longer available.`);
+        }
+      }
+      throw err;
+    }
 
     return this.toOrderDto(order);
   }
 
   getOrder = async (id: string) => {
     const order = await getItemById<Order>(this.db, orders, id);
-    if (!order || !(order.customerId === this.user.id && !this.user.isAdmin)) {
+    if (!order || (order.customerId !== this.user.id && !this.user.isAdmin)) {
       throw notFound("Order could not be found.");
     }
 
@@ -112,35 +159,37 @@ export class OrderService implements IOrderService {
   }
 
   listOrders = async (query: ListOrdersQuery) => {
-    const { cursor, limit, statuses } = query;
+    const { cursor, limit, status } = query;
     const customerId = this.user.isAdmin ? query.customerId : this.user.id;
     const select = Object.keys(SelectedOrder.shape);
 
     const options: PaginatedQueryOptions = {
       tableName: orders,
-      keys: ["id", "orderDate"],
+      keys: ["id"],
       cursor,
       limit,
-      select
+      select,
+      reverse: true
     };
-    if (customerId && statuses?.length) {
+    if (customerId && status) {
       options.indexName = ordersByCustomerStatus
-      options.keyCondition = "customerId = :customerId AND status in :statuses";
-      options.keys.push("customerId", "status");
+      options.keyCondition = "customerId = :customerId AND currentStatus = :status";
+      options.keys.push("customerId", "currentStatus");
     } else if (customerId) {
       options.indexName = ordersByCustomer;
       options.keyCondition = "customerId = :customerId";
       options.keys.push("customerId");
-    } else if (statuses) {
+    } else if (status) {
       options.indexName = ordersByStatus;
-      options.keyCondition = "status in :statuses";
-      options.keys.push("status");
+      options.keyCondition = "currentStatus = :status";
+      options.keys.push("currentStatus");
     }
 
-    if (customerId || statuses?.length) {
+    if (customerId || status) {
+      options.keys.push("orderDate");
       options.attributeValues = {
         ...(customerId ? { ":customerId": customerId } : {}),
-        ...(statuses ? { ":statuses": statuses } : {})
+        ...(status ? { ":status": status } : {})
       };
     }
 
@@ -172,10 +221,10 @@ export class OrderService implements IOrderService {
   }
 
   private toOrderOverview = (data: unknown) => {
-    const { items, ...order } = parseStored(data, SelectedOrder);
+    const { products, ...order } = parseStored(data, SelectedOrder);
     return {
       ...order,
-      total: getOrderTotal(items)
+      total: getOrderTotal(products)
     }
   }
 }

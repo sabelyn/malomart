@@ -73,6 +73,7 @@ export type PaginatedQueryOptions = {
   keyCondition?: string;
   attributeValues?: Record<string, unknown>;
   maxRequests?: number;
+  reverse?: boolean;
 };
 
 export class InvalidCursorError extends Error {
@@ -113,7 +114,8 @@ export const getPaginatedResults = async (client: DynamoDBDocumentClient, option
     indexName,
     keyCondition,
     attributeValues,
-    maxRequests = 10
+    maxRequests = 10,
+    reverse
   } = options;
 
   const projected = select ? [...new Set([...select, ...keys])] : undefined;
@@ -128,7 +130,8 @@ export const getPaginatedResults = async (client: DynamoDBDocumentClient, option
         ProjectionExpression: projected.map((_, i) => `#sel${i}`).join(", "),
         ExpressionAttributeNames: Object.fromEntries(projected.map((name, i) => [`#sel${i}`, name]))
       }
-      : {})
+      : {}),
+    ...(reverse ? { ScanIndexForward: false } : {})
   };
 
   const items: Record<string, unknown>[] = [];

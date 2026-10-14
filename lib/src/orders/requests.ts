@@ -18,6 +18,6 @@ export type UpdateOrderStatusBody = zinfer<typeof UpdateOrderStatusBody>;
 export const ListOrdersQuery = object({
   ...PaginationQuery.shape,
   customerId: Id.optional(),
-  statuses: OrderStatusSchema.array().optional()
+  status: OrderStatusSchema.optional()
 });
 export type ListOrdersQuery = zinfer<typeof ListOrdersQuery>;

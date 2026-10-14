@@ -9,8 +9,8 @@ export const OrderDto = strictObject({
   ...Order.pick({
     id: true,
     customerId: true,
-    items: true,
-    status: true,
+    products: true,
+    currentStatus: true,
     statusUpdates: true,
     orderDate: true,
     address: true
@@ -24,7 +24,7 @@ export const OrderOverview = strictObject({
     id: true,
     customerId: true,
     orderDate: true,
-    status: true
+    currentStatus: true
   }).shape,
   total: PositiveInt
 });
