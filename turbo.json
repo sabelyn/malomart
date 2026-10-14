@@ -4,7 +4,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "package.json", "vite.config.mts"],
+      "inputs": ["src/**", "package.json", "vite.config.mts", ".env"],
       "outputs": ["dist/**", "cdk.out/**"]
     },
     "check": {},

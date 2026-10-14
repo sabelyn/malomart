@@ -8,15 +8,19 @@ import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations
 import { AttributeType, BillingMode, Table } from "aws-cdk-lib/aws-dynamodb";
 import { Key } from "aws-cdk-lib/aws-kms";
 import { Architecture, Runtime } from "aws-cdk-lib/aws-lambda";
+import { SqsDestination } from "aws-cdk-lib/aws-lambda-destinations";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import type { Construct } from "constructs";
 import { resolve } from "path";
 
+import { FailureQueue } from "../constructs/FailureQueue";
+import type { AlertsStack } from "./AlertsStack";
 import type { AuthStack } from "./AuthStack";
 import type { GatewayStack } from "./GatewayStack";
 
 type Props = StackProps & {
+  alertsStack: AlertsStack;
   authStack: AuthStack;
   gatewayStack: GatewayStack;
 };
@@ -84,10 +88,16 @@ export class VaultStack extends Stack {
     });
     cardTable.grant(describeCard, "dynamodb:GetItem");
 
+    const deleteCardFailures = new FailureQueue(this, "DeleteCardFailures", {
+      description: "Async card deletions failed after retries",
+      alarmTopic: props.alertsStack.alarmTopic
+    });
     const deleteCard = new NodejsFunction(this, "DeleteCardFunction", {
       entry: resolve(__dirname, "../lambdas/vaultDeleteCard.ts"),
       runtime: Runtime.NODEJS_24_X,
       architecture: Architecture.ARM_64,
+      retryAttempts: 2,
+      onFailure: new SqsDestination(deleteCardFailures.queue),
       logGroup: new LogGroup(this, "DeleteCardLogs", {
         retention: RetentionDays.ONE_WEEK,
         removalPolicy: RemovalPolicy.DESTROY
@@ -98,10 +108,16 @@ export class VaultStack extends Stack {
     });
     cardTable.grant(deleteCard, "dynamodb:DeleteItem");
 
+    const updateCardFailures = new FailureQueue(this, "UpdateCardFailures", {
+      description: "Async card expiration updates failed after retries",
+      alarmTopic: props.alertsStack.alarmTopic
+    });
     const updateCard = new NodejsFunction(this, "UpdateCardFunction", {
       entry: resolve(__dirname, "../lambdas/vaultUpdateCardExpiration.ts"),
       runtime: Runtime.NODEJS_24_X,
       architecture: Architecture.ARM_64,
+      retryAttempts: 2,
+      onFailure: new SqsDestination(updateCardFailures.queue),
       logGroup: new LogGroup(this, "UpdateCardLogs", {
         retention: RetentionDays.ONE_WEEK,
         removalPolicy: RemovalPolicy.DESTROY

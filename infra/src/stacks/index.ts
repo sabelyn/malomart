@@ -1,5 +1,6 @@
 import type { Stage } from "aws-cdk-lib";
 
+import { AlertsStack } from "./AlertsStack";
 import { ApiStack } from "./ApiStack";
 import { AuthStack } from "./AuthStack";
 import { DbStack } from "./DbStack";
@@ -16,18 +17,21 @@ export type StageConfig = {
   apiTaskCount: number;
   siteDomain?: SiteDomain;
   emailDomain?: string;
+  alarmEmail?: string;
 };
 
 export const configureStacks = (stage: Stage, config: StageConfig) => {
-  const dbStack = new DbStack(stage, "MaloMartDbStack");
+  const alertsStack = new AlertsStack(stage, "MaloMartAlertsStack", { alarmEmail: config.alarmEmail });
+  const dbStack = new DbStack(stage, "MaloMartDbStack", { alertsStack });
   const gatewayStack = new GatewayStack(stage, "MaloMartGatewayStack");
   const frontendStack = new FrontendStack(stage, "MaloMartFrontendStack", {
+    alertsStack,
     dbStack,
     gatewayStack,
     siteDomain: config.siteDomain
   });
   const authStack = new AuthStack(stage, "MaloMartAuthStack", { dbStack, emailDomain: config.emailDomain });
-  const vaultStack = new VaultStack(stage, "MaloMartVaultStack", { authStack, gatewayStack });
+  const vaultStack = new VaultStack(stage, "MaloMartVaultStack", { alertsStack, authStack, gatewayStack });
   new ApiStack(stage, "MaloMartApiStack", {
     authStack,
     dbStack,

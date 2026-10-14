@@ -6,9 +6,11 @@ import { Architecture, FilterCriteria, FilterRule, Runtime, StartingPosition } f
 import { DynamoEventSource, SqsDlq } from "aws-cdk-lib/aws-lambda-event-sources";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
-import { Queue } from "aws-cdk-lib/aws-sqs";
 import type { Construct } from "constructs";
 import path from "node:path";
+
+import { FailureQueue } from "../constructs/FailureQueue";
+import type { AlertsStack } from "./AlertsStack";
 
 export const INDEXES: TableIndexes = {
   addressesByCustomer: "IDX_ADDRESSES_CUSTOMER",
@@ -20,10 +22,14 @@ export const INDEXES: TableIndexes = {
   productsByCategoryInStock: "IDX_PRODUCTS_CATEGORY_IN_STOCK"
 };
 
+type Props = StackProps & {
+  alertsStack: AlertsStack;
+};
+
 export class DbStack extends Stack {
   readonly tables: Record<keyof TableNames, Table>;
 
-  constructor(scope: Construct, id: string, props?: StackProps) {
+  constructor(scope: Construct, id: string, props: Props) {
     super(scope, id, props);
 
     const addressesTable = new Table(this, "AddressesTable", {
@@ -122,9 +128,10 @@ export class DbStack extends Stack {
     });
     productsTable.grant(stockFlagSync, "dynamodb:UpdateItem");
 
-    const stockFlagSyncDlq = new Queue(this, "StockFlagSyncDlq", {
-      retentionPeriod: Duration.days(14)
-    });
+    const stockFlagSyncDlq = new FailureQueue(this, "StockFlagSyncFailures", {
+      description: "Product stream records failed to sync the inStock flag",
+      alarmTopic: props.alertsStack.alarmTopic
+    }).queue;
 
     stockFlagSync.addEventSource(
       new DynamoEventSource(productsTable, {

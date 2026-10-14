@@ -24,6 +24,7 @@ import { HttpOrigin, S3BucketOrigin } from "aws-cdk-lib/aws-cloudfront-origins";
 import { Rule } from "aws-cdk-lib/aws-events";
 import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
 import { Architecture, Runtime } from "aws-cdk-lib/aws-lambda";
+import { SqsDestination } from "aws-cdk-lib/aws-lambda-destinations";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { AaaaRecord, ARecord, HostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
@@ -33,6 +34,8 @@ import { BucketDeployment, CacheControl, Source } from "aws-cdk-lib/aws-s3-deplo
 import type { Construct } from "constructs";
 import path from "node:path";
 
+import { FailureQueue } from "../constructs/FailureQueue";
+import type { AlertsStack } from "./AlertsStack";
 import type { DbStack } from "./DbStack";
 import type { GatewayStack } from "./GatewayStack";
 
@@ -42,6 +45,7 @@ export type SiteDomain = {
 };
 
 type Props = StackProps & {
+  alertsStack: AlertsStack;
   dbStack: DbStack;
   gatewayStack: GatewayStack;
   siteDomain?: SiteDomain;
@@ -165,12 +169,18 @@ export class FrontendStack extends Stack {
     });
 
     const productsTable = props.dbStack.tables.products;
+    const imageProcessorFailures = new FailureQueue(this, "ImageProcessorFailures", {
+      description: "Product image uploads failed to process",
+      alarmTopic: props.alertsStack.alarmTopic
+    });
     const imageProcessor = new NodejsFunction(this, "ImageProcessorFunction", {
       entry: path.resolve(__dirname, "../lambdas/imageProcessor.ts"),
       runtime: Runtime.NODEJS_24_X,
       architecture: Architecture.ARM_64,
       memorySize: 1024,
       timeout: Duration.seconds(30),
+      retryAttempts: 2,
+      onFailure: new SqsDestination(imageProcessorFailures.queue),
       logGroup: new LogGroup(this, "ImageProcessorLogs", {
         retention: RetentionDays.ONE_WEEK,
         removalPolicy: RemovalPolicy.DESTROY
@@ -206,7 +216,13 @@ export class FrontendStack extends Stack {
           object: { key: [{ prefix: "products/" }] }
         }
       },
-      targets: [new LambdaFunction(imageProcessor, { retryAttempts: 2, maxEventAge: Duration.hours(1) })]
+      targets: [
+        new LambdaFunction(imageProcessor, {
+          retryAttempts: 2,
+          maxEventAge: Duration.hours(1),
+          deadLetterQueue: imageProcessorFailures.queue
+        })
+      ]
     });
 
     const assetsDeployment = new BucketDeployment(this, "DeployAssets", {

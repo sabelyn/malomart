@@ -2,11 +2,16 @@
 import type { StackProps } from "aws-cdk-lib";
 import { App, Stage } from "aws-cdk-lib";
 import { RemovalPolicies } from "aws-cdk-lib/core";
+import { existsSync } from "node:fs";
 
 import type { StageConfig } from "./stacks";
 import { configureStacks, DomainStack, MailStack } from "./stacks";
 
 const DOMAIN_NAME = "malomart.link";
+
+if (existsSync(".env")) {
+  process.loadEnvFile();
+}
 
 const app = new App();
 const env: StackProps["env"] = { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION };
@@ -20,7 +25,8 @@ const stages: Record<string, { env: StackProps["env"]; config: StageConfig }> = 
     config: {
       apiTaskCount: Number(app.node.tryGetContext("apiTasks") ?? 0),
       siteDomain: { zoneName: DOMAIN_NAME, hostName: `dev.${DOMAIN_NAME}` },
-      emailDomain: DOMAIN_NAME
+      emailDomain: DOMAIN_NAME,
+      alarmEmail: process.env.DEV_ALARM_EMAIL
     }
   }
 };
