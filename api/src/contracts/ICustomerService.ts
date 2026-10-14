@@ -1,4 +1,12 @@
-import type { AddressDto, CreateAddressBody, CustomerDto, ListAddressesResponse, UpdateAddressBody, UpdateCartBody, UpdateCartResponse } from "@mm/lib";
+import type {
+  AddressDto,
+  CreateAddressBody,
+  CustomerDto,
+  ListAddressesResponse,
+  UpdateAddressBody,
+  UpdateCartBody,
+  UpdateCartResponse
+} from "@mm/lib";
 
 export interface ICustomerService {
   createAddress: (body: CreateAddressBody) => Promise<AddressDto>;

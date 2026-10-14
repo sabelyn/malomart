@@ -5,6 +5,8 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router";
 
 import { isUnauthorized, useEndpointMutation, useSetSession } from "@/api";
+import { authErrorMessage, SESSION_TIMED_OUT } from "@/components/auth/authErrors";
+import CodeForm from "@/components/auth/CodeForm";
 import ChudleyHype from "@/components/ChudleyHype";
 import MaloSays from "@/components/MaloSays";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
@@ -12,8 +14,6 @@ import { SIGN_UP_PATH } from "@/routes/paths";
 import type { SignInState } from "@/routes/paths";
 import pages from "../pages.module.css";
 import classes from "./auth.module.css";
-import { authErrorMessage, SESSION_TIMED_OUT } from "@/components/auth/authErrors";
-import CodeForm from "@/components/auth/CodeForm";
 
 const SignInPage = () => {
   useDocumentTitle("Sign in");

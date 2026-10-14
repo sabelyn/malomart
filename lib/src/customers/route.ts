@@ -171,6 +171,7 @@ export const updateCart = new Endpoint(customers, {
     body: UpdateCartBody,
     response: UpdateCartResponse
   },
-  successDescription: "The cart was synced to the server. Any quantities reduced to match available stock are returned.",
+  successDescription:
+    "The cart was synced to the server. Any quantities reduced to match available stock are returned.",
   summary: "Update Cart"
 });

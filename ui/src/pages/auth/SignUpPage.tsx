@@ -6,6 +6,8 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 
 import { useEndpointMutation, useSetSession } from "@/api";
+import { authErrorMessage } from "@/components/auth/authErrors";
+import CodeForm from "@/components/auth/CodeForm";
 import ChudleyHype from "@/components/ChudleyHype";
 import MaloSays from "@/components/MaloSays";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
@@ -13,8 +15,6 @@ import { SIGN_IN_PATH } from "@/routes/paths";
 import type { SignInState } from "@/routes/paths";
 import pages from "../pages.module.css";
 import classes from "./auth.module.css";
-import { authErrorMessage } from "@/components/auth/authErrors";
-import CodeForm from "@/components/auth/CodeForm";
 
 const isAccountExists = (error: unknown) => error instanceof ApiRequestError && error.code === ErrorCode.AccountExists;
 

@@ -10,4 +10,4 @@ export const getOrderTotal = (items: OrderItems): number => {
   }
 
   return total;
-}
+};

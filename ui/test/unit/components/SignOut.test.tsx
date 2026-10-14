@@ -55,7 +55,7 @@ describe("sign out", () => {
   it("lands on the home page even when it has to load first", async () => {
     stubApi({ "POST /api/auth/sign-out": () => new Response(null, { status: 204 }) });
     const user = userEvent.setup();
-    const LazyHome = lazy(async () => ({ default: () => <p>lazy home page</p> }));
+    const LazyHome = lazy(() => Promise.resolve({ default: () => <p>lazy home page</p> }));
     renderWithProviders(
       <>
         <Suspense>

@@ -20,10 +20,10 @@ const ChangeEmailFlow = ({ currentEmail, onCancel, onSaved }: ChangeEmailFlowPro
   const [pendingEmail, setPendingEmail] = useState<string>();
   const [notice, setNotice] = useState<string>();
 
-  const EmailForm = RequestEmailChangeBody.refine(
-    ({ email }) => email.toLowerCase() !== currentEmail.toLowerCase(),
-    { error: "That's already your email.", path: ["email"] }
-  );
+  const EmailForm = RequestEmailChangeBody.refine(({ email }) => email.toLowerCase() !== currentEmail.toLowerCase(), {
+    error: "That's already your email.",
+    path: ["email"]
+  });
 
   const form = useForm({
     initialValues: { email: "" },

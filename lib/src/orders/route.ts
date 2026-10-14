@@ -6,7 +6,8 @@ import { ListOrdersResponse, OrderDto } from "./responses";
 export const orders = new Route("/orders", "user", ["Orders"], apiRoot);
 
 export const listOrders = new Endpoint(orders, {
-  description: "List paginated orders with optional filtering. A customer only gets their orders, while an admin gets all orders.",
+  description:
+    "List paginated orders with optional filtering. A customer only gets their orders, while an admin gets all orders.",
   errors: {
     400: "The query parameters were invalid."
   },

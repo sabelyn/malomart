@@ -7,11 +7,7 @@
     "us-east-1e",
     "us-east-1f"
   ],
-  "availability-zones:account=161012475232:region=us-east-2": [
-    "us-east-2a",
-    "us-east-2b",
-    "us-east-2c"
-  ],
+  "availability-zones:account=161012475232:region=us-east-2": ["us-east-2a", "us-east-2b", "us-east-2c"],
   "hosted-zone:account=161012475232:domainName=malomart.link:region=us-east-2": {
     "Id": "/hostedzone/Z005549015QVZBVX7TJ7E",
     "Name": "malomart.link."

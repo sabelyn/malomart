@@ -51,10 +51,14 @@ export const getItemsByIds = async <T = unknown>(
   const unique = [...new Set(ids)];
   const items: T[] = [];
   for (let i = 0; i < unique.length; i += 100) {
-    let keys: Record<string, unknown>[] | undefined = unique.slice(i, i + 100).map((id) => ({ id }));
+    let keys: Record<string, unknown>[] | undefined = unique.slice(i, i + 100).map(id => ({ id }));
     for (let attempt = 0; keys?.length && attempt < 5; attempt++) {
-      if (attempt) await new Promise((r) => setTimeout(r, 50 * 2 ** attempt));
-      const result: BatchGetCommandOutput = await client.send(new BatchGetCommand({ RequestItems: { [TableName]: { Keys: keys, ProjectionExpression } } }));
+      if (attempt) {
+        await new Promise(r => setTimeout(r, 50 * 2 ** attempt));
+      }
+      const result: BatchGetCommandOutput = await client.send(
+        new BatchGetCommand({ RequestItems: { [TableName]: { Keys: keys, ProjectionExpression } } })
+      );
       items.push(...((result.Responses?.[TableName] ?? []) as T[]));
       keys = result.UnprocessedKeys?.[TableName]?.Keys;
     }
@@ -127,9 +131,9 @@ export const getPaginatedResults = async (client: DynamoDBDocumentClient, option
     ...(attributeValues ? { ExpressionAttributeValues: attributeValues } : {}),
     ...(projected
       ? {
-        ProjectionExpression: projected.map((_, i) => `#sel${i}`).join(", "),
-        ExpressionAttributeNames: Object.fromEntries(projected.map((name, i) => [`#sel${i}`, name]))
-      }
+          ProjectionExpression: projected.map((_, i) => `#sel${i}`).join(", "),
+          ExpressionAttributeNames: Object.fromEntries(projected.map((name, i) => [`#sel${i}`, name]))
+        }
       : {}),
     ...(reverse ? { ScanIndexForward: false } : {})
   };

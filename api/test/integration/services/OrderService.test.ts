@@ -70,13 +70,28 @@ const makeOrder = (overrides: Partial<Order> = {}): Order => {
     currentStatus: OrderStatus.Placed,
     statusUpdates: { [OrderStatus.Placed]: orderDate },
     products: { [crypto.randomUUID()]: { amount: 2, pricePerUnit: 50 } },
-    address: { recipient: "Link", street: "12 Lost Woods Path", city: "Kakariko", region: "Eldin", postalCode: "12345" },
-    paymentMethod: { brand: "Hyrulian Express", lastFour: "4242", expirationMonth: 4, expirationYear: 2030, token: "tok_test" },
+    address: {
+      recipient: "Link",
+      street: "12 Lost Woods Path",
+      city: "Kakariko",
+      region: "Eldin",
+      postalCode: "12345"
+    },
+    paymentMethod: {
+      brand: "Hyrulian Express",
+      lastFour: "4242",
+      expirationMonth: 4,
+      expirationYear: 2030,
+      token: "tok_test"
+    },
     ...overrides
   };
 };
 
-const toDto = ({ paymentMethod: { brand, lastFour }, ...order }: Order) => ({ ...order, paymentMethod: { brand, lastFour } });
+const toDto = ({ paymentMethod: { brand, lastFour }, ...order }: Order) => ({
+  ...order,
+  paymentMethod: { brand, lastFour }
+});
 
 const toOverview = ({ id, customerId, orderDate, currentStatus }: Order, total = 100) => ({
   id,
@@ -103,14 +118,12 @@ const putProducts = async (...stockCounts: number[]) => {
   return products;
 };
 
-const getRawOrder = async (id: string) =>
-  (await db.send(new GetCommand({ TableName: OrdersTable, Key: { id } }))).Item;
+const getRawOrder = async (id: string) => (await db.send(new GetCommand({ TableName: OrdersTable, Key: { id } }))).Item;
 
 const getRawProduct = async (id: string) =>
   (await db.send(new GetCommand({ TableName: ProductsTable, Key: { id } }))).Item;
 
-const getRawCart = async () =>
-  (await db.send(new GetCommand({ TableName: CartsTable, Key: { customerId } }))).Item;
+const getRawCart = async () => (await db.send(new GetCommand({ TableName: CartsTable, Key: { customerId } }))).Item;
 
 const getRawCustomerOrders = async () =>
   (
@@ -174,7 +187,13 @@ describe("createOrder", () => {
       ...expected,
       id: created.id,
       orderDate: created.orderDate,
-      paymentMethod: { brand: "Hyrulian Express", lastFour: "4242", expirationMonth: 4, expirationYear: 2030, token: "tok_test" }
+      paymentMethod: {
+        brand: "Hyrulian Express",
+        lastFour: "4242",
+        expirationMonth: 4,
+        expirationYear: 2030,
+        token: "tok_test"
+      }
     });
     expect(await getRawProduct(first.id)).toMatchObject({ stockCount: 3 });
     expect(await getRawProduct(second.id)).toMatchObject({ stockCount: 0 });
@@ -390,7 +409,10 @@ describe("listOrders", () => {
 
   it("returns the customer's orders newest first with totals", async () => {
     const own = datedOrders(3);
-    own[1].products = { [crypto.randomUUID()]: { amount: 3, pricePerUnit: 20 }, [crypto.randomUUID()]: { amount: 1, pricePerUnit: 5 } };
+    own[1].products = {
+      [crypto.randomUUID()]: { amount: 3, pricePerUnit: 20 },
+      [crypto.randomUUID()]: { amount: 1, pricePerUnit: 5 }
+    };
     await putOrders(...own, makeOrder({ customerId: crypto.randomUUID() }));
 
     const { data } = await makeService().listOrders({ limit: 10 });
@@ -456,9 +478,19 @@ describe("listOrders", () => {
 
   it.each([
     ["a customer's orders", () => makeService(), {}, () => true],
-    ["a customer's orders by status", () => makeService(), { status: OrderStatus.Placed }, (o: Order) => o.currentStatus === OrderStatus.Placed],
+    [
+      "a customer's orders by status",
+      () => makeService(),
+      { status: OrderStatus.Placed },
+      (o: Order) => o.currentStatus === OrderStatus.Placed
+    ],
     ["all orders as an admin", () => asAdmin(), {}, () => true],
-    ["orders by status as an admin", () => asAdmin(), { status: OrderStatus.Placed }, (o: Order) => o.currentStatus === OrderStatus.Placed]
+    [
+      "orders by status as an admin",
+      () => asAdmin(),
+      { status: OrderStatus.Placed },
+      (o: Order) => o.currentStatus === OrderStatus.Placed
+    ]
   ])("paginates through %s without duplicates or gaps", async (_, makeListService, filters, predicate) => {
     const orders = datedOrders(25, i => ({ currentStatus: i % 3 ? OrderStatus.Placed : OrderStatus.Shipped }));
     await putOrders(...orders);
@@ -472,8 +504,16 @@ describe("listOrders", () => {
     }
     expect(pages.at(-1)!.pagination.hasNext).toBe(false);
     expect(new Set(all.map(item => item.id)).size).toBe(all.length);
-    expect(all.filter(item => ids.has(item.id)).map(o => o.id).toSorted()).toEqual(
-      orders.filter(predicate).map(o => o.id).toSorted()
+    expect(
+      all
+        .filter(item => ids.has(item.id))
+        .map(o => o.id)
+        .toSorted()
+    ).toEqual(
+      orders
+        .filter(predicate)
+        .map(o => o.id)
+        .toSorted()
     );
   });
 

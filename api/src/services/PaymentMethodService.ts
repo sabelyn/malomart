@@ -23,7 +23,7 @@ export class PaymentMethodService implements IPaymentMethodService {
     @inject(DB) private readonly db: DynamoDBDocumentClient,
     @inject(LAMBDA) private readonly lambda: LambdaClient,
     @inject(USER) private readonly user: User
-  ) { }
+  ) {}
 
   createPaymentMethod = async (body: CreatePaymentMethodWithTokenBody) => {
     const { token, setAsDefault } = body;

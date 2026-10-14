@@ -2,7 +2,7 @@ import type { infer as zinfer } from "zod";
 import { strictObject } from "zod";
 
 import { PaginationData, PositiveInt } from "../common";
-import { Address, PaymentMethod } from "../customers/types";
+import { PaymentMethod } from "../customers/types";
 import { Order } from "./types";
 
 export const OrderDto = strictObject({
@@ -15,7 +15,7 @@ export const OrderDto = strictObject({
     orderDate: true,
     address: true
   }).shape,
-  paymentMethod: PaymentMethod.pick({ brand: true, lastFour: true }).optional(),
+  paymentMethod: PaymentMethod.pick({ brand: true, lastFour: true }).optional()
 });
 export type OrderDto = zinfer<typeof OrderDto>;
 

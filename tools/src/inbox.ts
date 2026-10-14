@@ -76,7 +76,12 @@ const findMessage = async (Bucket: string, to?: string, since?: Date) => {
 };
 
 const summary = (mail: ParsedMail) =>
-  [`From: ${mail.from?.text ?? ""}`, `To: ${addresses(mail.to).join(", ")}`, `Date: ${mail.date?.toISOString() ?? ""}`, `Subject: ${mail.subject ?? ""}`].join("\n");
+  [
+    `From: ${mail.from?.text ?? ""}`,
+    `To: ${addresses(mail.to).join(", ")}`,
+    `Date: ${mail.date?.toISOString() ?? ""}`,
+    `Subject: ${mail.subject ?? ""}`
+  ].join("\n");
 
 const bodyText = (mail: ParsedMail) =>
   (mail.text || (mail.html || "").replace(/<br\s*\/?>|<\/(p|div|tr|h\d)>/gi, "\n").replace(/<[^>]+>/g, "")).trim();

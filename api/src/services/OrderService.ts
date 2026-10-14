@@ -31,35 +31,46 @@ export class OrderService implements IOrderService {
     @inject(PAYMENT_METHOD_SERVICE) private readonly paymentMethodService: IPaymentMethodService,
     @inject(PRODUCT_SERVICE) private readonly productService: IProductService,
     @inject(USER) private readonly user: User
-  ) { }
+  ) {}
 
   cancelOrder = async (id: string) => {
-    const ExpressionAttributeValues: Record<string, string> = { ":placed": OrderStatus.Placed, ":confirmed": OrderStatus.Confirmed, ":cancelled": OrderStatus.Cancelled, ":now": new Date().toISOString() };
+    const ExpressionAttributeValues: Record<string, string> = {
+      ":placed": OrderStatus.Placed,
+      ":confirmed": OrderStatus.Confirmed,
+      ":cancelled": OrderStatus.Cancelled,
+      ":now": new Date().toISOString()
+    };
     let ConditionExpression = "currentStatus = :placed OR currentStatus = :confirmed";
     if (!this.user.isAdmin) {
       ConditionExpression = `customerId = :customerId AND (${ConditionExpression})`;
-      ExpressionAttributeValues[":customerId"] = this.user.id
+      ExpressionAttributeValues[":customerId"] = this.user.id;
     }
 
     try {
-      await this.db.send(new UpdateCommand({
-        TableName: orders,
-        Key: { id },
-        ConditionExpression,
-        UpdateExpression: "SET currentStatus = :cancelled, statusUpdates.#cancelled = :now",
-        ExpressionAttributeNames: { "#cancelled": OrderStatus.Cancelled },
-        ExpressionAttributeValues,
-        ReturnValuesOnConditionCheckFailure: "ALL_OLD"
-      }));
+      await this.db.send(
+        new UpdateCommand({
+          TableName: orders,
+          Key: { id },
+          ConditionExpression,
+          UpdateExpression: "SET currentStatus = :cancelled, statusUpdates.#cancelled = :now",
+          ExpressionAttributeNames: { "#cancelled": OrderStatus.Cancelled },
+          ExpressionAttributeValues,
+          ReturnValuesOnConditionCheckFailure: "ALL_OLD"
+        })
+      );
     } catch (err) {
       const cancellable: string[] = [OrderStatus.Placed, OrderStatus.Confirmed];
-      const isUncancellableOrder = err instanceof ConditionalCheckFailedException && err.Item && (this.user.isAdmin || err.Item.customerId?.S === this.user.id) && !cancellable.includes(err.Item.currentStatus?.S ?? "");
+      const isUncancellableOrder =
+        err instanceof ConditionalCheckFailedException &&
+        err.Item &&
+        (this.user.isAdmin || err.Item.customerId?.S === this.user.id) &&
+        !cancellable.includes(err.Item.currentStatus?.S ?? "");
       if (isUncancellableOrder) {
         throw conflict("Order can no longer be cancelled.");
       }
       throw mapConditionFailure(err, "Order");
     }
-  }
+  };
 
   createOrder = async (body: CreateOrderBody) => {
     const customerId = this.user.id;
@@ -103,35 +114,37 @@ export class OrderService implements IOrderService {
     };
 
     try {
-      await this.db.send(new TransactWriteCommand({
-        TransactItems: [
-          ...products.map(({ id }) => ({
-            Update: {
-              TableName: productsTable,
-              Key: { id },
-              ConditionExpression: "stockCount >= :amount",
-              UpdateExpression: "SET stockCount = stockCount - :amount",
-              ExpressionAttributeValues: { ":amount": orderEntries[id].amount },
-              ReturnValuesOnConditionCheckFailure: "ALL_OLD" as const
+      await this.db.send(
+        new TransactWriteCommand({
+          TransactItems: [
+            ...products.map(({ id }) => ({
+              Update: {
+                TableName: productsTable,
+                Key: { id },
+                ConditionExpression: "stockCount >= :amount",
+                UpdateExpression: "SET stockCount = stockCount - :amount",
+                ExpressionAttributeValues: { ":amount": orderEntries[id].amount },
+                ReturnValuesOnConditionCheckFailure: "ALL_OLD" as const
+              }
+            })),
+            {
+              Put: {
+                TableName: orders,
+                Item: order
+              }
+            },
+            {
+              Update: {
+                TableName: carts,
+                Key: { customerId },
+                UpdateExpression: "SET #items = :empty",
+                ExpressionAttributeNames: { "#items": "items" },
+                ExpressionAttributeValues: { ":empty": {} }
+              }
             }
-          })),
-          {
-            Put: {
-              TableName: orders,
-              Item: order
-            }
-          },
-          {
-            Update: {
-              TableName: carts,
-              Key: { customerId },
-              UpdateExpression: "SET #items = :empty",
-              ExpressionAttributeNames: { "#items": "items" },
-              ExpressionAttributeValues: { ":empty": {} }
-            }
-          }
-        ]
-      }));
+          ]
+        })
+      );
     } catch (err) {
       if (err instanceof TransactionCanceledException) {
         const reasons = err.CancellationReasons ?? [];
@@ -147,7 +160,7 @@ export class OrderService implements IOrderService {
     }
 
     return this.toOrderDto(order);
-  }
+  };
 
   getOrder = async (id: string) => {
     const order = await getItemById<Order>(this.db, orders, id);
@@ -156,7 +169,7 @@ export class OrderService implements IOrderService {
     }
 
     return this.toOrderDto(order);
-  }
+  };
 
   listOrders = async (query: ListOrdersQuery) => {
     const { cursor, limit, status } = query;
@@ -172,7 +185,7 @@ export class OrderService implements IOrderService {
       reverse: true
     };
     if (customerId && status) {
-      options.indexName = ordersByCustomerStatus
+      options.indexName = ordersByCustomerStatus;
       options.keyCondition = "customerId = :customerId AND currentStatus = :status";
       options.keys.push("customerId", "currentStatus");
     } else if (customerId) {
@@ -209,7 +222,7 @@ export class OrderService implements IOrderService {
       }
       throw err;
     }
-  }
+  };
 
   private toOrderDto = (data: unknown) => {
     const order = parseStored(data, Order);
@@ -218,13 +231,13 @@ export class OrderService implements IOrderService {
       ...order,
       paymentMethod: { brand, lastFour }
     };
-  }
+  };
 
   private toOrderOverview = (data: unknown) => {
     const { products, ...order } = parseStored(data, SelectedOrder);
     return {
       ...order,
       total: getOrderTotal(products)
-    }
-  }
+    };
+  };
 }

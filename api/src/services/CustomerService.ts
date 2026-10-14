@@ -23,7 +23,7 @@ export class CustomerService implements ICustomerService {
     @inject(PAYMENT_METHOD_SERVICE) private readonly paymentMethodService: IPaymentMethodService,
     @inject(PRODUCT_SERVICE) private readonly productService: IProductService,
     @inject(USER) private readonly user: User
-  ) { }
+  ) {}
 
   createAddress = async (body: CreateAddressBody) => {
     const customerId = this.user.id;
@@ -118,7 +118,7 @@ export class CustomerService implements ICustomerService {
   getCustomerCart = async () => {
     const result = await getItemById<Cart>(this.db, carts, this.user.id, "customerId");
     return result ? result.items : {};
-  }
+  };
 
   listAddresses = async () => {
     const result = await this.db.send(
@@ -189,13 +189,15 @@ export class CustomerService implements ICustomerService {
   updateCart = async (body: UpdateCartBody) => {
     const productIds = Object.keys(body);
     if (productIds.length === 0) {
-      await this.db.send(new UpdateCommand({
-        TableName: carts,
-        Key: { customerId: this.user.id },
-        UpdateExpression: "SET #items = :empty",
-        ExpressionAttributeNames: { "#items": "items" },
-        ExpressionAttributeValues: { ":empty": {} }
-      }));
+      await this.db.send(
+        new UpdateCommand({
+          TableName: carts,
+          Key: { customerId: this.user.id },
+          UpdateExpression: "SET #items = :empty",
+          ExpressionAttributeNames: { "#items": "items" },
+          ExpressionAttributeValues: { ":empty": {} }
+        })
+      );
 
       return {};
     }
@@ -215,18 +217,20 @@ export class CustomerService implements ICustomerService {
       }
     }
 
-    await this.db.send(new UpdateCommand({
-      TableName: carts,
-      Key: {
-        customerId: this.user.id
-      },
-      UpdateExpression: "SET #items = :items",
-      ExpressionAttributeNames: { "#items": "items" },
-      ExpressionAttributeValues: { ":items": items }
-    }));
+    await this.db.send(
+      new UpdateCommand({
+        TableName: carts,
+        Key: {
+          customerId: this.user.id
+        },
+        UpdateExpression: "SET #items = :items",
+        ExpressionAttributeNames: { "#items": "items" },
+        ExpressionAttributeValues: { ":items": items }
+      })
+    );
 
     return changes;
-  }
+  };
 
   private setDefaultAddress = async (id: string | null) => {
     await this.db.send(

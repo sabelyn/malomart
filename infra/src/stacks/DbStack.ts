@@ -144,10 +144,14 @@ export class DbStack extends Stack {
         onFailure: new SqsDlq(stockFlagSyncDlq),
         filters: [
           FilterCriteria.filter({
-            dynamodb: { NewImage: { stockCount: { N: FilterRule.isEqual("0") }, inStock: { N: FilterRule.isEqual("1") } } }
+            dynamodb: {
+              NewImage: { stockCount: { N: FilterRule.isEqual("0") }, inStock: { N: FilterRule.isEqual("1") } }
+            }
           }),
           FilterCriteria.filter({
-            dynamodb: { NewImage: { stockCount: { N: FilterRule.notEquals("0") }, inStock: { N: FilterRule.isEqual("0") } } }
+            dynamodb: {
+              NewImage: { stockCount: { N: FilterRule.notEquals("0") }, inStock: { N: FilterRule.isEqual("0") } }
+            }
           })
         ]
       })

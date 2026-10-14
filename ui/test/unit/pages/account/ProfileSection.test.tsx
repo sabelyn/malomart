@@ -206,8 +206,7 @@ describe("ProfileSection", () => {
     stubApi({
       ...GET_CUSTOMER,
       "POST /api/auth/me/deletion": accepted,
-      "POST /api/auth/me/deletion/confirm": () =>
-        json(401, { message: "Expired.", code: ErrorCode.NoPendingSignIn }),
+      "POST /api/auth/me/deletion/confirm": () => json(401, { message: "Expired.", code: ErrorCode.NoPendingSignIn }),
       "POST /api/auth/refresh": () => new Response(null, { status: 204 })
     });
     const user = userEvent.setup();

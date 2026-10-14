@@ -3,7 +3,15 @@ import { DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import type { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { DeleteCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import type { PaginatedQueryOptions } from "@mm/clients";
-import { getItemById, getItemsByIds, getPaginatedResults, IMAGE_WIDTHS, imageVariantKey, InvalidCursorError, productImageKey } from "@mm/clients";
+import {
+  getItemById,
+  getItemsByIds,
+  getPaginatedResults,
+  IMAGE_WIDTHS,
+  imageVariantKey,
+  InvalidCursorError,
+  productImageKey
+} from "@mm/clients";
 import type { CreateProductBody, ListProductsQuery, ProductDto, UpdateProductBody } from "@mm/lib";
 import { isDefined, Product, ProductOverview } from "@mm/lib";
 import { inject, injectable } from "tsyringe";
@@ -24,7 +32,7 @@ export class ProductService implements IProductService {
   constructor(
     @inject(DB) private readonly db: DynamoDBDocumentClient,
     @inject(S3) private readonly s3: S3Client
-  ) { }
+  ) {}
 
   createProduct = async (data: CreateProductBody) => {
     const Item: Product = {
@@ -129,7 +137,7 @@ export class ProductService implements IProductService {
       throw notFound("Some products could not be found.");
     }
     return results;
-  }
+  };
 
   getProductStocks = async (ids: string[]) => {
     if (ids.length === 0) {
@@ -140,12 +148,12 @@ export class ProductService implements IProductService {
       return { [product.id]: product.stockCount };
     }
 
-    const results = await getItemsByIds<{ id: string; stockCount: number; }>(this.db, TableName, ids, "id, stockCount");
+    const results = await getItemsByIds<{ id: string; stockCount: number }>(this.db, TableName, ids, "id, stockCount");
     if (results.length < new Set(ids).size) {
       throw notFound("Some products could not be found.");
     }
     return Object.fromEntries(results.map(({ id, stockCount }) => [id, stockCount]));
-  }
+  };
 
   listProducts = async (query: ListProductsQuery) => {
     const { cursor, category, inStock, limit } = query;

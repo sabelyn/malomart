@@ -52,7 +52,11 @@ it("sets the flag when stock is replenished", async () => {
 });
 
 it("updates every product in the batch", async () => {
-  await run(record(crypto.randomUUID(), 0, "1"), record(crypto.randomUUID(), 0, "2"), record(crypto.randomUUID(), 3, "3"));
+  await run(
+    record(crypto.randomUUID(), 0, "1"),
+    record(crypto.randomUUID(), 0, "2"),
+    record(crypto.randomUUID(), 3, "3")
+  );
 
   expect(db).toHaveReceivedCommandTimes(UpdateCommand, 3);
 });
@@ -73,7 +77,11 @@ it("reports only the records that failed", async () => {
   const failing = crypto.randomUUID();
   db.on(UpdateCommand, { Key: { id: failing } }).rejects(awsError("ThrottlingException"));
 
-  const response = await run(record(crypto.randomUUID(), 0, "1"), record(failing, 0, "2"), record(crypto.randomUUID(), 5, "3"));
+  const response = await run(
+    record(crypto.randomUUID(), 0, "1"),
+    record(failing, 0, "2"),
+    record(crypto.randomUUID(), 5, "3")
+  );
 
   expect(response).toEqual({ batchItemFailures: [{ itemIdentifier: "2" }] });
 });

@@ -84,8 +84,8 @@ const SignOutEverywhere = ({ email }: { email: string }) => {
   return (
     <>
       <Text className={classes.blurb}>
-        Lost your Sheikah Slate? This signs you out here and everywhere else. Other devices can take up to 15 minutes
-        to notice.
+        Lost your Sheikah Slate? This signs you out here and everywhere else. Other devices can take up to 15 minutes to
+        notice.
       </Text>
       {signOut.isError && (
         <Text role="alert" className={classes.error}>
@@ -138,7 +138,13 @@ const ProfileSection = () => {
         <dt>Name</dt>
         <dd>
           <span>{user.name}</span>
-          <Anchor component="button" type="button" underline="always" className={classes.factLink} onClick={() => setOpenModal("name")}>
+          <Anchor
+            component="button"
+            type="button"
+            underline="always"
+            className={classes.factLink}
+            onClick={() => setOpenModal("name")}
+          >
             Change name
           </Anchor>
         </dd>

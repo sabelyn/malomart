@@ -72,8 +72,8 @@ const DeleteAccountFlow = ({ email, onCancel, onDeleted }: DeleteAccountFlowProp
         </Alert>
       )}
       <Text>
-        This deletes your account, saved addresses, and payment methods. There's no undo. We'll email a code to{" "}
-        {email} to make sure it's really you.
+        This deletes your account, saved addresses, and payment methods. There's no undo. We'll email a code to {email}{" "}
+        to make sure it's really you.
       </Text>
       <Group justify="flex-end">
         <Button variant="subtle" onClick={onCancel} data-autofocus>
