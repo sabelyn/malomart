@@ -1,8 +1,14 @@
 import type { TableIndexes, TableNames } from "@mm/clients";
 import type { StackProps } from "aws-cdk-lib";
-import { CfnOutput, Stack } from "aws-cdk-lib";
-import { AttributeType, BillingMode, Table } from "aws-cdk-lib/aws-dynamodb";
+import { CfnOutput, Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
+import { AttributeType, BillingMode, StreamViewType, Table } from "aws-cdk-lib/aws-dynamodb";
+import { Architecture, FilterCriteria, FilterRule, Runtime, StartingPosition } from "aws-cdk-lib/aws-lambda";
+import { DynamoEventSource, SqsDlq } from "aws-cdk-lib/aws-lambda-event-sources";
+import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
+import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
+import { Queue } from "aws-cdk-lib/aws-sqs";
 import type { Construct } from "constructs";
+import path from "node:path";
 
 export const INDEXES: TableIndexes = {
   addressesByCustomer: "IDX_ADDRESSES_CUSTOMER",
@@ -84,7 +90,8 @@ export class DbStack extends Stack {
 
     const productsTable = new Table(this, "ProductsTable", {
       partitionKey: { name: "id", type: AttributeType.STRING },
-      billingMode: BillingMode.PAY_PER_REQUEST
+      billingMode: BillingMode.PAY_PER_REQUEST,
+      stream: StreamViewType.NEW_IMAGE
     });
     productsTable.addGlobalSecondaryIndex({
       indexName: INDEXES.productsByCategory,
@@ -99,6 +106,45 @@ export class DbStack extends Stack {
       ],
       sortKey: { name: "id", type: AttributeType.STRING }
     });
+
+    const stockFlagSync = new NodejsFunction(this, "StockFlagSyncFunction", {
+      entry: path.resolve(__dirname, "../lambdas/stockFlagSync.ts"),
+      runtime: Runtime.NODEJS_24_X,
+      architecture: Architecture.ARM_64,
+      timeout: Duration.seconds(30),
+      logGroup: new LogGroup(this, "StockFlagSyncLogs", {
+        retention: RetentionDays.ONE_WEEK,
+        removalPolicy: RemovalPolicy.DESTROY
+      }),
+      environment: {
+        PRODUCTS_TABLE_NAME: productsTable.tableName
+      }
+    });
+    productsTable.grant(stockFlagSync, "dynamodb:UpdateItem");
+
+    const stockFlagSyncDlq = new Queue(this, "StockFlagSyncDlq", {
+      retentionPeriod: Duration.days(14)
+    });
+
+    stockFlagSync.addEventSource(
+      new DynamoEventSource(productsTable, {
+        startingPosition: StartingPosition.LATEST,
+        batchSize: 25,
+        maxBatchingWindow: Duration.seconds(1),
+        bisectBatchOnError: true,
+        retryAttempts: 3,
+        reportBatchItemFailures: true,
+        onFailure: new SqsDlq(stockFlagSyncDlq),
+        filters: [
+          FilterCriteria.filter({
+            dynamodb: { NewImage: { stockCount: { N: FilterRule.isEqual("0") }, inStock: { N: FilterRule.isEqual("1") } } }
+          }),
+          FilterCriteria.filter({
+            dynamodb: { NewImage: { stockCount: { N: FilterRule.notEquals("0") }, inStock: { N: FilterRule.isEqual("0") } } }
+          })
+        ]
+      })
+    );
 
     this.tables = {
       addresses: addressesTable,
