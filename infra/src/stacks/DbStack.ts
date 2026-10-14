@@ -40,7 +40,7 @@ export class DbStack extends Stack {
       billingMode: BillingMode.PAY_PER_REQUEST
     });
 
-    const ordersTable = new Table(this, "OrdersTable", {
+    const ordersTable = new Table(this, "OrdersTableV2", {
       partitionKey: { name: "id", type: AttributeType.STRING },
       billingMode: BillingMode.PAY_PER_REQUEST
     });

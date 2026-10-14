@@ -1,5 +1,5 @@
 import { CognitoIdentityProviderServiceException } from "@aws-sdk/client-cognito-identity-provider";
-import { ConditionalCheckFailedException, DynamoDBServiceException } from "@aws-sdk/client-dynamodb";
+import { ConditionalCheckFailedException, DynamoDBServiceException, TransactionCanceledException } from "@aws-sdk/client-dynamodb";
 import { ErrorCode } from "@mm/lib";
 import { number, strictObject, ZodError } from "zod";
 
@@ -29,6 +29,13 @@ const dynamoError = (name: string, retryable = false) => {
   }
   return err;
 };
+
+const cancelledTransaction = (...codes: string[]) =>
+  new TransactionCanceledException({
+    $metadata: metadata,
+    message: "Transaction cancelled",
+    CancellationReasons: codes.map(Code => ({ Code }))
+  });
 
 const cognitoError = (name: string, retryable = false) => {
   const err = new CognitoIdentityProviderServiceException({
@@ -126,6 +133,27 @@ describe("toApiError", () => {
     const cause = new ConditionalCheckFailedException({ $metadata: metadata, message: "failed" });
 
     expect(toApiError(cause)).toMatchObject({ statusCode: 409, cause });
+  });
+
+  it.each([
+    ["throttling", ["None", "ThrottlingError"], 503, true],
+    ["exceeded throughput", ["ProvisionedThroughputExceeded", "None"], 503, true],
+    ["a request limit", ["RequestLimitExceeded"], 503, true],
+    ["a transaction conflict", ["None", "TransactionConflict"], 409, false],
+    ["a failed condition", ["ConditionalCheckFailed", "None"], 409, false],
+    ["throttling alongside a failed condition", ["ConditionalCheckFailed", "ThrottlingError"], 503, true],
+    ["a validation error", ["None", "ValidationError"], 500, false],
+    ["no reasons", [], 500, false]
+  ])("maps a DynamoDB transaction cancelled by %s to a %i", (_, codes, statusCode, retryable) => {
+    const cause = cancelledTransaction(...codes);
+
+    expect(toApiError(cause)).toMatchObject({ statusCode, retryable, cause });
+  });
+
+  it("includes the cancellation reason codes when a cancelled transaction maps to a 500", () => {
+    expect(toApiError(cancelledTransaction("None", "ValidationError")).details).toEqual({
+      cancellationReasons: ["None", "ValidationError"]
+    });
   });
 
   it.each([
