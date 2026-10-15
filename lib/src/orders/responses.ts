@@ -27,7 +27,8 @@ export const OrderOverview = strictObject({
     orderDate: true,
     currentStatus: true
   }).shape,
-  total: PositiveInt
+  total: PositiveInt,
+  itemCount: PositiveInt
 });
 export type OrderOverview = zinfer<typeof OrderOverview>;
 

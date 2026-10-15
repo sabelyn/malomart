@@ -1,4 +1,4 @@
-import { getOrderSubtotal, getOrderTotal } from "../../../src/orders";
+import { getOrderItemCount, getOrderSubtotal, getOrderTotal } from "../../../src/orders";
 
 describe("getOrderSubtotal", () => {
   it("returns 0 for an order with no products", () => {
@@ -28,5 +28,16 @@ describe("getOrderTotal", () => {
         shipping: { method: "Express", cost: 40 }
       })
     ).toBe(140);
+  });
+});
+
+describe("getOrderItemCount", () => {
+  it("sums the amounts across products", () => {
+    expect(
+      getOrderItemCount({
+        a: { amount: 2, pricePerUnit: 50 },
+        b: { amount: 3, pricePerUnit: 5 }
+      })
+    ).toBe(5);
   });
 });

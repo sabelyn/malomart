@@ -7,6 +7,7 @@ type ConfirmModalProps = {
   opened: boolean;
   title: string;
   confirmLabel: string;
+  dismissLabel?: string;
   pending: boolean;
   error?: string;
   children: ReactNode;
@@ -19,6 +20,7 @@ const ConfirmModal = ({
   opened,
   title,
   confirmLabel,
+  dismissLabel = "Cancel",
   pending,
   error,
   children,
@@ -41,7 +43,7 @@ const ConfirmModal = ({
       )}
       <Group justify="flex-end">
         <Button variant="subtle" onClick={onClose} data-autofocus>
-          Cancel
+          {dismissLabel}
         </Button>
         <Button color="red" loading={pending} onClick={onConfirm}>
           {confirmLabel}

@@ -12,5 +12,14 @@ export const getOrderSubtotal = (items: OrderItems): number => {
   return total;
 };
 
+export const getOrderItemCount = (items: OrderItems): number => {
+  let count = 0;
+  for (const { amount } of Object.values(items)) {
+    count += amount;
+  }
+
+  return count;
+};
+
 export const getOrderTotal = ({ products, shipping }: Pick<Order, "products" | "shipping">): number =>
   getOrderSubtotal(products) + shipping.cost;

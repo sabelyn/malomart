@@ -94,12 +94,13 @@ const toDto = ({ paymentMethod: { brand, lastFour }, ...order }: Order) => ({
   paymentMethod: { brand, lastFour }
 });
 
-const toOverview = ({ id, customerId, orderDate, currentStatus }: Order, total = 100) => ({
+const toOverview = ({ id, customerId, orderDate, currentStatus }: Order, total = 100, itemCount = 2) => ({
   id,
   customerId,
   orderDate,
   currentStatus,
-  total
+  total,
+  itemCount
 });
 
 const putOrders = (...orders: Order[]) => putItems(db, OrdersTable, orders);
@@ -531,7 +532,7 @@ describe("listOrders", () => {
 
   const newestFirst = (orders: Order[]) => orders.toSorted((a, b) => b.orderDate.localeCompare(a.orderDate));
 
-  it("returns the customer's orders newest first with totals", async () => {
+  it("returns the customer's orders newest first with totals and item counts", async () => {
     const own = datedOrders(3);
     own[1].products = {
       [crypto.randomUUID()]: { amount: 3, pricePerUnit: 20 },
@@ -542,7 +543,7 @@ describe("listOrders", () => {
 
     const { data } = await makeService().listOrders({ limit: 10 });
 
-    expect(data).toEqual(newestFirst(own).map(o => toOverview(o, o === own[1] ? 105 : 100)));
+    expect(data).toEqual(newestFirst(own).map(o => (o === own[1] ? toOverview(o, 105, 4) : toOverview(o))));
   });
 
   it("ignores the customerId filter for non-admins", async () => {

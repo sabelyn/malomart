@@ -4,7 +4,6 @@ import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router";
 
 import AccountPage from "@/pages/account/AccountPage";
-import AccountPlaceholder from "@/pages/account/AccountPlaceholder";
 import ProfileSection from "@/pages/account/ProfileSection";
 import { customer, json, renderWithProviders, stubApi } from "../../../utils";
 
@@ -36,7 +35,7 @@ const renderAccount = (route = "/account") =>
     <Routes>
       <Route path="/account" element={<AccountPage />}>
         <Route index element={<ProfileSection />} />
-        <Route path="addresses" element={<AccountPlaceholder title="Addresses" />} />
+        <Route path="addresses" element={<h2>Addresses</h2>} />
       </Route>
     </Routes>,
     { route, session: customer }

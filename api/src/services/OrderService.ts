@@ -4,7 +4,7 @@ import { GetCommand, TransactWriteCommand, UpdateCommand } from "@aws-sdk/lib-dy
 import type { PaginatedQueryOptions } from "@mm/clients";
 import { getItemById, getPaginatedResults, InvalidCursorError } from "@mm/clients";
 import type { CreateOrderBody, ListOrdersQuery, OrderItemEntry } from "@mm/lib";
-import { getOrderTotal, isCardExpired, Order, OrderOverview, OrderStatus, ShippingOptions } from "@mm/lib";
+import { getOrderItemCount, getOrderTotal, isCardExpired, Order, OrderOverview, OrderStatus, ShippingOptions } from "@mm/lib";
 import { inject, injectable } from "tsyringe";
 import { strictObject } from "zod";
 
@@ -16,7 +16,7 @@ import type { User } from "@/types/user";
 import { parseStored } from "@/utils/parsing";
 
 const SelectedOrder = strictObject({
-  ...OrderOverview.omit({ total: true }).shape,
+  ...OrderOverview.omit({ total: true, itemCount: true }).shape,
   products: Order.shape.products,
   shipping: Order.shape.shipping
 });
@@ -285,7 +285,8 @@ export class OrderService implements IOrderService {
     const { products, shipping, ...order } = parseStored(data, SelectedOrder);
     return {
       ...order,
-      total: getOrderTotal({ products, shipping })
+      total: getOrderTotal({ products, shipping }),
+      itemCount: getOrderItemCount(products)
     };
   };
 }
