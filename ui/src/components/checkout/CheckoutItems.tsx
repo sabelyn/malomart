@@ -1,0 +1,47 @@
+import { Text, Title, VisuallyHidden } from "@mantine/core";
+import { Link } from "react-router";
+
+import { formatRupees } from "@/components/PriceTag";
+import { productImageSrc } from "@/components/product/productDisplay";
+import classes from "./checkout.module.css";
+
+const THUMBNAIL_WIDTH = 320;
+
+export type CheckoutItem = {
+  id: string;
+  title: string;
+  thumbnailKey?: string | null;
+  amount: number;
+  pricePerUnit: number;
+};
+
+type CheckoutItemsProps = {
+  items: CheckoutItem[];
+};
+
+const CheckoutItems = ({ items }: CheckoutItemsProps) => (
+  <ul className={classes.items} aria-label="Items">
+    {items.map(({ id, title, thumbnailKey, amount, pricePerUnit }) => (
+      <li key={id} className={classes.item}>
+        {thumbnailKey ? (
+          <img src={productImageSrc(thumbnailKey, THUMBNAIL_WIDTH)} alt="" className={classes.itemImage} />
+        ) : (
+          <div className={classes.itemImage} />
+        )}
+        <div>
+          <Title order={3} className={classes.itemTitle}>
+            <Link to={`/products/${id}`}>{title}</Link>
+          </Title>
+          <Text className={classes.itemMeta}>
+            Quantity {amount}, {formatRupees(pricePerUnit)} rupees each
+          </Text>
+        </div>
+        <Text className={classes.itemTotal}>
+          {formatRupees(amount * pricePerUnit)} <VisuallyHidden>rupees total</VisuallyHidden>
+        </Text>
+      </li>
+    ))}
+  </ul>
+);
+
+export default CheckoutItems;

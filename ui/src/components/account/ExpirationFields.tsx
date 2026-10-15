@@ -1,8 +1,7 @@
 import { Group, NativeSelect } from "@mantine/core";
 import type { GetInputPropsReturnType } from "@mantine/form";
+import { isCardExpired } from "@mm/lib/customers";
 import { string } from "zod";
-
-import { isExpired } from "@/components/account/accountDisplay";
 
 const YEARS_AHEAD = 15;
 
@@ -11,7 +10,7 @@ export const expirationFields = {
   expirationYear: string().nonempty({ error: "Choose a year." }).transform(Number)
 };
 
-export const notExpired = (value: { expirationMonth: number; expirationYear: number }) => !isExpired(value);
+export const notExpired = (value: { expirationMonth: number; expirationYear: number }) => !isCardExpired(value);
 
 export const expiredIssue = { error: "That card has expired.", path: ["expirationYear"] };
 

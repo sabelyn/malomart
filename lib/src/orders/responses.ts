@@ -13,7 +13,8 @@ export const OrderDto = strictObject({
     currentStatus: true,
     statusUpdates: true,
     orderDate: true,
-    address: true
+    address: true,
+    shipping: true
   }).shape,
   paymentMethod: PaymentMethod.pick({ brand: true, lastFour: true }).optional()
 });

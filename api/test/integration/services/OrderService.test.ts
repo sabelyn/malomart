@@ -1,7 +1,7 @@
 import { DeleteCommand, GetCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { dbClient, s3Client } from "@mm/clients";
-import type { AddressDto, Order, PaymentMethodDto, Product } from "@mm/lib";
-import { Category, OrderStatus } from "@mm/lib";
+import type { AddressDto, CreateOrderBody, Order, PaymentMethodDto, Product } from "@mm/lib";
+import { Category, OrderStatus, ShippingMethod, ShippingOptions } from "@mm/lib";
 
 import type { ICustomerService, IPaymentMethodService } from "@/contracts";
 import env from "@/env";
@@ -70,6 +70,7 @@ const makeOrder = (overrides: Partial<Order> = {}): Order => {
     currentStatus: OrderStatus.Placed,
     statusUpdates: { [OrderStatus.Placed]: orderDate },
     products: { [crypto.randomUUID()]: { amount: 2, pricePerUnit: 50 } },
+    shipping: { method: ShippingMethod.Standard, cost: 0 },
     address: {
       recipient: "Link",
       street: "12 Lost Woods Path",
@@ -161,17 +162,46 @@ afterEach(async () => {
 });
 
 describe("createOrder", () => {
-  const body = { addressId: addressDto.id, paymentMethodId: paymentMethodDto.id };
+  const expressCost = ShippingOptions[ShippingMethod.Express].cost;
+
+  const orderBody = (
+    items: Record<string, number>,
+    products: Product[] = [],
+    overrides: Partial<CreateOrderBody> = {}
+  ): CreateOrderBody => {
+    const prices = new Map(products.map(({ id, price }) => [id, price]));
+    const subtotal = Object.entries(items).reduce((total, [id, amount]) => total + amount * (prices.get(id) ?? 0), 0);
+    return {
+      id: crypto.randomUUID(),
+      addressId: addressDto.id,
+      paymentMethodId: paymentMethodDto.id,
+      shippingMethod: ShippingMethod.Express,
+      items,
+      expectedTotal: subtotal + expressCost,
+      ...overrides
+    };
+  };
+
+  const changeDuringCreate = (change: () => Promise<unknown>) => {
+    const getProducts = productService.getProducts;
+    vi.spyOn(productService, "getProducts").mockImplementationOnce(async ids => {
+      const result = await getProducts(ids);
+      await change();
+      return result;
+    });
+  };
 
   it("stores the order, decrements stock, clears the cart, and hides the card token", async () => {
     const [first, second] = await putProducts(5, 3);
-    await setCart({ [first.id]: 2, [second.id]: 3 });
+    const items = { [first.id]: 2, [second.id]: 3 };
+    await setCart(items);
+    const body = orderBody(items, [first, second]);
 
     const created = await makeService().createOrder(body);
 
     const { id: _, isDefault: __, label: ___, ...address } = addressDto;
     const expected = {
-      id: expect.any(String),
+      id: body.id,
       customerId,
       orderDate: expect.any(String),
       currentStatus: OrderStatus.Placed,
@@ -180,12 +210,12 @@ describe("createOrder", () => {
         [first.id]: { amount: 2, pricePerUnit: first.price },
         [second.id]: { amount: 3, pricePerUnit: second.price }
       },
+      shipping: { method: ShippingMethod.Express, cost: expressCost },
       address
     };
     expect(created).toEqual({ ...expected, paymentMethod: { brand: "Hyrulian Express", lastFour: "4242" } });
-    expect(await getRawOrder(created.id)).toEqual({
+    expect(await getRawOrder(body.id)).toEqual({
       ...expected,
-      id: created.id,
       orderDate: created.orderDate,
       paymentMethod: {
         brand: "Hyrulian Express",
@@ -202,85 +232,179 @@ describe("createOrder", () => {
 
   it("looks up the requested address and payment method", async () => {
     const [product] = await putProducts(1);
-    await setCart({ [product.id]: 1 });
+    const items = { [product.id]: 1 };
+    await setCart(items);
 
-    await makeService().createOrder(body);
+    await makeService().createOrder(orderBody(items, [product]));
 
     expect(getAddress).toHaveBeenCalledWith(addressDto.id);
     expect(getPaymentMethodWithToken).toHaveBeenCalledWith(paymentMethodDto.id);
   });
 
+  it("returns the existing order without placing another when the same ID is submitted again", async () => {
+    const [product] = await putProducts(5);
+    const items = { [product.id]: 2 };
+    await setCart(items);
+    const body = orderBody(items, [product]);
+    const service = makeService();
+
+    const created = await service.createOrder(body);
+    getCustomerCart.mockResolvedValue({});
+    const repeated = await service.createOrder(body);
+
+    expect(repeated).toEqual(created);
+    expect(await getRawCustomerOrders()).toHaveLength(1);
+    expect(await getRawProduct(product.id)).toMatchObject({ stockCount: 3 });
+  });
+
+  it("returns the order when a concurrent request with the same ID places it first", async () => {
+    const [product] = await putProducts(5);
+    const items = { [product.id]: 1 };
+    await setCart(items);
+    const body = orderBody(items, [product]);
+    const placed = makeOrder({ id: body.id });
+    changeDuringCreate(() => putOrders(placed));
+
+    await expect(makeService().createOrder(body)).resolves.toEqual(toDto(placed));
+    expect(await getRawProduct(product.id)).toMatchObject({ stockCount: 5 });
+  });
+
+  it("throws a 409 without changing anything when the ID belongs to another customer's order", async () => {
+    const [product] = await putProducts(5);
+    const items = { [product.id]: 1 };
+    await setCart(items);
+    const theirs = makeOrder({ customerId: crypto.randomUUID() });
+    await putOrders(theirs);
+
+    await expectApiError(makeService().createOrder(orderBody(items, [product], { id: theirs.id })), 409);
+    expect(await getRawOrder(theirs.id)).toEqual(theirs);
+    expect(await getRawProduct(product.id)).toMatchObject({ stockCount: 5 });
+  });
+
   it("throws a 400 when the cart is empty", async () => {
-    await expectApiError(makeService().createOrder(body), 400);
+    await expectApiError(makeService().createOrder(orderBody({})), 400);
     expect(await getRawCustomerOrders()).toEqual([]);
+  });
+
+  it("throws a 400 when the payment method has expired", async () => {
+    const [product] = await putProducts(5);
+    const items = { [product.id]: 1 };
+    await setCart(items);
+    getPaymentMethodWithToken.mockResolvedValue({ ...paymentMethodDto, expirationYear: 2020 });
+
+    await expectApiError(makeService().createOrder(orderBody(items, [product])), 400);
+    expect(await getRawCustomerOrders()).toEqual([]);
+  });
+
+  it("throws a 409 when the cart doesn't match the reviewed items", async () => {
+    const [product] = await putProducts(5);
+    await setCart({ [product.id]: 2 });
+
+    await expectApiError(makeService().createOrder(orderBody({ [product.id]: 1 }, [product])), 409);
+    expect(await getRawCustomerOrders()).toEqual([]);
+  });
+
+  it("throws a 409 when the total doesn't match the reviewed total", async () => {
+    const [product] = await putProducts(5);
+    const items = { [product.id]: 1 };
+    await setCart(items);
+    const body = orderBody(items, [product]);
+
+    await expectApiError(makeService().createOrder({ ...body, expectedTotal: body.expectedTotal - 1 }), 409);
+    expect(await getRawCustomerOrders()).toEqual([]);
+  });
+
+  it("throws a 409 and changes nothing when the cart changes before the order is written", async () => {
+    const [product] = await putProducts(5);
+    const items = { [product.id]: 1 };
+    await setCart(items);
+    changeDuringCreate(() => putItems(db, CartsTable, [{ customerId, items: { [product.id]: 3 } }], ["customerId"]));
+
+    await expectApiError(makeService().createOrder(orderBody(items, [product])), 409);
+    expect(await getRawCustomerOrders()).toEqual([]);
+    expect(await getRawProduct(product.id)).toMatchObject({ stockCount: 5 });
+    expect(await getRawCart()).toEqual({ customerId, items: { [product.id]: 3 } });
+  });
+
+  it("places only one order when the same cart is submitted twice with different IDs", async () => {
+    const [product] = await putProducts(5);
+    const items = { [product.id]: 2 };
+    await setCart(items);
+    const service = makeService();
+
+    const results = await Promise.allSettled([
+      service.createOrder(orderBody(items, [product])),
+      service.createOrder(orderBody(items, [product]))
+    ]);
+
+    expect(results.filter(({ status }) => status === "fulfilled")).toHaveLength(1);
+    expect(await getRawCustomerOrders()).toHaveLength(1);
+    expect(await getRawProduct(product.id)).toMatchObject({ stockCount: 3 });
   });
 
   it("throws a 409 and changes nothing when the cart exceeds the stock", async () => {
     const [plenty, scarce] = await putProducts(5, 1);
-    await setCart({ [plenty.id]: 1, [scarce.id]: 2 });
+    const items = { [plenty.id]: 1, [scarce.id]: 2 };
+    await setCart(items);
 
-    await expectApiError(makeService().createOrder(body), 409);
+    await expectApiError(makeService().createOrder(orderBody(items, [plenty, scarce])), 409);
 
     expect(await getRawCustomerOrders()).toEqual([]);
     expect(await getRawProduct(plenty.id)).toMatchObject({ stockCount: 5 });
-    expect(await getRawCart()).toEqual({ customerId, items: { [plenty.id]: 1, [scarce.id]: 2 } });
+    expect(await getRawCart()).toEqual({ customerId, items });
   });
 
   it("throws a 404 when a product in the cart does not exist", async () => {
     const [product] = await putProducts(5);
-    await setCart({ [product.id]: 1, [crypto.randomUUID()]: 1 });
+    const items = { [product.id]: 1, [crypto.randomUUID()]: 1 };
+    await setCart(items);
 
-    await expectApiError(makeService().createOrder(body), 404);
+    await expectApiError(makeService().createOrder(orderBody(items, [product])), 404);
     expect(await getRawCustomerOrders()).toEqual([]);
   });
 
   it("throws a 409 and changes nothing when stock runs out before the order is written", async () => {
     const [plenty, scarce] = await putProducts(5, 2);
-    await setCart({ [plenty.id]: 1, [scarce.id]: 2 });
-    const getProducts = productService.getProducts;
-    vi.spyOn(productService, "getProducts").mockImplementationOnce(async ids => {
-      const result = await getProducts(ids);
-      await db.send(
+    const items = { [plenty.id]: 1, [scarce.id]: 2 };
+    await setCart(items);
+    changeDuringCreate(() =>
+      db.send(
         new UpdateCommand({
           TableName: ProductsTable,
           Key: { id: scarce.id },
           UpdateExpression: "SET stockCount = :one",
           ExpressionAttributeValues: { ":one": 1 }
         })
-      );
-      return result;
-    });
+      )
+    );
 
-    const result = makeService().createOrder(body);
+    const result = makeService().createOrder(orderBody(items, [plenty, scarce]));
 
     await expectApiError(result, 409);
     await expect(result).rejects.toMatchObject({ message: `Not enough ${scarce.title} in stock.` });
     expect(await getRawCustomerOrders()).toEqual([]);
     expect(await getRawProduct(plenty.id)).toMatchObject({ stockCount: 5 });
-    expect(await getRawCart()).toEqual({ customerId, items: { [plenty.id]: 1, [scarce.id]: 2 } });
+    expect(await getRawCart()).toEqual({ customerId, items });
   });
 
   it("throws a 404 when a product is deleted before the order is written", async () => {
     const [plenty, removed] = await putProducts(5, 2);
-    await setCart({ [plenty.id]: 1, [removed.id]: 1 });
-    const getProducts = productService.getProducts;
-    vi.spyOn(productService, "getProducts").mockImplementationOnce(async ids => {
-      const result = await getProducts(ids);
-      await db.send(new DeleteCommand({ TableName: ProductsTable, Key: { id: removed.id } }));
-      return result;
-    });
+    const items = { [plenty.id]: 1, [removed.id]: 1 };
+    await setCart(items);
+    changeDuringCreate(() => db.send(new DeleteCommand({ TableName: ProductsTable, Key: { id: removed.id } })));
 
-    await expectApiError(makeService().createOrder(body), 404);
+    await expectApiError(makeService().createOrder(orderBody(items, [plenty, removed])), 404);
     expect(await getRawCustomerOrders()).toEqual([]);
     expect(await getRawProduct(plenty.id)).toMatchObject({ stockCount: 5 });
   });
 
   it("does not write anything when the address cannot be found", async () => {
     const [product] = await putProducts(5);
-    await setCart({ [product.id]: 1 });
+    const items = { [product.id]: 1 };
+    await setCart(items);
     getAddress.mockRejectedValue(notFound("Address could not be found."));
 
-    await expectApiError(makeService().createOrder(body), 404);
+    await expectApiError(makeService().createOrder(orderBody(items, [product])), 404);
     expect(await getRawCustomerOrders()).toEqual([]);
     expect(await getRawProduct(product.id)).toMatchObject({ stockCount: 5 });
   });
@@ -413,11 +537,12 @@ describe("listOrders", () => {
       [crypto.randomUUID()]: { amount: 3, pricePerUnit: 20 },
       [crypto.randomUUID()]: { amount: 1, pricePerUnit: 5 }
     };
+    own[1].shipping = { method: ShippingMethod.Express, cost: 40 };
     await putOrders(...own, makeOrder({ customerId: crypto.randomUUID() }));
 
     const { data } = await makeService().listOrders({ limit: 10 });
 
-    expect(data).toEqual(newestFirst(own).map(o => toOverview(o, o === own[1] ? 65 : 100)));
+    expect(data).toEqual(newestFirst(own).map(o => toOverview(o, o === own[1] ? 105 : 100)));
   });
 
   it("ignores the customerId filter for non-admins", async () => {

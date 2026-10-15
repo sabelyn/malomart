@@ -1,10 +1,10 @@
 import { ConditionalCheckFailedException, TransactionCanceledException } from "@aws-sdk/client-dynamodb";
 import type { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-import { TransactWriteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, TransactWriteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import type { PaginatedQueryOptions } from "@mm/clients";
 import { getItemById, getPaginatedResults, InvalidCursorError } from "@mm/clients";
 import type { CreateOrderBody, ListOrdersQuery, OrderItemEntry } from "@mm/lib";
-import { getOrderTotal, Order, OrderOverview, OrderStatus } from "@mm/lib";
+import { getOrderTotal, isCardExpired, Order, OrderOverview, OrderStatus, ShippingOptions } from "@mm/lib";
 import { inject, injectable } from "tsyringe";
 import { strictObject } from "zod";
 
@@ -17,8 +17,14 @@ import { parseStored } from "@/utils/parsing";
 
 const SelectedOrder = strictObject({
   ...OrderOverview.omit({ total: true }).shape,
-  products: Order.shape.products
+  products: Order.shape.products,
+  shipping: Order.shape.shipping
 });
+
+const sameItems = (a: Record<string, number>, b: Record<string, number>) => {
+  const ids = Object.keys(a);
+  return ids.length === Object.keys(b).length && ids.every(id => a[id] === b[id]);
+};
 
 const { carts, orders, products: productsTable } = env.TABLE_NAMES;
 const { ordersByCustomer, ordersByStatus, ordersByCustomerStatus } = env.TABLE_INDEXES;
@@ -74,7 +80,12 @@ export class OrderService implements IOrderService {
 
   createOrder = async (body: CreateOrderBody) => {
     const customerId = this.user.id;
-    const { addressId, paymentMethodId } = body;
+    const { id, addressId, paymentMethodId, shippingMethod, items, expectedTotal } = body;
+
+    const existing = await this.findPlacedOrder(id);
+    if (existing) {
+      return existing;
+    }
 
     const [address, cart, paymentMethod] = await Promise.all([
       this.customerService.getAddress(addressId),
@@ -82,9 +93,15 @@ export class OrderService implements IOrderService {
       this.paymentMethodService.getPaymentMethodWithToken(paymentMethodId)
     ]);
 
+    if (isCardExpired(paymentMethod)) {
+      throw badRequest("The payment method has expired.");
+    }
     const productIds = Object.keys(cart);
     if (productIds.length === 0) {
       throw badRequest("The customer's cart has no items.");
+    }
+    if (!sameItems(cart, items)) {
+      throw conflict("The cart changed since it was reviewed.");
     }
 
     const products = await this.productService.getProducts(productIds);
@@ -92,19 +109,19 @@ export class OrderService implements IOrderService {
       throw notFound("Some items in the cart could not be found.");
     }
     const orderEntries: Record<string, OrderItemEntry> = {};
-    for (const { id, stockCount, price, title } of products) {
-      const inCart = cart[id];
+    for (const { id: productId, stockCount, price, title } of products) {
+      const inCart = cart[productId];
       if (stockCount < inCart) {
         throw conflict(`Not enough ${title} in stock.`);
       }
-      orderEntries[id] = { amount: inCart, pricePerUnit: price };
+      orderEntries[productId] = { amount: inCart, pricePerUnit: price };
     }
 
     const { street, city, region, postalCode, recipient } = address;
     const { brand, lastFour, expirationMonth, expirationYear, token } = paymentMethod;
     const orderDate = new Date().toISOString();
     const order: Order = {
-      id: crypto.randomUUID(),
+      id,
       customerId,
       orderDate,
       currentStatus: OrderStatus.Placed,
@@ -112,37 +129,43 @@ export class OrderService implements IOrderService {
         [OrderStatus.Placed]: orderDate
       },
       products: orderEntries,
+      shipping: { method: shippingMethod, cost: ShippingOptions[shippingMethod].cost },
       address: { recipient, street, city, region, postalCode },
       paymentMethod: { brand, lastFour, expirationMonth, expirationYear, token }
     };
+    if (getOrderTotal(order) !== expectedTotal) {
+      throw conflict("Prices changed since the order was reviewed.");
+    }
 
     try {
       await this.db.send(
         new TransactWriteCommand({
           TransactItems: [
-            ...products.map(({ id }) => ({
+            ...products.map(({ id: productId }) => ({
               Update: {
                 TableName: productsTable,
-                Key: { id },
+                Key: { id: productId },
                 ConditionExpression: "stockCount >= :amount",
                 UpdateExpression: "SET stockCount = stockCount - :amount",
-                ExpressionAttributeValues: { ":amount": orderEntries[id].amount },
+                ExpressionAttributeValues: { ":amount": orderEntries[productId].amount },
                 ReturnValuesOnConditionCheckFailure: "ALL_OLD" as const
               }
             })),
             {
               Put: {
                 TableName: orders,
-                Item: order
+                Item: order,
+                ConditionExpression: "attribute_not_exists(id)"
               }
             },
             {
               Update: {
                 TableName: carts,
                 Key: { customerId },
+                ConditionExpression: "#items = :cart",
                 UpdateExpression: "SET #items = :empty",
                 ExpressionAttributeNames: { "#items": "items" },
-                ExpressionAttributeValues: { ":empty": {} }
+                ExpressionAttributeValues: { ":cart": cart, ":empty": {} }
               }
             }
           ]
@@ -150,13 +173,22 @@ export class OrderService implements IOrderService {
       );
     } catch (err) {
       if (err instanceof TransactionCanceledException) {
-        const reasons = err.CancellationReasons ?? [];
-        const failedIndex = reasons.findIndex(r => r.Code === "ConditionalCheckFailed");
+        const failed = (index: number) => err.CancellationReasons?.[index]?.Code === "ConditionalCheckFailed";
+        if (failed(products.length)) {
+          const placed = await this.findPlacedOrder(id);
+          if (placed) {
+            return placed;
+          }
+        }
+        const failedIndex = products.findIndex((_, index) => failed(index));
         const product = products[failedIndex];
         if (product) {
-          throw reasons[failedIndex].Item
+          throw err.CancellationReasons?.[failedIndex].Item
             ? conflict(`Not enough ${product.title} in stock.`, err)
             : notFound(`${product.title} is no longer available.`);
+        }
+        if (failed(products.length + 1)) {
+          throw conflict("The cart changed since it was reviewed.", err);
         }
       }
       throw err;
@@ -227,6 +259,19 @@ export class OrderService implements IOrderService {
     }
   };
 
+  private findPlacedOrder = async (id: string) => {
+    const { Item: order } = await this.db.send(
+      new GetCommand({ TableName: orders, Key: { id }, ConsistentRead: true })
+    );
+    if (!order) {
+      return null;
+    }
+    if (order.customerId !== this.user.id) {
+      throw conflict("Order ID is already in use.");
+    }
+    return this.toOrderDto(order);
+  };
+
   private toOrderDto = (data: unknown) => {
     const order = parseStored(data, Order);
     const { brand, lastFour } = order.paymentMethod;
@@ -237,10 +282,10 @@ export class OrderService implements IOrderService {
   };
 
   private toOrderOverview = (data: unknown) => {
-    const { products, ...order } = parseStored(data, SelectedOrder);
+    const { products, shipping, ...order } = parseStored(data, SelectedOrder);
     return {
       ...order,
-      total: getOrderTotal(products)
+      total: getOrderTotal({ products, shipping })
     };
   };
 }

@@ -1,7 +1,8 @@
 import { Badge, Text } from "@mantine/core";
 import type { PaymentMethodDto } from "@mm/lib/customers";
+import { isCardExpired } from "@mm/lib/customers";
 
-import { isExpired, paymentMethodExpiry, paymentMethodName } from "@/components/account/accountDisplay";
+import { paymentMethodExpiry, paymentMethodName } from "@/components/account/accountDisplay";
 import AccountCard from "./AccountCard";
 import classes from "./AccountCard.module.css";
 
@@ -27,7 +28,7 @@ const PaymentMethodCard = ({
     title={paymentMethodName(method)}
     isDefault={method.isDefault}
     badges={
-      isExpired(method) && (
+      isCardExpired(method) && (
         <Badge variant="outline" color="red.4">
           Expired
         </Badge>

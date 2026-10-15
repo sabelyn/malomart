@@ -1,14 +1,13 @@
-import { Alert, Button, Container, Title } from "@mantine/core";
+import { Button, Container, Title } from "@mantine/core";
 import type { ProductOverview } from "@mm/lib/products";
-import { getProductsByIds } from "@mm/lib/products";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { Link } from "react-router";
 
-import { endpointQuery, useSession } from "@/api";
-import { isEmptyCart, stockAdjustments } from "@/cart/cartItems";
-import { useCart } from "@/cart/CartProvider";
+import { useSession } from "@/api";
+import { isEmptyCart } from "@/cart/cartItems";
+import { useCartProducts } from "@/cart/useCartProducts";
 import cartClasses from "@/components/cart/cart.module.css";
+import CartAdjustmentsAlert from "@/components/cart/CartAdjustmentsAlert";
 import CartLine from "@/components/cart/CartLine";
 import CartSummary from "@/components/cart/CartSummary";
 import MaloSays from "@/components/MaloSays";
@@ -17,62 +16,12 @@ import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { notify } from "@/notifications/notify";
 import classes from "./pages.module.css";
 
-const byTitle = (a: ProductOverview, b: ProductOverview) => a.title.localeCompare(b.title);
-
-const adjustmentNotices = (adjustments: Record<string, number>, products: Map<string, ProductOverview>) => {
-  const notices: string[] = [];
-  let missing = 0;
-  for (const [id, amount] of Object.entries(adjustments)) {
-    const product = products.get(id);
-    if (!product) {
-      missing++;
-    } else if (amount === 0) {
-      notices.push(`${product.title} sold out, so I took it out.`);
-    } else {
-      notices.push(`${product.title}: only ${amount} left, so that's what you get.`);
-    }
-  }
-  if (missing === 1) {
-    notices.push("Something in your cart isn't sold anymore, so I took it out.");
-  } else if (missing > 1) {
-    notices.push(`${missing} things in your cart aren't sold anymore, so I took them out.`);
-  }
-  return notices;
-};
-
 const CartPage = () => {
   useDocumentTitle("Cart");
   const headingRef = useRef<HTMLHeadingElement>(null);
   const { data: user } = useSession();
-  const cart = useCart();
-  const { items, ready, adjustments, adjust } = cart;
-
-  const ids = [...new Set([...Object.keys(items), ...Object.keys(adjustments)])].sort();
-  const {
-    data: products,
-    isPlaceholderData,
-    isError,
-    refetch
-  } = useQuery({
-    ...endpointQuery(getProductsByIds, { query: { ids } }),
-    enabled: ready && ids.length > 0,
-    placeholderData: keepPreviousData
-  });
-
-  useEffect(() => {
-    if (!ready || !products || isPlaceholderData) {
-      return;
-    }
-    const changes = stockAdjustments(items, products);
-    if (!isEmptyCart(changes)) {
-      adjust(changes);
-    }
-  }, [ready, products, isPlaceholderData, items, adjust]);
-
-  const productsById = new Map((products ?? []).map(product => [product.id, product]));
-  const lines = (products ?? []).filter(product => items[product.id] !== undefined).sort(byTitle);
-  const subtotal = lines.reduce((total, product) => total + product.price * items[product.id], 0);
-  const notices = adjustmentNotices(adjustments, productsById);
+  const { cart, products, lines, subtotal, notices, isError, refetch } = useCartProducts();
+  const { items, ready } = cart;
 
   const remove = (product: ProductOverview) => {
     cart.remove(product.id);
@@ -140,23 +89,7 @@ const CartPage = () => {
       <Title order={1} ref={headingRef} tabIndex={-1}>
         Your cart
       </Title>
-      {notices.length > 0 && (
-        <Alert
-          mt="xl"
-          variant="light"
-          color="gilt"
-          title="I fixed your cart"
-          withCloseButton
-          closeButtonLabel="Dismiss"
-          onClose={cart.clearAdjustments}
-        >
-          <ul className={cartClasses.notices}>
-            {notices.map(notice => (
-              <li key={notice}>{notice}</li>
-            ))}
-          </ul>
-        </Alert>
-      )}
+      {notices.length > 0 && <CartAdjustmentsAlert notices={notices} onClose={cart.clearAdjustments} />}
       {renderContent()}
     </Container>
   );

@@ -13,6 +13,8 @@ const AccountPage = lazy(() => import("@/pages/account/AccountPage"));
 const AccountPlaceholder = lazy(() => import("@/pages/account/AccountPlaceholder"));
 const AddressesSection = lazy(() => import("@/pages/account/AddressesSection"));
 const AdminPage = lazy(() => import("@/pages/admin/AdminPage"));
+const CheckoutPage = lazy(() => import("@/pages/checkout/CheckoutPage"));
+const OrderPlacedPage = lazy(() => import("@/pages/orders/OrderPlacedPage"));
 const PaymentMethodsSection = lazy(() => import("@/pages/account/PaymentMethodsSection"));
 const ProfileSection = lazy(() => import("@/pages/account/ProfileSection"));
 const SignInPage = lazy(() => import("@/pages/auth/SignInPage"));
@@ -39,9 +41,10 @@ const App = () => (
           <Route path="payment-methods" element={<PaymentMethodsSection />} />
           <Route path="orders" element={<AccountPlaceholder title="Orders" />} />
         </Route>
-        <Route path="checkout" element={<PlaceholderPage title="Checkout" />} />
+        <Route path="checkout" element={<CheckoutPage />} />
         <Route path="orders" element={<Navigate to="/account/orders" replace />} />
         <Route path="orders/:id" element={<PlaceholderPage title="Order" />} />
+        <Route path="orders/:id/placed" element={<OrderPlacedPage />} />
       </Route>
       <Route path="admin" element={<RequireAdmin />}>
         <Route index element={<AdminPage />} />

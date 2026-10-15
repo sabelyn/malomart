@@ -40,11 +40,12 @@ export const getOrder = new Endpoint(orders, {
 });
 
 export const createOrder = new Endpoint(orders, {
-  description: "Submit a new purchase order for processing.",
+  description:
+    "Submit a new purchase order for processing. Repeating a request with the ID of an order the customer already placed returns that order.",
   errors: {
-    400: "The request body is invalid.",
+    400: "The request body is invalid, the cart is empty, or the payment method has expired.",
     404: "A related entity cannot be found, such as the customer, address, payment method, or any of the submitted items.",
-    409: "The amount of a purchased item exceeds the number in stock."
+    409: "The cart or prices changed since the customer reviewed them, an item doesn't have enough stock, or the order ID belongs to another customer."
   },
   id: "createOrder",
   method: "POST",

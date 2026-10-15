@@ -27,7 +27,8 @@ const order: OrderDto = {
   orderDate: ORDER_DATE,
   currentStatus: "Placed",
   statusUpdates: { Placed: ORDER_DATE },
-  products: { [PRODUCT_ID]: { amount: 2, pricePerUnit: 500 } }
+  products: { [PRODUCT_ID]: { amount: 2, pricePerUnit: 500 } },
+  shipping: { method: "Express", cost: 40 }
 };
 
 const listResponse: ListOrdersResponse = {
@@ -35,7 +36,14 @@ const listResponse: ListOrdersResponse = {
   pagination: { hasNext: false, limit: 20 }
 };
 
-const orderBody = { addressId: ID, paymentMethodId: ID };
+const orderBody = {
+  id: ID,
+  addressId: ID,
+  paymentMethodId: ID,
+  shippingMethod: "Express",
+  items: { [PRODUCT_ID]: 2 },
+  expectedTotal: 1040
+};
 
 const app = createTestApp(api);
 
@@ -133,6 +141,9 @@ describe("POST /api/orders", () => {
   it.each([
     ["a missing address id", { paymentMethodId: ID }],
     ["an invalid payment method id", { ...orderBody, paymentMethodId: "nope" }],
+    ["a missing order id", { ...orderBody, id: undefined }],
+    ["an unknown shipping method", { ...orderBody, shippingMethod: "Carrier Pigeon" }],
+    ["a cart quantity of zero", { ...orderBody, items: { [PRODUCT_ID]: 0 } }],
     ["an unknown field", { ...orderBody, total: 1 }]
   ])("rejects %s with a 400", async (_, body) => {
     const res = await request(app).post("/api/orders").set(asRegularUser).send(body);
