@@ -27,6 +27,7 @@ type Props = StackProps & {
 
 export class VaultStack extends Stack {
   public readonly invokeFunctions: Record<keyof InvokeFunctionNames, NodejsFunction>;
+  public readonly chargeCardFunction: NodejsFunction;
 
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id, props);
@@ -127,6 +128,23 @@ export class VaultStack extends Stack {
       }
     });
     cardTable.grant(updateCard, "dynamodb:UpdateItem");
+
+    this.chargeCardFunction = new NodejsFunction(this, "ChargeCardFunction", {
+      entry: resolve(__dirname, "../lambdas/vaultChargeCard.ts"),
+      runtime: Runtime.NODEJS_24_X,
+      architecture: Architecture.ARM_64,
+      timeout: Duration.seconds(10),
+      logGroup: new LogGroup(this, "ChargeCardLogs", {
+        retention: RetentionDays.ONE_WEEK,
+        removalPolicy: RemovalPolicy.DESTROY
+      }),
+      environment: {
+        VAULT_CARD_TABLE_NAME: cardTable.tableName,
+        VAULT_KEY_ID: cardKey.keyArn
+      }
+    });
+    cardTable.grant(this.chargeCardFunction, "dynamodb:GetItem");
+    cardKey.grant(this.chargeCardFunction, "kms:Decrypt");
 
     this.invokeFunctions = {
       deleteCard,

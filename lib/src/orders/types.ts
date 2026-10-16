@@ -14,6 +14,13 @@ export const OrderStatus = {
 export const OrderStatusSchema = zenum(OrderStatus);
 export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
 
+export const CancellationReason = {
+  Requested: "Requested",
+  PaymentDeclined: "PaymentDeclined"
+} as const;
+export const CancellationReasonSchema = zenum(CancellationReason);
+export type CancellationReason = (typeof CancellationReason)[keyof typeof CancellationReason];
+
 export const ShippingMethod = {
   Standard: "Standard",
   Express: "Express",
@@ -43,6 +50,9 @@ export const Order = strictObject({
   currentStatus: OrderStatusSchema,
   statusUpdates: partialRecord(OrderStatusSchema, iso.datetime()),
   products: record(Id, OrderItemEntry),
-  shipping: OrderShipping
+  shipping: OrderShipping,
+  cancellationReason: CancellationReasonSchema.optional(),
+  fulfillmentToken: Id.optional(),
+  restockedAt: iso.datetime().optional()
 });
 export type Order = zinfer<typeof Order>;

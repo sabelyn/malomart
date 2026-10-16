@@ -1,6 +1,7 @@
 import type { infer as zinfer } from "zod";
 import { strictObject, string } from "zod";
 
+import { Id, PositiveInt } from "../common/types";
 import { PaymentMethod } from "../customers/types";
 
 export const CreatePaymentMethodBody = strictObject({
@@ -26,3 +27,13 @@ export const UpdatePaymentMethodExpirationEvent = PaymentMethod.pick({
   customerId: true
 });
 export type UpdatePaymentMethodExpirationEvent = zinfer<typeof UpdatePaymentMethodExpirationEvent>;
+
+export const ChargeCardEvent = strictObject({
+  ...PaymentMethod.pick({
+    customerId: true,
+    token: true
+  }).shape,
+  orderId: Id,
+  amount: PositiveInt
+});
+export type ChargeCardEvent = zinfer<typeof ChargeCardEvent>;

@@ -4,6 +4,7 @@ import { dbClient } from "@mm/clients/db";
 import type { PaymentMethodMetadata, VaultCard } from "@mm/lib/lambdas";
 
 import { handler as tokenize } from "../../../src/lambdas/vaultCardTokenizer";
+import { DECLINING_TEST_CARDS, handler as chargeCard } from "../../../src/lambdas/vaultChargeCard";
 import { handler as deleteCard } from "../../../src/lambdas/vaultDeleteCard";
 import { handler as describeCard } from "../../../src/lambdas/vaultDescribeCard";
 import { handler as updateCard } from "../../../src/lambdas/vaultUpdateCardExpiration";
@@ -43,9 +44,9 @@ const putCard = async (overrides: Partial<VaultCard> = {}) => {
   return card;
 };
 
-const tokenizeCard = async () => {
+const tokenizeCard = async (cardNumber = cardData.cardNumber) => {
   const result = (await invoke(tokenize, {
-    body: JSON.stringify(cardData),
+    body: JSON.stringify({ ...cardData, cardNumber }),
     requestContext: { authorizer: { lambda: { customerId } } }
   })) as { statusCode: number; body: string };
   return { statusCode: result.statusCode, token: JSON.parse(result.body).token as string };
@@ -156,5 +157,34 @@ describe("vaultDeleteCard", () => {
     await expect(invoke(deleteCard, { token: crypto.randomUUID(), customerId })).resolves.toEqual({
       errorName: "ConditionalCheckFailedException"
     });
+  });
+});
+
+describe("vaultChargeCard", () => {
+  const charge = (token: string, owner = customerId) =>
+    invoke(chargeCard, { token, customerId: owner, orderId: crypto.randomUUID(), amount: 120 });
+
+  it("approves a tokenized card for its owner", async () => {
+    const { token } = await tokenizeCard();
+
+    await expect(charge(token)).resolves.toEqual({ approved: true, chargeId: expect.any(String) });
+  });
+
+  it("declines a tokenized test card", async () => {
+    const { token } = await tokenizeCard([...DECLINING_TEST_CARDS][0]);
+
+    await expect(charge(token)).resolves.toEqual({ approved: false, reason: "Declined" });
+  });
+
+  it("declines another customer's card", async () => {
+    const { token } = await tokenizeCard();
+
+    await expect(charge(token, crypto.randomUUID())).resolves.toEqual({ approved: false, reason: "Declined" });
+  });
+
+  it("declines an expired card", async () => {
+    const { token } = await putCard({ expirationYear: 2020 });
+
+    await expect(charge(token)).resolves.toEqual({ approved: false, reason: "Expired" });
   });
 });
