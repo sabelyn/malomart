@@ -54,7 +54,8 @@ export class DbStack extends Stack {
 
     const ordersTable = new Table(this, "OrdersTableV2", {
       partitionKey: { name: "id", type: AttributeType.STRING },
-      billingMode: BillingMode.PAY_PER_REQUEST
+      billingMode: BillingMode.PAY_PER_REQUEST,
+      stream: StreamViewType.NEW_AND_OLD_IMAGES
     });
     ordersTable.addGlobalSecondaryIndex({
       indexName: INDEXES.ordersByCustomer,

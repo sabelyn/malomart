@@ -9,6 +9,7 @@ import type { SiteDomain } from "./FrontendStack";
 import { FrontendStack } from "./FrontendStack";
 import { GatewayStack } from "./GatewayStack";
 import { MailStack } from "./MailStack";
+import { OrdersStack } from "./OrdersStack";
 import { VaultStack } from "./VaultStack";
 
 export { DomainStack, MailStack };
@@ -18,6 +19,7 @@ export type StageConfig = {
   siteDomain?: SiteDomain;
   emailDomain?: string;
   alarmEmail?: string;
+  fulfillmentTimeScale?: number;
 };
 
 export const configureStacks = (stage: Stage, config: StageConfig) => {
@@ -32,6 +34,15 @@ export const configureStacks = (stage: Stage, config: StageConfig) => {
   });
   const authStack = new AuthStack(stage, "MaloMartAuthStack", { dbStack, emailDomain: config.emailDomain });
   const vaultStack = new VaultStack(stage, "MaloMartVaultStack", { alertsStack, authStack, gatewayStack });
+  new OrdersStack(stage, "MaloMartOrdersStack", {
+    alertsStack,
+    authStack,
+    dbStack,
+    vaultStack,
+    appOrigin: frontendStack.appOrigin,
+    emailDomain: config.emailDomain,
+    timeScale: config.fulfillmentTimeScale ?? 1
+  });
   new ApiStack(stage, "MaloMartApiStack", {
     authStack,
     dbStack,

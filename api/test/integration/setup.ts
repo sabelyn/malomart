@@ -2,11 +2,13 @@ import { dbClient } from "@mm/clients";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { deleteTracked } from "../helpers/db";
+import { deleteTracked, wasTouched } from "../helpers/db";
+import { drainQueues } from "../helpers/queues";
 
 const OUTPUTS_FILE = path.resolve(__dirname, "../../../local/cdk-outputs.json");
 const DB_STACK = "Dev-MaloMartDbStack";
 const VAULT_STACK = "Dev-MaloMartVaultStack";
+const ORDERS_STACK = "Dev-MaloMartOrdersStack";
 
 type StackOutputs = Record<string, Record<string, string>>;
 
@@ -18,15 +20,15 @@ const readStackOutputs = () => {
     throw new Error(`Could not read ${OUTPUTS_FILE}. Run "pnpm deploy:dev" first.`, { cause: err });
   }
 
-  for (const stack of [DB_STACK, VAULT_STACK]) {
+  for (const stack of [DB_STACK, VAULT_STACK, ORDERS_STACK]) {
     if (!outputs[stack]) {
       throw new Error(`No outputs for ${stack} in ${OUTPUTS_FILE}. Run "pnpm deploy:dev".`);
     }
   }
-  return { db: outputs[DB_STACK], vault: outputs[VAULT_STACK] };
+  return { db: outputs[DB_STACK], vault: outputs[VAULT_STACK], orders: outputs[ORDERS_STACK] };
 };
 
-const { db, vault } = readStackOutputs();
+const { db, vault, orders } = readStackOutputs();
 
 delete process.env.AWS_REGION;
 
@@ -38,3 +40,9 @@ Object.assign(process.env, {
 });
 
 afterEach(() => deleteTracked(dbClient()));
+
+afterAll(async () => {
+  if (wasTouched(JSON.parse(db.TableNames).orders)) {
+    await drainQueues(JSON.parse(orders.FailureQueueUrls));
+  }
+}, 60_000);

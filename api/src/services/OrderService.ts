@@ -4,7 +4,7 @@ import { GetCommand, TransactWriteCommand, UpdateCommand } from "@aws-sdk/lib-dy
 import type { PaginatedQueryOptions } from "@mm/clients";
 import { getItemById, getPaginatedResults, InvalidCursorError } from "@mm/clients";
 import type { CreateOrderBody, ListOrdersQuery, OrderItemEntry } from "@mm/lib";
-import { getOrderItemCount, getOrderTotal, isCardExpired, Order, OrderOverview, OrderStatus, ShippingOptions } from "@mm/lib";
+import { CancellationReason, getOrderItemCount, getOrderTotal, isCardExpired, Order, OrderOverview, OrderStatus, ShippingOptions } from "@mm/lib";
 import { inject, injectable } from "tsyringe";
 import { strictObject } from "zod";
 
@@ -37,14 +37,15 @@ export class OrderService implements IOrderService {
     @inject(PAYMENT_METHOD_SERVICE) private readonly paymentMethodService: IPaymentMethodService,
     @inject(PRODUCT_SERVICE) private readonly productService: IProductService,
     @inject(USER) private readonly user: User
-  ) {}
+  ) { }
 
   cancelOrder = async (id: string) => {
     const ExpressionAttributeValues: Record<string, string> = {
       ":placed": OrderStatus.Placed,
       ":confirmed": OrderStatus.Confirmed,
       ":cancelled": OrderStatus.Cancelled,
-      ":now": new Date().toISOString()
+      ":now": new Date().toISOString(),
+      ":reason": CancellationReason.Requested
     };
     let ConditionExpression = "currentStatus = :placed OR currentStatus = :confirmed";
     if (!this.user.isAdmin) {
@@ -58,7 +59,7 @@ export class OrderService implements IOrderService {
           TableName: orders,
           Key: { id },
           ConditionExpression,
-          UpdateExpression: "SET currentStatus = :cancelled, statusUpdates.#cancelled = :now",
+          UpdateExpression: "SET currentStatus = :cancelled, statusUpdates.#cancelled = :now, cancellationReason = :reason",
           ExpressionAttributeNames: { "#cancelled": OrderStatus.Cancelled },
           ExpressionAttributeValues,
           ReturnValuesOnConditionCheckFailure: "ALL_OLD"
@@ -273,8 +274,8 @@ export class OrderService implements IOrderService {
   };
 
   private toOrderDto = (data: unknown) => {
-    const order = parseStored(data, Order);
-    const { brand, lastFour } = order.paymentMethod;
+    const { paymentMethod, fulfillmentToken: _, restockedAt: __, ...order } = parseStored(data, Order);
+    const { brand, lastFour } = paymentMethod;
     return {
       ...order,
       paymentMethod: { brand, lastFour }

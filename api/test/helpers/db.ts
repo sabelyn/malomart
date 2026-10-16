@@ -19,8 +19,12 @@ const batchWrite = async (db: DynamoDBDocumentClient, tableName: string, request
 };
 
 const tracked = new Map<string, Map<string, Record<string, unknown>>>();
+const touched = new Set<string>();
+
+export const wasTouched = (tableName: string) => touched.has(tableName);
 
 export const track = (tableName: string, ...keys: Record<string, unknown>[]) => {
+  touched.add(tableName);
   const table = tracked.get(tableName) ?? new Map<string, Record<string, unknown>>();
   for (const key of keys) {
     table.set(JSON.stringify(key), key);

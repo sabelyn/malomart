@@ -1,5 +1,5 @@
 import type { OrderDto } from "@mm/lib/orders";
-import { OrderStatus } from "@mm/lib/orders";
+import { CancellationReason, OrderStatus } from "@mm/lib/orders";
 
 import { formatOrderDateTime } from "./orderDisplay";
 import classes from "./orders.module.css";
@@ -14,11 +14,13 @@ const STEP_NOTES: Record<OrderStatus, string> = {
   Cancelled: "Cancelled. Nothing ships."
 };
 
+const DECLINED_NOTE = "Payment declined. Nothing ships.";
+
 type OrderUpdatesProps = {
-  order: Pick<OrderDto, "currentStatus" | "statusUpdates">;
+  order: Pick<OrderDto, "currentStatus" | "statusUpdates" | "cancellationReason">;
 };
 
-const OrderUpdates = ({ order: { currentStatus, statusUpdates } }: OrderUpdatesProps) => {
+const OrderUpdates = ({ order: { currentStatus, statusUpdates, cancellationReason } }: OrderUpdatesProps) => {
   const steps =
     currentStatus === OrderStatus.Cancelled
       ? [...FLOW.filter(status => statusUpdates[status]), OrderStatus.Cancelled]
@@ -29,6 +31,10 @@ const OrderUpdates = ({ order: { currentStatus, statusUpdates } }: OrderUpdatesP
       {steps.map(status => {
         const reachedAt = statusUpdates[status];
         const state = status === OrderStatus.Cancelled ? "cancelled" : reachedAt ? "reached" : "pending";
+        const note =
+          status === OrderStatus.Cancelled && cancellationReason === CancellationReason.PaymentDeclined
+            ? DECLINED_NOTE
+            : STEP_NOTES[status];
         return (
           <li
             key={status}
@@ -44,7 +50,7 @@ const OrderUpdates = ({ order: { currentStatus, statusUpdates } }: OrderUpdatesP
                   <p className={classes.updateTime}>
                     <time dateTime={reachedAt}>{formatOrderDateTime(reachedAt)}</time>
                   </p>
-                  <p className={classes.updateNote}>{STEP_NOTES[status]}</p>
+                  <p className={classes.updateNote}>{note}</p>
                 </>
               ) : (
                 <p className={classes.updateTime}>Not yet.</p>

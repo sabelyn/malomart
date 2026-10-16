@@ -1,7 +1,7 @@
 import { DeleteCommand, GetCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { dbClient, s3Client } from "@mm/clients";
 import type { AddressDto, CreateOrderBody, Order, PaymentMethodDto, Product } from "@mm/lib";
-import { Category, OrderStatus, ShippingMethod, ShippingOptions } from "@mm/lib";
+import { CancellationReason, Category, OrderStatus, ShippingMethod, ShippingOptions } from "@mm/lib";
 
 import type { ICustomerService, IPaymentMethodService } from "@/contracts";
 import env from "@/env";
@@ -63,12 +63,13 @@ const asAdmin = () => makeService(makeUser({ id: crypto.randomUUID(), isAdmin: t
 
 const makeOrder = (overrides: Partial<Order> = {}): Order => {
   const orderDate = overrides.orderDate ?? new Date().toISOString();
+  const currentStatus = overrides.currentStatus ?? OrderStatus.Placed;
   return {
     id: crypto.randomUUID(),
     customerId,
     orderDate,
-    currentStatus: OrderStatus.Placed,
-    statusUpdates: { [OrderStatus.Placed]: orderDate },
+    currentStatus,
+    statusUpdates: { [OrderStatus.Placed]: orderDate, [currentStatus]: orderDate },
     products: { [crypto.randomUUID()]: { amount: 2, pricePerUnit: 50 } },
     shipping: { method: ShippingMethod.Standard, cost: 0 },
     address: {
@@ -419,6 +420,19 @@ describe("getOrder", () => {
     await expect(makeService().getOrder(order.id)).resolves.toEqual(toDto(order));
   });
 
+  it("returns the cancellation reason but not the fulfillment bookkeeping", async () => {
+    const order = makeOrder({
+      currentStatus: OrderStatus.Cancelled,
+      cancellationReason: CancellationReason.PaymentDeclined,
+      fulfillmentToken: crypto.randomUUID(),
+      restockedAt: new Date().toISOString()
+    });
+    await putOrders(order);
+
+    const { fulfillmentToken: _, restockedAt: __, ...visible } = order;
+    await expect(makeService().getOrder(order.id)).resolves.toEqual(toDto(visible));
+  });
+
   it("returns another customer's order to an admin", async () => {
     const order = makeOrder();
     await putOrders(order);
@@ -455,7 +469,8 @@ describe("cancelOrder", () => {
     expect(await getRawOrder(order.id)).toEqual({
       ...order,
       currentStatus: OrderStatus.Cancelled,
-      statusUpdates: { ...order.statusUpdates, [OrderStatus.Cancelled]: expect.any(String) }
+      statusUpdates: { ...order.statusUpdates, [OrderStatus.Cancelled]: expect.any(String) },
+      cancellationReason: CancellationReason.Requested
     });
   });
 
