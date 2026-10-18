@@ -16,9 +16,9 @@ export const useOrderItems = (order: OrderDto | undefined) => {
 
   const byId = new Map((products.data ?? []).map(product => [product.id, product]));
   const items: CheckoutItem[] = entries
-    .map(([id, { amount, pricePerUnit }]) => ({
+    .map(([id, { title, amount, pricePerUnit }]) => ({
       id,
-      title: byId.get(id)?.title ?? "Item no longer sold",
+      title,
       thumbnailKey: byId.get(id)?.thumbnailKey,
       amount,
       pricePerUnit

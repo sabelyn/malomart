@@ -52,6 +52,7 @@ const AccountLinks = () => {
   if (user) {
     return (
       <>
+        {user.isAdmin && <NavLink to="/admin">Back office</NavLink>}
         <NavLink to="/account">Account</NavLink>
         <SignOutButton />
       </>

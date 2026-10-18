@@ -1,6 +1,6 @@
 import { AdminGetUserCommand, CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";
 import { SendEmailCommand, SESv2Client } from "@aws-sdk/client-sesv2";
-import { BatchGetCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand } from "@aws-sdk/lib-dynamodb";
 import { dbClient } from "@mm/clients/db";
 import type { Order } from "@mm/lib/orders";
 import { mockClient } from "aws-sdk-client-mock";
@@ -16,6 +16,7 @@ const mask = crypto.randomUUID();
 
 const order: Order = {
   id: "8a2be9e3-ee3a-4357-9a7a-de01c096f5c7",
+  entityType: "Order",
   customerId: crypto.randomUUID(),
   address: { recipient: "Link", street: "1 Ordon Way", city: "Ordon", region: "Faron", postalCode: "12345" },
   paymentMethod: {
@@ -28,7 +29,7 @@ const order: Order = {
   orderDate: "2026-10-16T12:00:00.000Z",
   currentStatus: "Confirmed",
   statusUpdates: { Placed: "2026-10-16T12:00:00.000Z", Confirmed: "2026-10-16T12:00:10.000Z" },
-  products: { [mask]: { amount: 2, pricePerUnit: 50 } },
+  products: { [mask]: { title: "Mask of Truth", amount: 2, pricePerUnit: 50 } },
   shipping: { method: "Express", cost: 40 }
 };
 
@@ -46,7 +47,6 @@ beforeEach(() => {
   cognito.reset();
   ses.reset();
   storedOrder();
-  db.on(BatchGetCommand).resolves({ Responses: { products: [{ id: mask, title: "Mask of Truth" }] } });
   cognito.on(AdminGetUserCommand).resolves({
     Username: order.customerId,
     UserAttributes: [

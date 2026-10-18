@@ -9,6 +9,7 @@ import { json, LocationDisplay, renderWithProviders } from "../../utils";
 const overview = (title: string, overrides: Partial<ProductOverview> = {}): ProductOverview => ({
   id: crypto.randomUUID(),
   title,
+  category: "Misc",
   price: 50,
   stockCount: 5,
   ...overrides

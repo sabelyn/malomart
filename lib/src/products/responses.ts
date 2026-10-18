@@ -2,11 +2,12 @@ import type { infer as zinfer } from "zod";
 import { record, strictObject, string, url } from "zod";
 
 import { PaginationData } from "../common/responses";
-import { Product } from "./types";
+import { ImageUpload, Product } from "./types";
 
 export const ProductOverview = Product.pick({
   id: true,
   title: true,
+  category: true,
   price: true,
   originalPrice: true,
   thumbnailKey: true,
@@ -40,3 +41,15 @@ export const PresignedPostResponse = strictObject({
   fields: record(string(), string())
 });
 export type PresignedPostResponse = zinfer<typeof PresignedPostResponse>;
+
+export const ImageUploadPostResponse = strictObject({
+  ...PresignedPostResponse.shape,
+  uploadId: ImageUpload.shape.id.meta({ description: "Used to check on the upload after posting it to S3." })
+}).meta({ id: "ImageUploadPostResponse" });
+export type ImageUploadPostResponse = zinfer<typeof ImageUploadPostResponse>;
+
+export const ImageUploadDto = ImageUpload.pick({ id: true, status: true, imageKey: true }).meta({
+  id: "ImageUploadDto",
+  description: "The processing status of an uploaded image. The image key is set once the image is ready."
+});
+export type ImageUploadDto = zinfer<typeof ImageUploadDto>;

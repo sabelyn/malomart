@@ -17,6 +17,7 @@ const lambda = mockClient(lambdaClient());
 
 const order: Order = {
   id: crypto.randomUUID(),
+  entityType: "Order",
   customerId: crypto.randomUUID(),
   address: { recipient: "Link", street: "1 Ordon Way", city: "Ordon", region: "Faron", postalCode: "12345" },
   paymentMethod: {
@@ -29,7 +30,7 @@ const order: Order = {
   orderDate: "2026-10-16T12:00:00.000Z",
   currentStatus: "Placed",
   statusUpdates: { Placed: "2026-10-16T12:00:00.000Z" },
-  products: { [crypto.randomUUID()]: { amount: 2, pricePerUnit: 50 } },
+  products: { [crypto.randomUUID()]: { title: "Mask of Truth", amount: 2, pricePerUnit: 50 } },
   shipping: { method: "Express", cost: 40 }
 };
 

@@ -19,6 +19,7 @@ Object.assign(process.env, {
     addressesByCustomer: "addresses-by-customer",
     ordersByCustomer: "orders-by-customer",
     ordersByCustomerStatus: "orders-by-customer-status",
+    ordersByDate: "orders-by-date",
     ordersByStatus: "orders-by-status",
     paymentMethodsByCustomer: "payment-methods-by-customer",
     productsByCategory: "products-by-category",
@@ -28,6 +29,7 @@ Object.assign(process.env, {
     addresses: "addresses",
     carts: "carts",
     customers: "customers",
+    imageUploads: "image-uploads",
     orders: "orders",
     paymentMethods: "payment-methods",
     products: "products"

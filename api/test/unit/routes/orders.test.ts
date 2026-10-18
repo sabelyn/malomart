@@ -27,13 +27,21 @@ const order: OrderDto = {
   orderDate: ORDER_DATE,
   currentStatus: "Placed",
   statusUpdates: { Placed: ORDER_DATE },
-  products: { [PRODUCT_ID]: { amount: 2, pricePerUnit: 500 } },
+  products: { [PRODUCT_ID]: { title: "Mask of Truth", amount: 2, pricePerUnit: 500 } },
   shipping: { method: "Express", cost: 40 }
 };
 
 const listResponse: ListOrdersResponse = {
   data: [
-    { id: ID, customerId: CUSTOMER_ID, orderDate: ORDER_DATE, currentStatus: "Placed", total: 1000, itemCount: 2 }
+    {
+      id: ID,
+      customerId: CUSTOMER_ID,
+      orderDate: ORDER_DATE,
+      currentStatus: "Placed",
+      recipient: "Link",
+      total: 1000,
+      itemCount: 2
+    }
   ],
   pagination: { hasNext: false, limit: 20 }
 };

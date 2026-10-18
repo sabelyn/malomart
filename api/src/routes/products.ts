@@ -1,7 +1,9 @@
 import {
+  adjustProductStock,
   createProduct,
   deleteProduct,
   deleteProductImage,
+  getImageUpload,
   getProduct,
   getProductsByIds,
   listProducts,
@@ -78,6 +80,35 @@ router.post(...pathAndMiddleware(requestImageUpload), async (req, res, next) => 
     const service = req.container.resolve(PRODUCT_SERVICE);
     const post = await service.getProductImageUploadPost(id, query?.contentType);
     return respond(res, requestImageUpload, post);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.get(...pathAndMiddleware(getImageUpload), async (req, res, next) => {
+  try {
+    const {
+      params: { id, uploadId }
+    } = validateRequest(getImageUpload, req);
+
+    const service = req.container.resolve(PRODUCT_SERVICE);
+    const upload = await service.getImageUpload(id, uploadId);
+    return respond(res, getImageUpload, upload);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.post(...pathAndMiddleware(adjustProductStock), async (req, res, next) => {
+  try {
+    const {
+      body: { change },
+      params: { id }
+    } = validateRequest(adjustProductStock, req);
+
+    const service = req.container.resolve(PRODUCT_SERVICE);
+    const product = await service.adjustStock(id, change);
+    return respond(res, adjustProductStock, product);
   } catch (err) {
     return next(err);
   }

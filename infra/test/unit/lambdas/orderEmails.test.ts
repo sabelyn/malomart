@@ -3,10 +3,11 @@ import type { Order } from "@mm/lib/orders";
 import { renderOrderEmail } from "../../../src/lambdas/emails/orderEmails";
 
 const mask = crypto.randomUUID();
-const gone = crypto.randomUUID();
+const nuts = crypto.randomUUID();
 
 const order: Order = {
   id: crypto.randomUUID(),
+  entityType: "Order",
   customerId: crypto.randomUUID(),
   address: { recipient: "Link", street: "1 Ordon Way", city: "Ordon", region: "Faron", postalCode: "12345" },
   paymentMethod: {
@@ -19,7 +20,10 @@ const order: Order = {
   orderDate: "2026-10-16T12:00:00.000Z",
   currentStatus: "Delivered",
   statusUpdates: { Placed: "2026-10-16T12:00:00.000Z" },
-  products: { [mask]: { amount: 1, pricePerUnit: 1500 }, [gone]: { amount: 3, pricePerUnit: 10 } },
+  products: {
+    [mask]: { title: "<Mask> & Co", amount: 1, pricePerUnit: 1500 },
+    [nuts]: { title: "Deku Nut", amount: 3, pricePerUnit: 10 }
+  },
   shipping: { method: "Standard", cost: 0 }
 };
 
@@ -27,15 +31,14 @@ const render = (recipientName?: string) =>
   renderOrderEmail({
     status: "Delivered",
     order,
-    titles: { [mask]: "<Mask> & Co" },
     recipientName,
     orderUrl: "https://malomart.test/orders/1?a=b&c=d"
   });
 
-it("names discontinued products and shows free shipping", () => {
+it("lists items by the titles saved on the order and shows free shipping", () => {
   const { text } = render();
 
-  expect(text).toContain("Discontinued item x3: 30 rupees");
+  expect(text).toContain("Deku Nut x3: 30 rupees");
   expect(text).toContain("Shipping (Postman on Foot): Free");
   expect(text).toContain("Total: 1,530 rupees");
 });

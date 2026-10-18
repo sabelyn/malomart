@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "seed": "node src/seed/index.ts",
+    "backfill:orders": "node src/backfillOrders.ts",
     "dev:session": "node src/devSession.ts",
     "inbox": "node src/inbox.ts",
     "sprites": "node src/sprites.ts",

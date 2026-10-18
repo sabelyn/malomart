@@ -19,7 +19,12 @@ import { formatRupees } from "@/components/PriceTag";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import classes from "../pages.module.css";
 
-const OrderDetailsPage = () => {
+type OrderDetailsPageProps = {
+  backTo?: string;
+  backLabel?: string;
+};
+
+const OrderDetailsPage = ({ backTo = "/account/orders", backLabel = "All your orders" }: OrderDetailsPageProps) => {
   const { id = "" } = useParams();
   const order = useQuery(endpointQuery(getOrder, { params: { id } }));
   const { items, count, isPending: itemsPending } = useOrderItems(order.data);
@@ -124,8 +129,8 @@ const OrderDetailsPage = () => {
         </dl>
       </section>
 
-      <Link to="/account/orders" className={orderClasses.backLink}>
-        All your orders
+      <Link to={backTo} className={orderClasses.backLink}>
+        {backLabel}
       </Link>
 
       <ConfirmModal

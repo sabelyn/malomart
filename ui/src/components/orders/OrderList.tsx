@@ -11,6 +11,8 @@ import classes from "./orders.module.css";
 
 type OrderListProps = {
   orders: OrderOverview[];
+  orderPath?: (id: string) => string;
+  showRecipient?: boolean;
   busy: boolean;
   hasMore: boolean;
   loadingMore: boolean;
@@ -18,7 +20,18 @@ type OrderListProps = {
   onShowMore: () => void;
 };
 
-const OrderList = ({ orders, busy, hasMore, loadingMore, loadMoreFailed, onShowMore }: OrderListProps) => {
+const customerOrderPath = (id: string) => `/orders/${id}`;
+
+const OrderList = ({
+  orders,
+  orderPath = customerOrderPath,
+  showRecipient = false,
+  busy,
+  hasMore,
+  loadingMore,
+  loadMoreFailed,
+  onShowMore
+}: OrderListProps) => {
   const listRef = useRef<HTMLUListElement>(null);
   const [focusIndex, setFocusIndex] = useState<number>();
 
@@ -38,11 +51,11 @@ const OrderList = ({ orders, busy, hasMore, loadingMore, loadMoreFailed, onShowM
   return (
     <>
       <ul ref={listRef} aria-busy={busy} className={classes.orderList}>
-        {orders.map(({ id, orderDate, currentStatus, total, itemCount }) => (
+        {orders.map(({ id, orderDate, currentStatus, recipient, total, itemCount }) => (
           <li key={id} className={classes.orderRow}>
             <div>
               <Title order={3} className={classes.orderTitle}>
-                <Link to={`/orders/${id}`} className={classes.orderLink}>
+                <Link to={orderPath(id)} className={classes.orderLink}>
                   Order {orderNumber(id)}
                 </Link>
                 <Badge
@@ -55,7 +68,7 @@ const OrderList = ({ orders, busy, hasMore, loadingMore, loadMoreFailed, onShowM
                 </Badge>
               </Title>
               <Text className={classes.orderMeta}>
-                Placed {formatOrderDate(orderDate)}. {itemsLabel(itemCount)}.
+                {showRecipient && `For ${recipient}. `}Placed {formatOrderDate(orderDate)}. {itemsLabel(itemCount)}.
               </Text>
             </div>
             <Text className={classes.orderTotal}>{formatRupees(total)} rupees</Text>

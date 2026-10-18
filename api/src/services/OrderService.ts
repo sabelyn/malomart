@@ -10,6 +10,7 @@ import {
   getOrderTotal,
   isCardExpired,
   Order,
+  ORDER_ENTITY_TYPE,
   OrderOverview,
   OrderStatus,
   ShippingOptions
@@ -25,7 +26,8 @@ import type { User } from "@/types/user";
 import { parseStored } from "@/utils/parsing";
 
 const SelectedOrder = strictObject({
-  ...OrderOverview.omit({ total: true, itemCount: true }).shape,
+  ...OrderOverview.omit({ recipient: true, total: true, itemCount: true }).shape,
+  address: Order.shape.address,
   products: Order.shape.products,
   shipping: Order.shape.shipping
 });
@@ -36,7 +38,7 @@ const sameItems = (a: Record<string, number>, b: Record<string, number>) => {
 };
 
 const { carts, orders, products: productsTable } = env.TABLE_NAMES;
-const { ordersByCustomer, ordersByStatus, ordersByCustomerStatus } = env.TABLE_INDEXES;
+const { ordersByCustomer, ordersByDate, ordersByStatus, ordersByCustomerStatus } = env.TABLE_INDEXES;
 
 @injectable()
 export class OrderService implements IOrderService {
@@ -125,7 +127,7 @@ export class OrderService implements IOrderService {
       if (stockCount < inCart) {
         throw conflict(`Not enough ${title} in stock.`);
       }
-      orderEntries[productId] = { amount: inCart, pricePerUnit: price };
+      orderEntries[productId] = { title, amount: inCart, pricePerUnit: price };
     }
 
     const { street, city, region, postalCode, recipient } = address;
@@ -133,6 +135,7 @@ export class OrderService implements IOrderService {
     const orderDate = new Date().toISOString();
     const order: Order = {
       id,
+      entityType: ORDER_ENTITY_TYPE,
       customerId,
       orderDate,
       currentStatus: OrderStatus.Placed,
@@ -242,15 +245,18 @@ export class OrderService implements IOrderService {
       options.indexName = ordersByStatus;
       options.keyCondition = "currentStatus = :status";
       options.keys.push("currentStatus");
+    } else {
+      options.indexName = ordersByDate;
+      options.keyCondition = "entityType = :entityType";
+      options.keys.push("entityType");
     }
 
-    if (customerId || status) {
-      options.keys.push("orderDate");
-      options.attributeValues = {
-        ...(customerId ? { ":customerId": customerId } : {}),
-        ...(status ? { ":status": status } : {})
-      };
-    }
+    options.keys.push("orderDate");
+    options.attributeValues = {
+      ...(customerId ? { ":customerId": customerId } : {}),
+      ...(status ? { ":status": status } : {}),
+      ...(customerId || status ? {} : { ":entityType": ORDER_ENTITY_TYPE })
+    };
 
     try {
       const results = await getPaginatedResults(this.db, options);
@@ -284,7 +290,7 @@ export class OrderService implements IOrderService {
   };
 
   private toOrderDto = (data: unknown) => {
-    const { paymentMethod, fulfillmentToken: _, restockedAt: __, ...order } = parseStored(data, Order);
+    const { paymentMethod, entityType: _, fulfillmentToken: __, restockedAt: ___, ...order } = parseStored(data, Order);
     const { brand, lastFour } = paymentMethod;
     return {
       ...order,
@@ -293,9 +299,10 @@ export class OrderService implements IOrderService {
   };
 
   private toOrderOverview = (data: unknown) => {
-    const { products, shipping, ...order } = parseStored(data, SelectedOrder);
+    const { address, products, shipping, ...order } = parseStored(data, SelectedOrder);
     return {
       ...order,
+      recipient: address.recipient,
       total: getOrderTotal({ products, shipping }),
       itemCount: getOrderItemCount(products)
     };

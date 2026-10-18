@@ -1,4 +1,4 @@
-import type { ListProductsResponse, PresignedPostResponse, ProductDto } from "@mm/lib";
+import type { ImageUploadDto, ImageUploadPostResponse, ListProductsResponse, ProductDto } from "@mm/lib";
 import request from "supertest";
 import { container } from "tsyringe";
 
@@ -30,14 +30,27 @@ const productData = {
 };
 
 const listResult: ListProductsResponse = {
-  data: [{ id: ID, title: product.title, price: product.price, stockCount: product.stockCount }],
+  data: [
+    {
+      id: ID,
+      title: product.title,
+      category: product.category,
+      price: product.price,
+      stockCount: product.stockCount
+    }
+  ],
   pagination: { hasNext: false, limit: 20 }
 };
 
-const uploadPost: PresignedPostResponse = {
+const UPLOAD_ID = "5d6e7f80-1a2b-4c3d-8e9f-0a1b2c3d4e5f";
+
+const uploadPost: ImageUploadPostResponse = {
   url: "https://upload-staging.s3.us-east-1.amazonaws.com/",
-  fields: { key: `products/${ID}/upload`, "Content-Type": "image/png" }
+  fields: { key: `products/${ID}/${UPLOAD_ID}`, "Content-Type": "image/png" },
+  uploadId: UPLOAD_ID
 };
+
+const upload: ImageUploadDto = { id: UPLOAD_ID, status: "Ready", imageKey: `products/${ID}/0123456789abcdef` };
 
 const IMAGE_KEY = "0123456789abcdef";
 
@@ -47,9 +60,11 @@ let service: { [K in keyof IProductService]: ReturnType<typeof vi.fn<IProductSer
 
 beforeEach(() => {
   service = {
+    adjustStock: vi.fn<IProductService["adjustStock"]>().mockResolvedValue(product),
     createProduct: vi.fn<IProductService["createProduct"]>().mockResolvedValue(product),
     deleteProduct: vi.fn<IProductService["deleteProduct"]>().mockResolvedValue(),
     deleteProductImage: vi.fn<IProductService["deleteProductImage"]>().mockResolvedValue(product),
+    getImageUpload: vi.fn<IProductService["getImageUpload"]>().mockResolvedValue(upload),
     getProduct: vi.fn<IProductService["getProduct"]>().mockResolvedValue(product),
     getProductImageUploadPost: vi.fn<IProductService["getProductImageUploadPost"]>().mockResolvedValue(uploadPost),
     getProducts: vi.fn<IProductService["getProducts"]>().mockResolvedValue(listResult.data),
@@ -74,6 +89,12 @@ describe("GET /api/products", () => {
     await request(app).get("/api/products").query({ limit: "50", category: "Weapons", inStock: "true", cursor: "abc" });
 
     expect(service.listProducts).toHaveBeenCalledWith({ limit: 50, category: "Weapons", inStock: true, cursor: "abc" });
+  });
+
+  it("passes an inStock of false through for out-of-stock filtering", async () => {
+    await request(app).get("/api/products").query({ inStock: "false" });
+
+    expect(service.listProducts).toHaveBeenCalledWith({ limit: 20, inStock: false });
   });
 
   it.each([
@@ -330,6 +351,93 @@ describe("POST /api/products/:id/images", () => {
 
     expect(res.status).toBe(400);
     expect(service.getProductImageUploadPost).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/products/:id/stock", () => {
+  const path = `/api/products/${ID}/stock`;
+
+  it("requires a user", async () => {
+    const res = await request(app).post(path).send({ change: 5 });
+
+    expect(res.status).toBe(401);
+  });
+
+  it("requires an admin", async () => {
+    const res = await request(app).post(path).set(asRegularUser).send({ change: 5 });
+
+    expect(res.status).toBe(403);
+    expect(service.adjustStock).not.toHaveBeenCalled();
+  });
+
+  it.each([5, -2])("applies a change of %i and responds with the product", async change => {
+    const res = await request(app).post(path).set(asAdmin).send({ change });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(product);
+    expect(service.adjustStock).toHaveBeenCalledWith(ID, change);
+  });
+
+  it.each([
+    ["a zero change", { change: 0 }],
+    ["a fractional change", { change: 1.5 }],
+    ["a change that is too large", { change: 10_001 }],
+    ["a missing change", {}],
+    ["an unknown field", { change: 1, productId: ID }]
+  ])("rejects %s with a 400", async (_, body) => {
+    const res = await request(app).post(path).set(asAdmin).send(body);
+
+    expect(res.status).toBe(400);
+    expect(service.adjustStock).not.toHaveBeenCalled();
+  });
+
+  it("returns a 409 when there isn't enough stock to remove", async () => {
+    service.adjustStock.mockRejectedValue(new ApiError(409, "Can't remove 5 when only 2 in stock."));
+
+    const res = await request(app).post(path).set(asAdmin).send({ change: -5 });
+
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ message: "Can't remove 5 when only 2 in stock." });
+  });
+});
+
+describe("GET /api/products/:id/uploads/:uploadId", () => {
+  const path = `/api/products/${ID}/uploads/${UPLOAD_ID}`;
+
+  it("requires a user", async () => {
+    const res = await request(app).get(path);
+
+    expect(res.status).toBe(401);
+  });
+
+  it("requires an admin", async () => {
+    const res = await request(app).get(path).set(asRegularUser);
+
+    expect(res.status).toBe(403);
+    expect(service.getImageUpload).not.toHaveBeenCalled();
+  });
+
+  it("responds with the upload status", async () => {
+    const res = await request(app).get(path).set(asAdmin);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(upload);
+    expect(service.getImageUpload).toHaveBeenCalledWith(ID, UPLOAD_ID);
+  });
+
+  it("rejects an invalid upload id with a 400", async () => {
+    const res = await request(app).get(`/api/products/${ID}/uploads/not-a-uuid`).set(asAdmin);
+
+    expect(res.status).toBe(400);
+    expect(service.getImageUpload).not.toHaveBeenCalled();
+  });
+
+  it("returns a 404 when the upload does not exist", async () => {
+    service.getImageUpload.mockRejectedValue(new ApiError(404, "Upload could not be found."));
+
+    const res = await request(app).get(path).set(asAdmin);
+
+    expect(res.status).toBe(404);
   });
 });
 

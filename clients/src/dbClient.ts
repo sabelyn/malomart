@@ -14,6 +14,7 @@ export const TableNames = strictObject({
   addresses: string().nonempty(),
   carts: string().nonempty(),
   customers: string().nonempty(),
+  imageUploads: string().nonempty(),
   orders: string().nonempty(),
   paymentMethods: string().nonempty(),
   products: string().nonempty()
@@ -24,6 +25,7 @@ export const TableIndexes = strictObject({
   addressesByCustomer: string().nonempty(),
   ordersByCustomer: string().nonempty(),
   ordersByCustomerStatus: string().nonempty(),
+  ordersByDate: string().nonempty(),
   ordersByStatus: string().nonempty(),
   paymentMethodsByCustomer: string().nonempty(),
   productsByCategory: string().nonempty(),

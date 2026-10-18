@@ -2,14 +2,34 @@ import { DeleteObjectCommand, DeleteObjectsCommand, GetObjectCommand, PutObjectC
 import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { dbClient } from "@mm/clients/db";
 import { IMAGE_WIDTHS, imageHash, imageVariantKey, MAX_UPLOAD_BYTES, productImageKey, s3Client } from "@mm/clients/s3";
+import { ImageUploadStatus } from "@mm/lib/products";
 import type { S3ObjectCreatedNotificationEvent } from "aws-lambda";
 import sharp from "sharp";
 
 import { hasErrorName } from "./helpers";
 
-const { IMAGE_BUCKET_NAME, PRODUCTS_TABLE_NAME } = process.env;
+const { IMAGE_BUCKET_NAME, IMAGE_UPLOADS_TABLE_NAME, PRODUCTS_TABLE_NAME } = process.env;
 
-const UPLOAD_KEY_PATTERN = /^products\/([^/]+)\/[^/]+$/;
+const UPLOAD_KEY_PATTERN = /^products\/([^/]+)\/([^/]+)$/;
+
+const setUploadStatus = async (uploadId: string, status: ImageUploadStatus, imageKey?: string) => {
+  try {
+    await dbClient().send(
+      new UpdateCommand({
+        TableName: IMAGE_UPLOADS_TABLE_NAME,
+        Key: { id: uploadId },
+        ConditionExpression: "attribute_exists(id)",
+        UpdateExpression: imageKey ? "SET #status = :status, imageKey = :imageKey" : "SET #status = :status",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: { ":status": status, ...(imageKey ? { ":imageKey": imageKey } : {}) }
+      })
+    );
+  } catch (err) {
+    if (!hasErrorName(err, "ConditionalCheckFailedException")) {
+      throw err;
+    }
+  }
+};
 
 export const handler = async (event: S3ObjectCreatedNotificationEvent) => {
   const bucket = event.detail.bucket.name;
@@ -17,10 +37,20 @@ export const handler = async (event: S3ObjectCreatedNotificationEvent) => {
   const s3 = s3Client();
   const discardUpload = () => s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: uploadKey }));
 
-  const productId = UPLOAD_KEY_PATTERN.exec(uploadKey)?.[1];
-  if (!productId || size > MAX_UPLOAD_BYTES) {
+  const [, productId, uploadId] = UPLOAD_KEY_PATTERN.exec(uploadKey) ?? [];
+  if (!productId || !uploadId) {
     console.warn(`Rejecting upload ${uploadKey} (${size} bytes).`);
     await discardUpload();
+    return;
+  }
+  const reject = async (reason: string, err?: unknown) => {
+    console.warn(`Rejecting upload ${uploadKey}: ${reason}`, ...(err ? [err] : []));
+    await setUploadStatus(uploadId, ImageUploadStatus.Rejected);
+    await discardUpload();
+  };
+
+  if (size > MAX_UPLOAD_BYTES) {
+    await reject(`${size} bytes is over the limit.`);
     return;
   }
 
@@ -37,8 +67,7 @@ export const handler = async (event: S3ObjectCreatedNotificationEvent) => {
       }))
     );
   } catch (err) {
-    console.warn(`Rejecting upload ${uploadKey}: not a readable image.`, err);
-    await discardUpload();
+    await reject("not a readable image.", err);
     return;
   }
 
@@ -58,16 +87,19 @@ export const handler = async (event: S3ObjectCreatedNotificationEvent) => {
     )
   );
 
+  let existingKeys: Set<string> | undefined;
   try {
-    await dbClient().send(
+    const { Attributes } = await dbClient().send(
       new UpdateCommand({
         TableName: PRODUCTS_TABLE_NAME,
         Key: { id: productId },
-        UpdateExpression: "ADD imageKeys :newKeys",
+        UpdateExpression: "ADD imageKeys :newKeys SET thumbnailKey = if_not_exists(thumbnailKey, :imageKey)",
         ConditionExpression: "attribute_exists(id)",
-        ExpressionAttributeValues: { ":newKeys": new Set([imageKey]) }
+        ExpressionAttributeValues: { ":newKeys": new Set([imageKey]), ":imageKey": imageKey },
+        ReturnValues: "UPDATED_OLD"
       })
     );
+    existingKeys = Attributes?.imageKeys as Set<string> | undefined;
   } catch (err) {
     if (!hasErrorName(err, "ConditionalCheckFailedException")) {
       throw err;
@@ -79,7 +111,12 @@ export const handler = async (event: S3ObjectCreatedNotificationEvent) => {
         Delete: { Objects: IMAGE_WIDTHS.map(width => ({ Key: imageVariantKey(imageKey, width) })) }
       })
     );
+    await setUploadStatus(uploadId, ImageUploadStatus.Rejected);
+    await discardUpload();
+    return;
   }
 
+  const status = existingKeys?.has(imageKey) ? ImageUploadStatus.Duplicate : ImageUploadStatus.Ready;
+  await setUploadStatus(uploadId, status, imageKey);
   await discardUpload();
 };

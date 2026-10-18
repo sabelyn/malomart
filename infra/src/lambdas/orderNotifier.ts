@@ -1,6 +1,6 @@
 import { AdminGetUserCommand, CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";
 import { SendEmailCommand, SESv2Client } from "@aws-sdk/client-sesv2";
-import { dbClient, getItemById, getItemsByIds } from "@mm/clients/db";
+import { dbClient, getItemById } from "@mm/clients/db";
 import { Order, OrderStatus, OrderStatusChangedDetail } from "@mm/lib/orders";
 import type { EventBridgeEvent } from "aws-lambda";
 
@@ -8,7 +8,7 @@ import type { NotifiedStatus } from "./emails/orderEmails";
 import { renderOrderEmail } from "./emails/orderEmails";
 import { hasErrorName } from "./helpers";
 
-const { APP_ORIGIN, EMAIL_FROM, ORDERS_TABLE_NAME, PRODUCTS_TABLE_NAME, USER_POOL_ID } = process.env;
+const { APP_ORIGIN, EMAIL_FROM, ORDERS_TABLE_NAME, USER_POOL_ID } = process.env;
 
 const db = dbClient();
 const cognito = new CognitoIdentityProviderClient({});
@@ -49,16 +49,9 @@ export const handler = async (event: EventBridgeEvent<"OrderStatusChanged", Orde
   }
 
   const order = Order.parse(item);
-  const products = await getItemsByIds<{ id: string; title: string }>(
-    db,
-    PRODUCTS_TABLE_NAME!,
-    Object.keys(order.products),
-    "id, title"
-  );
   const { subject, html, text } = renderOrderEmail({
     status,
     order,
-    titles: Object.fromEntries(products.map(({ id, title }) => [id, title])),
     recipientName: recipient.name,
     orderUrl: `${APP_ORIGIN}/orders/${orderId}`
   });

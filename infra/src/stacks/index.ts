@@ -20,6 +20,7 @@ export type StageConfig = {
   emailDomain?: string;
   alarmEmail?: string;
   fulfillmentTimeScale?: number;
+  localDevOrigin?: string;
 };
 
 export const configureStacks = (stage: Stage, config: StageConfig) => {
@@ -30,7 +31,8 @@ export const configureStacks = (stage: Stage, config: StageConfig) => {
     alertsStack,
     dbStack,
     gatewayStack,
-    siteDomain: config.siteDomain
+    siteDomain: config.siteDomain,
+    localDevOrigin: config.localDevOrigin
   });
   const authStack = new AuthStack(stage, "MaloMartAuthStack", { dbStack, emailDomain: config.emailDomain });
   const vaultStack = new VaultStack(stage, "MaloMartVaultStack", { alertsStack, authStack, gatewayStack });

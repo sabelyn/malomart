@@ -11,6 +11,7 @@ const overview = (id: string, overrides: Partial<OrderOverview> = {}): OrderOver
   customerId: "9b1e4c2a-5d3f-4a6b-8c7d-1e2f3a4b5c6d",
   orderDate: "2026-10-15T16:00:00.000Z",
   currentStatus: "Placed",
+  recipient: "Link",
   total: 140,
   itemCount: 3,
   ...overrides

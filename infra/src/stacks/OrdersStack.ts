@@ -147,12 +147,10 @@ export class OrdersStack extends Stack {
           APP_ORIGIN: props.appOrigin,
           EMAIL_FROM: `"Malo Mart" <noreply@${props.emailDomain}>`,
           ORDERS_TABLE_NAME: orders.tableName,
-          PRODUCTS_TABLE_NAME: products.tableName,
           USER_POOL_ID: userPool.userPoolId
         }
       });
       orders.grant(notifier, "dynamodb:GetItem");
-      products.grant(notifier, "dynamodb:BatchGetItem");
       userPool.grant(notifier, "cognito-idp:AdminGetUser");
       notifier.addToRolePolicy(
         new PolicyStatement({

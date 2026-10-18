@@ -5,7 +5,7 @@ import { Route, Routes } from "react-router";
 
 import { GUEST_CART_KEY } from "@/cart/guestCart";
 import ProductPage from "@/pages/ProductPage";
-import { announced, json, renderWithProviders, stubApi, toasts } from "../../utils";
+import { admin, announced, json, renderWithProviders, stubApi, toasts } from "../../utils";
 
 const ID = "5d0a4c1e-3b1f-4c55-9a51-7f3c2e1b8a01";
 
@@ -22,12 +22,12 @@ const product: ProductDto = {
   features: ["Fireproof", "Blocks Guardian lasers with good timing"]
 };
 
-const renderProduct = (id = ID) =>
+const renderProduct = (id = ID, session: typeof admin | null = null) =>
   renderWithProviders(
     <Routes>
       <Route path="/products/:id" element={<ProductPage />} />
     </Routes>,
-    { route: `/products/${id}`, session: null, withCart: true }
+    { route: `/products/${id}`, session, withCart: true }
   );
 
 afterEach(() => {
@@ -46,6 +46,20 @@ describe("ProductPage", () => {
     expect(screen.getByText("20% off? Why not!")).toBeTruthy();
     expect(screen.getAllByRole("listitem").map(item => item.textContent)).toContain("Fireproof");
     expect(document.title).toBe("Hylian Shield · Malo Mart");
+    expect(screen.queryByRole("link", { name: "Edit product" })).toBeNull();
+  });
+
+  it("links admins to the product's editor", async () => {
+    stubApi({
+      [`GET /api/products/${ID}`]: () => json(200, product),
+      "GET /api/customers": () =>
+        json(200, { id: admin.id, defaultAddress: null, defaultPaymentMethod: null, cart: {} })
+    });
+    renderProduct(ID, admin);
+
+    expect((await screen.findByRole("link", { name: "Edit product" })).getAttribute("href")).toBe(
+      `/admin/products/${ID}`
+    );
   });
 
   it("starts the gallery on the thumbnail and switches images", async () => {

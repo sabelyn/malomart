@@ -1,6 +1,6 @@
-import type { Order } from "./types";
+import type { Order, OrderItemEntry } from "./types";
 
-type OrderItems = Order["products"];
+type OrderItems = Record<string, Pick<OrderItemEntry, "amount" | "pricePerUnit">>;
 
 // Prices on this website are whole numbers, so no need to account for floating point addition
 export const getOrderSubtotal = (items: OrderItems): number => {
@@ -21,5 +21,5 @@ export const getOrderItemCount = (items: OrderItems): number => {
   return count;
 };
 
-export const getOrderTotal = ({ products, shipping }: Pick<Order, "products" | "shipping">): number =>
+export const getOrderTotal = ({ products, shipping }: { products: OrderItems; shipping: Order["shipping"] }): number =>
   getOrderSubtotal(products) + shipping.cost;

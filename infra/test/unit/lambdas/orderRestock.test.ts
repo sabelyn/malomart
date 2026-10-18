@@ -13,6 +13,7 @@ const shield = crypto.randomUUID();
 
 const order: Order = {
   id: crypto.randomUUID(),
+  entityType: "Order",
   customerId: crypto.randomUUID(),
   address: { recipient: "Link", street: "1 Ordon Way", city: "Ordon", region: "Faron", postalCode: "12345" },
   paymentMethod: {
@@ -25,7 +26,10 @@ const order: Order = {
   orderDate: "2026-10-16T12:00:00.000Z",
   currentStatus: "Cancelled",
   statusUpdates: { Placed: "2026-10-16T12:00:00.000Z", Cancelled: "2026-10-16T12:00:10.000Z" },
-  products: { [mask]: { amount: 2, pricePerUnit: 50 }, [shield]: { amount: 1, pricePerUnit: 200 } },
+  products: {
+    [mask]: { title: "Mask of Truth", amount: 2, pricePerUnit: 50 },
+    [shield]: { title: "Hylian Shield", amount: 1, pricePerUnit: 200 }
+  },
   shipping: { method: "Standard", cost: 0 }
 };
 

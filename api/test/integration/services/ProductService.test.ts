@@ -1,7 +1,7 @@
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
 import { dbClient, s3Client } from "@mm/clients";
-import type { CreateProductBody, Product } from "@mm/lib";
-import { Category } from "@mm/lib";
+import type { CreateProductBody, ImageUpload, Product } from "@mm/lib";
+import { Category, ImageUploadStatus } from "@mm/lib";
 import { mockClient } from "aws-sdk-client-mock";
 
 import env from "@/env";
@@ -10,6 +10,7 @@ import { ProductService } from "@/services";
 import { putItems, track } from "../../helpers/db";
 
 const TableName = env.TABLE_NAMES.products;
+const UploadsTableName = env.TABLE_NAMES.imageUploads;
 const db = dbClient();
 const s3 = mockClient(s3Client());
 const service = new ProductService(db, s3Client());
@@ -32,11 +33,25 @@ const makeProduct = (overrides: Partial<Product> = {}): Product => ({
 
 const toDto = ({ inStock: _, imageKeys, ...product }: Product) => ({ ...product, imageKeys: [...(imageKeys ?? [])] });
 
-const toOverview = ({ id, title, price, stockCount }: Product) => ({ id, title, price, stockCount });
+const toOverview = ({ id, title, category, price, stockCount }: Product) => ({
+  id,
+  title,
+  category,
+  price,
+  stockCount
+});
 
 const byId = (a: { id: string }, b: { id: string }) => a.id.localeCompare(b.id);
 
 const getRawItem = async (id: string) => (await db.send(new GetCommand({ TableName, Key: { id } }))).Item;
+
+const getRawUpload = async (id: string) =>
+  (await db.send(new GetCommand({ TableName: UploadsTableName, Key: { id }, ConsistentRead: true }))).Item;
+
+const expectApiError = async (promise: Promise<unknown>, statusCode: number) => {
+  await expect(promise).rejects.toBeInstanceOf(ApiError);
+  await expect(promise).rejects.toMatchObject({ statusCode });
+};
 
 const createProduct = async (data: CreateProductBody) => {
   const created = await service.createProduct(data);
@@ -111,9 +126,69 @@ describe("updateProduct", () => {
   it("updates multiple fields at once", async () => {
     const product = makeProduct();
     await putItems(db, TableName, [product]);
-    const changes = { title: "Mask of Lies", description: "Hides your thoughts from others.", price: 90 };
+    const changes = {
+      title: "Mask of Lies",
+      category: Category.Misc,
+      description: "Hides your thoughts from others.",
+      originalPrice: 110,
+      price: 90,
+      features: ["Conceals thoughts", "Fools mind readers"]
+    };
 
     await expect(service.updateProduct(product.id, changes)).resolves.toEqual({ ...toDto(product), ...changes });
+    expect(await getRawItem(product.id)).toEqual({ ...product, ...changes });
+  });
+
+  it("updates the category", async () => {
+    const product = makeProduct();
+    await putItems(db, TableName, [product]);
+
+    const updated = await service.updateProduct(product.id, { category: Category.Potions });
+
+    expect(updated).toEqual({ ...toDto(product), category: Category.Potions });
+    expect(await getRawItem(product.id)).toEqual({ ...product, category: Category.Potions });
+  });
+
+  it("sets the original price", async () => {
+    const product = makeProduct();
+    await putItems(db, TableName, [product]);
+
+    const updated = await service.updateProduct(product.id, { originalPrice: 100 });
+
+    expect(updated).toEqual({ ...toDto(product), originalPrice: 100 });
+    expect(await getRawItem(product.id)).toEqual({ ...product, originalPrice: 100 });
+  });
+
+  it("ignores fields that are undefined", async () => {
+    const product = makeProduct();
+    await putItems(db, TableName, [product]);
+
+    const updated = await service.updateProduct(product.id, { title: undefined, price: 120 });
+
+    expect(updated).toEqual({ ...toDto(product), price: 120 });
+    expect(await getRawItem(product.id)).toEqual({ ...product, price: 120 });
+  });
+
+  it("clears the original price when given null", async () => {
+    const product = makeProduct({ originalPrice: 100 });
+    await putItems(db, TableName, [product]);
+
+    const updated = await service.updateProduct(product.id, { originalPrice: null });
+
+    const { originalPrice: _, ...rest } = product;
+    expect(updated).toEqual(toDto(rest));
+    expect(await getRawItem(product.id)).toEqual(rest);
+  });
+
+  it("clears the original price while setting other fields", async () => {
+    const product = makeProduct({ originalPrice: 100 });
+    await putItems(db, TableName, [product]);
+
+    const updated = await service.updateProduct(product.id, { originalPrice: null, price: 70 });
+
+    const { originalPrice: _, ...rest } = product;
+    expect(updated).toEqual(toDto({ ...rest, price: 70 }));
+    expect(await getRawItem(product.id)).toEqual({ ...rest, price: 70 });
   });
 
   it("throws a 404 and does not create the product when it does not exist", async () => {
@@ -123,6 +198,115 @@ describe("updateProduct", () => {
     await expect(result).rejects.toBeInstanceOf(ApiError);
     await expect(result).rejects.toMatchObject({ statusCode: 404 });
     expect(await getRawItem(id)).toBeUndefined();
+  });
+});
+
+describe("adjustStock", () => {
+  it("adds stock", async () => {
+    const product = makeProduct({ stockCount: 2 });
+    await putItems(db, TableName, [product]);
+
+    const updated = await service.adjustStock(product.id, 5);
+
+    expect(updated).toEqual(toDto({ ...product, stockCount: 7 }));
+    expect(await getRawItem(product.id)).toMatchObject({ stockCount: 7 });
+  });
+
+  it("removes stock down to zero", async () => {
+    const product = makeProduct({ stockCount: 3 });
+    await putItems(db, TableName, [product]);
+
+    const updated = await service.adjustStock(product.id, -3);
+
+    expect(updated.stockCount).toBe(0);
+    expect(await getRawItem(product.id)).toMatchObject({ stockCount: 0 });
+  });
+
+  it("throws a 409 and leaves the stock alone when removing more than is in stock", async () => {
+    const product = makeProduct({ stockCount: 2 });
+    await putItems(db, TableName, [product]);
+
+    const result = service.adjustStock(product.id, -3);
+
+    await expectApiError(result, 409);
+    await expect(result).rejects.toMatchObject({ message: "Can't remove 3 when only 2 in stock." });
+    expect(await getRawItem(product.id)).toMatchObject({ stockCount: 2 });
+  });
+
+  it.each([5, -5])("throws a 404 and does not create the product when changing by %i", async change => {
+    const id = crypto.randomUUID();
+
+    await expectApiError(service.adjustStock(id, change), 404);
+    expect(await getRawItem(id)).toBeUndefined();
+  });
+});
+
+describe("getProductImageUploadPost", () => {
+  it("records a pending upload and returns a post for its staging key", async () => {
+    const product = makeProduct();
+    await putItems(db, TableName, [product]);
+    const nowSeconds = Date.now() / 1000;
+
+    const post = await service.getProductImageUploadPost(product.id, "image/png");
+    track(UploadsTableName, { id: post.uploadId });
+
+    expect(post.fields).toMatchObject({ key: `products/${product.id}/${post.uploadId}`, "Content-Type": "image/png" });
+    const upload = (await getRawUpload(post.uploadId)) as ImageUpload;
+    expect(upload).toEqual({
+      id: post.uploadId,
+      productId: product.id,
+      status: ImageUploadStatus.Pending,
+      expiresAt: expect.any(Number)
+    });
+    expect(upload.expiresAt).toBeGreaterThan(nowSeconds + 23 * 60 * 60);
+    expect(upload.expiresAt).toBeLessThanOrEqual(nowSeconds + 24 * 60 * 60 + 1);
+  });
+
+  it("throws a 404 when the product does not exist", async () => {
+    await expectApiError(service.getProductImageUploadPost(crypto.randomUUID(), "image/png"), 404);
+  });
+});
+
+describe("getImageUpload", () => {
+  const makeUpload = (overrides: Partial<ImageUpload> = {}): ImageUpload => ({
+    id: crypto.randomUUID(),
+    productId: crypto.randomUUID(),
+    status: ImageUploadStatus.Ready,
+    imageKey: "products/x/0123456789abcdef",
+    expiresAt: Math.floor(Date.now() / 1000) + 60,
+    ...overrides
+  });
+
+  it("returns the upload status without bookkeeping fields", async () => {
+    const upload = makeUpload();
+    await putItems(db, UploadsTableName, [upload]);
+
+    await expect(service.getImageUpload(upload.productId, upload.id)).resolves.toEqual({
+      id: upload.id,
+      status: ImageUploadStatus.Ready,
+      imageKey: upload.imageKey
+    });
+  });
+
+  it("returns a pending upload without an image key", async () => {
+    const { imageKey: _, ...upload } = makeUpload({ status: ImageUploadStatus.Pending });
+    await putItems(db, UploadsTableName, [upload]);
+
+    await expect(service.getImageUpload(upload.productId, upload.id)).resolves.toEqual({
+      id: upload.id,
+      status: ImageUploadStatus.Pending
+    });
+  });
+
+  it("throws a 404 when the upload belongs to another product", async () => {
+    const upload = makeUpload();
+    await putItems(db, UploadsTableName, [upload]);
+
+    await expectApiError(service.getImageUpload(crypto.randomUUID(), upload.id), 404);
+  });
+
+  it("throws a 404 when the upload does not exist", async () => {
+    await expectApiError(service.getImageUpload(crypto.randomUUID(), crypto.randomUUID()), 404);
   });
 });
 
@@ -279,6 +463,30 @@ describe("listProducts", () => {
     expect(result).toEqual([toOverview(inStock)]);
   });
 
+  it("keeps only products that are out of stock when inStock is false", async () => {
+    const outOfStock = makeProduct({ stockCount: 0 });
+    const products = [outOfStock, makeProduct({ stockCount: 1 })];
+    await putItems(db, TableName, products);
+
+    const result = await listOwn(products, { limit: 100, inStock: false });
+
+    expect(result).toEqual([toOverview(outOfStock)]);
+  });
+
+  it("combines the category and out-of-stock filters using the category stock index", async () => {
+    const match = makeProduct({ stockCount: 0 });
+    const products = [
+      match,
+      makeProduct({ stockCount: 2 }),
+      makeProduct({ category: Category.Weapons, stockCount: 0 })
+    ];
+    await putItems(db, TableName, products);
+
+    const result = await listOwn(products, { limit: 100, category: Category.Masks, inStock: false });
+
+    expect(result).toEqual([toOverview(match)]);
+  });
+
   it("combines the category and stock filters using the category stock index", async () => {
     const matches = [makeProduct({ stockCount: 3 }), makeProduct({ stockCount: 1 })];
     const products = [
@@ -297,6 +505,7 @@ describe("listProducts", () => {
     ["all products", {}, () => true],
     ["a category", { category: Category.Masks }, (p: Product) => p.category === Category.Masks],
     ["in-stock products", { inStock: true }, (p: Product) => p.stockCount > 0],
+    ["out-of-stock products", { inStock: false }, (p: Product) => p.stockCount === 0],
     [
       "in-stock products in a category",
       { category: Category.Masks, inStock: true },

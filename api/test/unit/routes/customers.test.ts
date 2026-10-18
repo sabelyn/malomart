@@ -9,6 +9,7 @@ import api from "@/routes";
 import { asRegularUser, createTestApp } from "../../helpers/testApp";
 
 const ID = "3f2a9c1e-7b4d-4e8a-9f6b-2c1d0e5a7b3c";
+const COGNITO_SUB = "211b9530-f0a1-7057-2e28-f1a2e95877e2";
 
 const addressData = {
   label: "Home",
@@ -31,7 +32,7 @@ const paymentMethod: PaymentMethodDto = {
 };
 
 const customer: CustomerDto = {
-  id: "9b1e4c2a-5d3f-4a6b-8c7d-1e2f3a4b5c6d",
+  id: COGNITO_SUB,
   defaultAddress: address,
   defaultPaymentMethod: null,
   cart: {}

@@ -48,6 +48,7 @@ type Props = StackProps & {
   dbStack: DbStack;
   gatewayStack: GatewayStack;
   siteDomain?: SiteDomain;
+  localDevOrigin?: string;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -147,10 +148,16 @@ export class FrontendStack extends Stack {
     this.uploadBucket = createPrivateBucket(this, "UploadBucket", {
       eventBridgeEnabled: true,
       lifecycleRules: [{ expiration: Duration.days(1) }],
-      cors: [{ allowedMethods: [HttpMethods.POST], allowedOrigins: [this.appOrigin], allowedHeaders: ["*"] }]
+      cors: [
+        {
+          allowedMethods: [HttpMethods.POST],
+          allowedOrigins: [this.appOrigin, ...(props.localDevOrigin ? [props.localDevOrigin] : [])],
+          allowedHeaders: ["*"]
+        }
+      ]
     });
 
-    const productsTable = props.dbStack.tables.products;
+    const { imageUploads: imageUploadsTable, products: productsTable } = props.dbStack.tables;
     const imageProcessorFailures = new FailureQueue(this, "ImageProcessorFailures", {
       description: "Product image uploads failed to process",
       alarmTopic: props.alertsStack.alarmTopic
@@ -173,6 +180,7 @@ export class FrontendStack extends Stack {
       },
       environment: {
         IMAGE_BUCKET_NAME: this.imageBucket.bucketName,
+        IMAGE_UPLOADS_TABLE_NAME: imageUploadsTable.tableName,
         PRODUCTS_TABLE_NAME: productsTable.tableName
       }
     });
@@ -181,6 +189,7 @@ export class FrontendStack extends Stack {
     this.imageBucket.grantPut(imageProcessor);
     this.imageBucket.grantDelete(imageProcessor);
     productsTable.grant(imageProcessor, "dynamodb:UpdateItem");
+    imageUploadsTable.grant(imageProcessor, "dynamodb:UpdateItem");
 
     new Rule(this, "ImageUploadedRule", {
       eventPattern: {

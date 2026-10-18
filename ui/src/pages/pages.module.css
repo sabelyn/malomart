@@ -11,6 +11,12 @@
   color: var(--mantine-color-gilt-2);
 }
 
+.adminLink {
+  display: inline-block;
+  margin-bottom: var(--mantine-spacing-lg);
+  color: var(--mantine-color-gilt-3);
+}
+
 .backLink {
   display: inline-block;
   margin-top: var(--mantine-spacing-xl);

@@ -1,5 +1,5 @@
 import type { infer as zinfer } from "zod";
-import { iso, partialRecord, record, strictObject, enum as zenum } from "zod";
+import { iso, literal, partialRecord, record, strictObject, string, enum as zenum } from "zod";
 
 import { Id, NonnegativeInt, PositiveInt } from "../common/types";
 import { Address, PaymentMethod } from "../customers/types";
@@ -36,13 +36,19 @@ export const OrderShipping = strictObject({
 export type OrderShipping = zinfer<typeof OrderShipping>;
 
 export const OrderItemEntry = strictObject({
+  title: string().nonempty().meta({ description: "The product's title when the order was placed." }),
   amount: PositiveInt,
   pricePerUnit: PositiveInt
 });
 export type OrderItemEntry = zinfer<typeof OrderItemEntry>;
 
+export const ORDER_ENTITY_TYPE = "Order";
+
 export const Order = strictObject({
   id: Id,
+  entityType: literal(ORDER_ENTITY_TYPE).meta({
+    description: "Constant partition key for listing all orders by date."
+  }),
   customerId: Id,
   address: Address.omit({ id: true, customerId: true, label: true }),
   paymentMethod: PaymentMethod.omit({ id: true, customerId: true }),

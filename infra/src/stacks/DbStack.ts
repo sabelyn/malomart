@@ -14,6 +14,7 @@ export const INDEXES: TableIndexes = {
   addressesByCustomer: "IDX_ADDRESSES_CUSTOMER",
   ordersByCustomer: "IDX_ORDERS_CUSTOMER",
   ordersByCustomerStatus: "IDX_ORDERS_CUSTOMER_STATUS",
+  ordersByDate: "IDX_ORDERS_DATE",
   ordersByStatus: "IDX_ORDERS_STATUS",
   paymentMethodsByCustomer: "IDX_PAYMENT_METHODS_CUSTOMER",
   productsByCategory: "IDX_PRODUCTS_CATEGORY",
@@ -81,6 +82,21 @@ export class DbStack extends Stack {
         { name: "orderDate", type: AttributeType.STRING },
         { name: "id", type: AttributeType.STRING }
       ]
+    });
+
+    ordersTable.addGlobalSecondaryIndex({
+      indexName: INDEXES.ordersByDate,
+      partitionKey: { name: "entityType", type: AttributeType.STRING },
+      sortKeys: [
+        { name: "orderDate", type: AttributeType.STRING },
+        { name: "id", type: AttributeType.STRING }
+      ]
+    });
+
+    const imageUploadsTable = new Table(this, "ImageUploadsTable", {
+      partitionKey: { name: "id", type: AttributeType.STRING },
+      billingMode: BillingMode.PAY_PER_REQUEST,
+      timeToLiveAttribute: "expiresAt"
     });
 
     const paymentMethodsTable = new Table(this, "PaymentMethodsTable", {
@@ -153,6 +169,7 @@ export class DbStack extends Stack {
       addresses: addressesTable,
       carts: cartsTable,
       customers: customersTable,
+      imageUploads: imageUploadsTable,
       orders: ordersTable,
       paymentMethods: paymentMethodsTable,
       products: productsTable

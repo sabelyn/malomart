@@ -12,6 +12,7 @@ Object.assign(process.env, {
   EVENT_BUS_NAME: "order-events",
   IMAGE_BUCKET_NAME: "images",
   IMAGE_KEY_PREFIX: "images/",
+  IMAGE_UPLOADS_TABLE_NAME: "image-uploads",
   INVALID_RECORDS_QUEUE_URL: "https://sqs.us-east-1.amazonaws.com/123456789012/invalid-records",
   ORDERS_TABLE_NAME: "orders",
   PRODUCTS_TABLE_NAME: "products",

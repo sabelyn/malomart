@@ -1,6 +1,6 @@
-import { Button, Chip, Group, Text, Title } from "@mantine/core";
+import { Button, Text, Title } from "@mantine/core";
 import type { OrderStatus } from "@mm/lib/orders";
-import { ListOrdersQuery, listOrders, OrderStatusSchema } from "@mm/lib/orders";
+import { ListOrdersQuery, listOrders } from "@mm/lib/orders";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 
@@ -8,13 +8,13 @@ import { endpointInfiniteQuery } from "@/api";
 import MaloSays from "@/components/MaloSays";
 import OrderList from "@/components/orders/OrderList";
 import orderClasses from "@/components/orders/orders.module.css";
+import OrderStatusFilter from "@/components/orders/OrderStatusFilter";
 import PageLoader from "@/components/PageLoader";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useSchemaSearch } from "@/hooks/useSchemaSearch";
 import classes from "./account.module.css";
 
 const PAGE_SIZE = 20;
-const ALL = "all";
 
 const OrdersSearch = ListOrdersQuery.pick({ status: true });
 
@@ -91,24 +91,7 @@ const OrdersSection = () => {
           Orders
         </Title>
       </div>
-      <fieldset className={orderClasses.filter}>
-        <legend className={orderClasses.filterLegend}>Status</legend>
-        <Chip.Group
-          value={status ?? ALL}
-          onChange={value => updateSearch({ status: value === ALL ? undefined : value })}
-        >
-          <Group gap="xs">
-            <Chip type="radio" name="status" value={ALL} classNames={{ label: orderClasses.chip }}>
-              All
-            </Chip>
-            {OrderStatusSchema.options.map(value => (
-              <Chip key={value} type="radio" name="status" value={value} classNames={{ label: orderClasses.chip }}>
-                {value}
-              </Chip>
-            ))}
-          </Group>
-        </Chip.Group>
-      </fieldset>
+      <OrderStatusFilter status={status} onChange={value => updateSearch({ status: value })} />
       <Text role="status" className={orderClasses.count}>
         {data && statusText(orders.length, hasNextPage, status)}
       </Text>

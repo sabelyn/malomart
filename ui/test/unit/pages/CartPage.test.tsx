@@ -13,12 +13,14 @@ const MISSING_ID = "0f0e0d0c-0b0a-4908-8706-050403020100";
 const shield: ProductOverview = {
   id: "5d0a4c1e-3b1f-4c55-9a51-7f3c2e1b8a01",
   title: "Hylian Shield",
+  category: "Shields",
   price: 200,
   stockCount: 5
 };
 const potion: ProductOverview = {
   id: "c3e8a1f2-7b4d-4e9a-8f1c-6d2b5a9e3f00",
   title: "Red Potion",
+  category: "Potions",
   price: 20,
   stockCount: 2,
   thumbnailKey: "products/potion/front"

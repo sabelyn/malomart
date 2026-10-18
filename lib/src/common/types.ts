@@ -1,5 +1,8 @@
-import { number, uuid } from "zod";
+import { guid, number } from "zod";
 
-export const Id = uuid().meta({ id: "ID" });
+export const Id = guid().meta({
+  id: "ID",
+  description: "A UUID-shaped identifier. Cognito user IDs don't always use a standard UUID version or variant."
+});
 export const NonnegativeInt = number().int().nonnegative();
 export const PositiveInt = number().int().positive();

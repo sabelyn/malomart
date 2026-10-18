@@ -1,7 +1,7 @@
 import { DeleteCommand, GetCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { dbClient, s3Client } from "@mm/clients";
 import type { AddressDto, CreateOrderBody, Order, PaymentMethodDto, Product } from "@mm/lib";
-import { CancellationReason, Category, OrderStatus, ShippingMethod, ShippingOptions } from "@mm/lib";
+import { CancellationReason, Category, ORDER_ENTITY_TYPE, OrderStatus, ShippingMethod, ShippingOptions } from "@mm/lib";
 
 import type { ICustomerService, IPaymentMethodService } from "@/contracts";
 import env from "@/env";
@@ -66,11 +66,12 @@ const makeOrder = (overrides: Partial<Order> = {}): Order => {
   const currentStatus = overrides.currentStatus ?? OrderStatus.Placed;
   return {
     id: crypto.randomUUID(),
+    entityType: ORDER_ENTITY_TYPE,
     customerId,
     orderDate,
     currentStatus,
     statusUpdates: { [OrderStatus.Placed]: orderDate, [currentStatus]: orderDate },
-    products: { [crypto.randomUUID()]: { amount: 2, pricePerUnit: 50 } },
+    products: { [crypto.randomUUID()]: { title: "Mask of Truth", amount: 2, pricePerUnit: 50 } },
     shipping: { method: ShippingMethod.Standard, cost: 0 },
     address: {
       recipient: "Link",
@@ -90,16 +91,17 @@ const makeOrder = (overrides: Partial<Order> = {}): Order => {
   };
 };
 
-const toDto = ({ paymentMethod: { brand, lastFour }, ...order }: Order) => ({
+const toDto = ({ paymentMethod: { brand, lastFour }, entityType: _, ...order }: Order) => ({
   ...order,
   paymentMethod: { brand, lastFour }
 });
 
-const toOverview = ({ id, customerId, orderDate, currentStatus }: Order, total = 100, itemCount = 2) => ({
+const toOverview = ({ id, customerId, orderDate, currentStatus, address }: Order, total = 100, itemCount = 2) => ({
   id,
   customerId,
   orderDate,
   currentStatus,
+  recipient: address.recipient,
   total,
   itemCount
 });
@@ -209,8 +211,8 @@ describe("createOrder", () => {
       currentStatus: OrderStatus.Placed,
       statusUpdates: { [OrderStatus.Placed]: created.orderDate },
       products: {
-        [first.id]: { amount: 2, pricePerUnit: first.price },
-        [second.id]: { amount: 3, pricePerUnit: second.price }
+        [first.id]: { title: first.title, amount: 2, pricePerUnit: first.price },
+        [second.id]: { title: second.title, amount: 3, pricePerUnit: second.price }
       },
       shipping: { method: ShippingMethod.Express, cost: expressCost },
       address
@@ -218,6 +220,7 @@ describe("createOrder", () => {
     expect(created).toEqual({ ...expected, paymentMethod: { brand: "Hyrulian Express", lastFour: "4242" } });
     expect(await getRawOrder(body.id)).toEqual({
       ...expected,
+      entityType: ORDER_ENTITY_TYPE,
       orderDate: created.orderDate,
       paymentMethod: {
         brand: "Hyrulian Express",
@@ -550,8 +553,8 @@ describe("listOrders", () => {
   it("returns the customer's orders newest first with totals and item counts", async () => {
     const own = datedOrders(3);
     own[1].products = {
-      [crypto.randomUUID()]: { amount: 3, pricePerUnit: 20 },
-      [crypto.randomUUID()]: { amount: 1, pricePerUnit: 5 }
+      [crypto.randomUUID()]: { title: "Hero's Shield", amount: 3, pricePerUnit: 20 },
+      [crypto.randomUUID()]: { title: "Deku Nut", amount: 1, pricePerUnit: 5 }
     };
     own[1].shipping = { method: ShippingMethod.Express, cost: 40 };
     await putOrders(...own, makeOrder({ customerId: crypto.randomUUID() }));
@@ -608,13 +611,13 @@ describe("listOrders", () => {
     expect(result.map(o => o.id).toSorted()).toEqual([orders[0].id, other.id].toSorted());
   });
 
-  it("returns every customer's orders to an admin with no filters", async () => {
-    const orders = [makeOrder(), makeOrder({ customerId: crypto.randomUUID() })];
+  it("returns every customer's orders newest first to an admin with no filters", async () => {
+    const orders = datedOrders(3, i => (i === 1 ? { customerId: crypto.randomUUID() } : {}));
     await putOrders(...orders);
 
     const result = await listOwn(asAdmin(), orders, { limit: 100 });
 
-    expect(result.map(o => o.id).toSorted()).toEqual(orders.map(o => o.id).toSorted());
+    expect(result).toEqual(newestFirst(orders).map(o => toOverview(o)));
   });
 
   it.each([

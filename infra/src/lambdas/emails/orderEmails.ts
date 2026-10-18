@@ -6,7 +6,6 @@ export type NotifiedStatus = Exclude<OrderStatus, "Placed">;
 export type OrderEmailInput = {
   status: NotifiedStatus;
   order: Order;
-  titles: Record<string, string>;
   recipientName?: string;
   orderUrl: string;
 };
@@ -60,13 +59,13 @@ const escapeHtml = (value: string) => value.replace(/[&<>"']/g, char => `&#${cha
 
 export const orderNumber = (order: Pick<Order, "id">) => order.id.slice(0, 8).toUpperCase();
 
-export const renderOrderEmail = ({ status, order, titles, recipientName, orderUrl }: OrderEmailInput): OrderEmail => {
+export const renderOrderEmail = ({ status, order, recipientName, orderUrl }: OrderEmailInput): OrderEmail => {
   const number = orderNumber(order);
   const shipping = ShippingOptions[order.shipping.method];
   const { subject, heading, lines } = copyFor(status, number, order.cancellationReason, shipping.name);
   const greeting = recipientName ? `${recipientName},` : undefined;
-  const items = Object.entries(order.products).map(([id, { amount, pricePerUnit }]) => ({
-    title: titles[id] ?? "Discontinued item",
+  const items = Object.values(order.products).map(({ title, amount, pricePerUnit }) => ({
+    title,
     amount,
     total: amount * pricePerUnit
   }));

@@ -18,7 +18,9 @@ export type CreateProductBody = zinfer<typeof CreateProductBody>;
 export const ListProductsQuery = object({
   ...PaginationQuery.shape,
   category: CategorySchema.optional(),
-  inStock: QueryBool.optional()
+  inStock: QueryBool.optional().meta({
+    description: "True for only products in stock, false for only products out of stock. Omit for both."
+  })
 }).meta({ id: "ListProductsQuery" });
 export type ListProductsQuery = zinfer<typeof ListProductsQuery>;
 export type ListProductsQueryInput = input<typeof ListProductsQuery>;
@@ -35,7 +37,9 @@ export type GetProductsByIdsQuery = zinfer<typeof GetProductsByIdsQuery>;
 
 export const UpdateProductBody = Product.pick({
   title: true,
+  category: true,
   description: true,
+  originalPrice: true,
   price: true,
   features: true
 })
@@ -44,14 +48,17 @@ export const UpdateProductBody = Product.pick({
   .meta({ id: "UpdateProductBody", description: "At least one property must be provided." });
 export type UpdateProductBody = zinfer<typeof UpdateProductBody>;
 
-export const StockUpdate = strictObject({
-  productId: Id,
-  stockAmount: number().int()
-});
-export type StockUpdate = zinfer<typeof StockUpdate>;
+export const MAX_STOCK_CHANGE = 10_000;
 
-export const UpdateStockBody = StockUpdate.array().nonempty();
-export type UpdateStockBody = zinfer<typeof UpdateStockBody>;
+export const AdjustStockBody = strictObject({
+  change: number()
+    .int()
+    .min(-MAX_STOCK_CHANGE)
+    .max(MAX_STOCK_CHANGE)
+    .refine(value => value !== 0, { error: "The change can't be zero." })
+    .meta({ description: "Positive to add stock, negative to remove it.", example: 5 })
+}).meta({ id: "AdjustStockBody" });
+export type AdjustStockBody = zinfer<typeof AdjustStockBody>;
 
 export const RequestImageUploadPostQuery = strictObject({
   contentType: string().regex(/^image\//i)
@@ -65,3 +72,9 @@ export const ProductImageParams = strictObject({
     .meta({ description: "Just the hash portion of the image key to avoid additional slashes in the path." })
 });
 export type ProductImageParams = zinfer<typeof ProductImageParams>;
+
+export const ImageUploadParams = strictObject({
+  id: Id.meta({ description: "The product ID." }),
+  uploadId: Id.meta({ description: "The upload ID returned when the upload was requested." })
+});
+export type ImageUploadParams = zinfer<typeof ImageUploadParams>;

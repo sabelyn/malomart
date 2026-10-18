@@ -28,6 +28,7 @@ export const OrderOverview = strictObject({
     orderDate: true,
     currentStatus: true
   }).shape,
+  recipient: Order.shape.address.shape.recipient,
   total: PositiveInt,
   itemCount: PositiveInt
 });

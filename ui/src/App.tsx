@@ -10,12 +10,15 @@ import { GuestOnly, RequireAdmin, RequireUser } from "@/routes/guards";
 
 const AccountPage = lazy(() => import("@/pages/account/AccountPage"));
 const AddressesSection = lazy(() => import("@/pages/account/AddressesSection"));
+const AdminOrdersSection = lazy(() => import("@/pages/admin/AdminOrdersSection"));
 const AdminPage = lazy(() => import("@/pages/admin/AdminPage"));
+const AdminProductsSection = lazy(() => import("@/pages/admin/AdminProductsSection"));
 const CheckoutPage = lazy(() => import("@/pages/checkout/CheckoutPage"));
 const OrderDetailsPage = lazy(() => import("@/pages/orders/OrderDetailsPage"));
 const OrderPlacedPage = lazy(() => import("@/pages/orders/OrderPlacedPage"));
 const OrdersSection = lazy(() => import("@/pages/account/OrdersSection"));
 const PaymentMethodsSection = lazy(() => import("@/pages/account/PaymentMethodsSection"));
+const ProductEditorPage = lazy(() => import("@/pages/admin/ProductEditorPage"));
 const ProfileSection = lazy(() => import("@/pages/account/ProfileSection"));
 const SignInPage = lazy(() => import("@/pages/auth/SignInPage"));
 const SignUpPage = lazy(() => import("@/pages/auth/SignUpPage"));
@@ -47,7 +50,14 @@ const App = () => (
         <Route path="orders/:id/placed" element={<OrderPlacedPage />} />
       </Route>
       <Route path="admin" element={<RequireAdmin />}>
-        <Route index element={<AdminPage />} />
+        <Route element={<AdminPage />}>
+          <Route index element={<Navigate to="products" replace />} />
+          <Route path="products" element={<AdminProductsSection />} />
+          <Route path="orders" element={<AdminOrdersSection />} />
+        </Route>
+        <Route path="products/new" element={<ProductEditorPage />} />
+        <Route path="products/:id" element={<ProductEditorPage />} />
+        <Route path="orders/:id" element={<OrderDetailsPage backTo="/admin/orders" backLabel="All orders" />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Route>

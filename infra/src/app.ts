@@ -32,7 +32,8 @@ const stages: Record<string, { env: StackProps["env"]; config: StageConfig }> = 
       siteDomain: { zoneName: DOMAIN_NAME, hostName: `dev.${DOMAIN_NAME}` },
       emailDomain: DOMAIN_NAME,
       alarmEmail: process.env.DEV_ALARM_EMAIL,
-      fulfillmentTimeScale: 0.1
+      fulfillmentTimeScale: 0.1,
+      localDevOrigin: "http://localhost:5173"
     }
   }
 };

@@ -3,10 +3,11 @@ import { ApiRequestError } from "@mm/lib/api";
 import { Id } from "@mm/lib/common";
 import { getProduct } from "@mm/lib/products";
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 
-import { endpointQuery } from "@/api";
+import { endpointQuery, useSession } from "@/api";
 import { useCart } from "@/cart/CartProvider";
+import { adminProductPath } from "@/components/admin/adminDisplay";
 import PageLoader from "@/components/PageLoader";
 import ProductBreadcrumbs from "@/components/product/ProductBreadcrumbs";
 import { percentOff } from "@/components/product/productDisplay";
@@ -21,6 +22,7 @@ const isMissing = (err: unknown) => err instanceof ApiRequestError && (err.statu
 const ProductPage = () => {
   const { id = "" } = useParams();
   const { add: addToCart } = useCart();
+  const { data: user } = useSession();
   const validId = Id.safeParse(id).success;
   const { data: product, error } = useQuery({
     ...endpointQuery(getProduct, { params: { id } }),
@@ -40,6 +42,11 @@ const ProductPage = () => {
     return (
       <>
         <ProductBreadcrumbs category={product.category} title={product.title} />
+        {user?.isAdmin && (
+          <Link to={adminProductPath(product.id)} className={classes.adminLink}>
+            Edit product
+          </Link>
+        )}
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing={48} verticalSpacing="xl">
           <ProductGallery
             key={product.id}

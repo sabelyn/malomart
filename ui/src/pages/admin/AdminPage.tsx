@@ -1,5 +1,10 @@
-import PlaceholderPage from "@/pages/PlaceholderPage";
+import SectionNavLayout from "@/components/SectionNavLayout";
 
-const AdminPage = () => <PlaceholderPage title="Back office" />;
+const SECTIONS = [
+  { to: "/admin/products", label: "Products" },
+  { to: "/admin/orders", label: "Orders" }
+];
+
+const AdminPage = () => <SectionNavLayout title="Back office" navLabel="Back office sections" sections={SECTIONS} />;
 
 export default AdminPage;
