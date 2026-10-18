@@ -5,6 +5,8 @@ import { IMAGE_WIDTHS, imageHash, imageVariantKey, MAX_UPLOAD_BYTES, productImag
 import type { S3ObjectCreatedNotificationEvent } from "aws-lambda";
 import sharp from "sharp";
 
+import { hasErrorName } from "./helpers";
+
 const { IMAGE_BUCKET_NAME, PRODUCTS_TABLE_NAME } = process.env;
 
 const UPLOAD_KEY_PATTERN = /^products\/([^/]+)\/[^/]+$/;
@@ -67,7 +69,7 @@ export const handler = async (event: S3ObjectCreatedNotificationEvent) => {
       })
     );
   } catch (err) {
-    if (!(err instanceof Error) || err.name !== "ConditionalCheckFailedException") {
+    if (!hasErrorName(err, "ConditionalCheckFailedException")) {
       throw err;
     }
     console.warn(`Product ${productId} no longer exists; discarding image ${imageKey}.`);

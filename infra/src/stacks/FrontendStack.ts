@@ -1,7 +1,7 @@
 import type { BucketNames } from "@mm/clients/s3";
 import { IMAGE_KEY_PREFIX } from "@mm/clients/s3";
 import type { StackProps } from "aws-cdk-lib";
-import { CfnOutput, Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
+import { CfnOutput, Duration, Stack } from "aws-cdk-lib";
 import { DnsValidatedCertificate } from "aws-cdk-lib/aws-certificatemanager";
 import {
   AllowedMethods,
@@ -23,18 +23,17 @@ import {
 import { HttpOrigin, S3BucketOrigin } from "aws-cdk-lib/aws-cloudfront-origins";
 import { Rule } from "aws-cdk-lib/aws-events";
 import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
-import { Architecture, Runtime } from "aws-cdk-lib/aws-lambda";
 import { SqsDestination } from "aws-cdk-lib/aws-lambda-destinations";
-import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
-import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { AaaaRecord, ARecord, HostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
 import { CloudFrontTarget } from "aws-cdk-lib/aws-route53-targets";
-import { BlockPublicAccess, Bucket, BucketEncryption, HttpMethods } from "aws-cdk-lib/aws-s3";
+import type { Bucket } from "aws-cdk-lib/aws-s3";
+import { HttpMethods } from "aws-cdk-lib/aws-s3";
 import { BucketDeployment, CacheControl, Source } from "aws-cdk-lib/aws-s3-deployment";
 import type { Construct } from "constructs";
 import path from "node:path";
 
 import { FailureQueue } from "../constructs/FailureQueue";
+import { createFunction, createPrivateBucket } from "../helpers";
 import type { AlertsStack } from "./AlertsStack";
 import type { DbStack } from "./DbStack";
 import type { GatewayStack } from "./GatewayStack";
@@ -75,21 +74,9 @@ export class FrontendStack extends Stack {
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id, props);
 
-    const siteBucket = new Bucket(this, "SiteBucket", {
-      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-      encryption: BucketEncryption.S3_MANAGED,
-      enforceSSL: true,
-      removalPolicy: RemovalPolicy.DESTROY,
-      autoDeleteObjects: true
-    });
+    const siteBucket = createPrivateBucket(this, "SiteBucket");
 
-    this.imageBucket = new Bucket(this, "ImageBucket", {
-      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-      encryption: BucketEncryption.S3_MANAGED,
-      enforceSSL: true,
-      removalPolicy: RemovalPolicy.DESTROY,
-      autoDeleteObjects: true
-    });
+    this.imageBucket = createPrivateBucket(this, "ImageBucket");
 
     const spaRewriteFunction = new CloudFrontFunction(this, "SpaRewrite", {
       code: FunctionCode.fromInline(spaRewrite)
@@ -157,12 +144,7 @@ export class FrontendStack extends Stack {
     }
     this.appOrigin = `https://${site?.hostName ?? this.distribution.distributionDomainName}`;
 
-    this.uploadBucket = new Bucket(this, "UploadBucket", {
-      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-      encryption: BucketEncryption.S3_MANAGED,
-      enforceSSL: true,
-      removalPolicy: RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
+    this.uploadBucket = createPrivateBucket(this, "UploadBucket", {
       eventBridgeEnabled: true,
       lifecycleRules: [{ expiration: Duration.days(1) }],
       cors: [{ allowedMethods: [HttpMethods.POST], allowedOrigins: [this.appOrigin], allowedHeaders: ["*"] }]
@@ -173,18 +155,11 @@ export class FrontendStack extends Stack {
       description: "Product image uploads failed to process",
       alarmTopic: props.alertsStack.alarmTopic
     });
-    const imageProcessor = new NodejsFunction(this, "ImageProcessorFunction", {
-      entry: path.resolve(__dirname, "../lambdas/imageProcessor.ts"),
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+    const imageProcessor = createFunction(this, "ImageProcessor", "imageProcessor", {
       memorySize: 1024,
       timeout: Duration.seconds(30),
       retryAttempts: 2,
       onFailure: new SqsDestination(imageProcessorFailures.queue),
-      logGroup: new LogGroup(this, "ImageProcessorLogs", {
-        retention: RetentionDays.ONE_WEEK,
-        removalPolicy: RemovalPolicy.DESTROY
-      }),
       bundling: {
         externalModules: ["@aws-sdk/*", "sharp"],
         commandHooks: {

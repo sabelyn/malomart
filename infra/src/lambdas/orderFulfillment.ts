@@ -16,6 +16,8 @@ import {
 } from "@mm/lib/orders";
 import type { EventBridgeEvent } from "aws-lambda";
 
+import { hasErrorName } from "./helpers";
+
 const { CHARGE_CARD_FUNCTION_NAME, ORDERS_TABLE_NAME, TIME_SCALE } = process.env;
 
 const db = dbClient();
@@ -23,8 +25,6 @@ const db = dbClient();
 type FulfillmentEvent = EventBridgeEvent<"OrderStatusChanged", OrderStatusChangedDetail>;
 
 type ClaimedOrder = Omit<ChargeCardEvent, "orderId"> & { shippingMethod: ShippingMethod };
-
-const isConditionFailure = (err: unknown) => err instanceof Error && err.name === "ConditionalCheckFailedException";
 
 const claim = async (id: string): Promise<ClaimedOrder | null> => {
   try {
@@ -46,7 +46,7 @@ const claim = async (id: string): Promise<ClaimedOrder | null> => {
       shippingMethod: order.shipping.method
     };
   } catch (err) {
-    if (isConditionFailure(err)) {
+    if (hasErrorName(err, "ConditionalCheckFailedException")) {
       return null;
     }
     throw err;
@@ -99,7 +99,7 @@ const transition = async (id: string, from: OrderStatus, to: OrderStatus, cancel
     );
     return true;
   } catch (err) {
-    if (isConditionFailure(err)) {
+    if (hasErrorName(err, "ConditionalCheckFailedException")) {
       return false;
     }
     throw err;

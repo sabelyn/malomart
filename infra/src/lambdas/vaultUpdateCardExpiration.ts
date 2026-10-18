@@ -4,7 +4,7 @@ import type { InvokeErrorResponse } from "@mm/lib/lambdas";
 import { UpdatePaymentMethodExpirationEvent } from "@mm/lib/lambdas";
 import type { Handler } from "aws-lambda";
 
-import { isRetriableError } from "./helpers";
+import { toInvokeError } from "./helpers";
 
 const { VAULT_CARD_TABLE_NAME } = process.env;
 
@@ -26,12 +26,7 @@ export const handler: Handler<UpdatePaymentMethodExpirationEvent, InvokeErrorRes
       })
     );
   } catch (err) {
-    if (isRetriableError(err)) {
-      throw err;
-    }
-
-    console.error(err);
-    return { errorName: err instanceof Error ? err.name : "Unknown" };
+    return toInvokeError(err);
   }
 
   return null;

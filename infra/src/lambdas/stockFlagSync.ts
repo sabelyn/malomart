@@ -2,6 +2,8 @@ import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { dbClient } from "@mm/clients/db";
 import type { DynamoDBBatchItemFailure, DynamoDBRecord, DynamoDBStreamHandler } from "aws-lambda";
 
+import { hasErrorName } from "./helpers";
+
 const { PRODUCTS_TABLE_NAME } = process.env;
 
 const db = dbClient();
@@ -26,7 +28,7 @@ const syncRecord = async (record: DynamoDBRecord) => {
       })
     );
   } catch (err) {
-    if (!(err instanceof Error) || err.name !== "ConditionalCheckFailedException") {
+    if (!hasErrorName(err, "ConditionalCheckFailedException")) {
       throw err;
     }
   }

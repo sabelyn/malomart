@@ -6,6 +6,7 @@ import type { EventBridgeEvent } from "aws-lambda";
 
 import type { NotifiedStatus } from "./emails/orderEmails";
 import { renderOrderEmail } from "./emails/orderEmails";
+import { hasErrorName } from "./helpers";
 
 const { APP_ORIGIN, EMAIL_FROM, ORDERS_TABLE_NAME, PRODUCTS_TABLE_NAME, USER_POOL_ID } = process.env;
 
@@ -24,7 +25,7 @@ const getRecipient = async (customerId: string) => {
     const email = attribute("email");
     return email ? { email, name: attribute("name") } : null;
   } catch (err) {
-    if (err instanceof Error && err.name === "UserNotFoundException") {
+    if (hasErrorName(err, "UserNotFoundException")) {
       return null;
     }
     throw err;
@@ -76,7 +77,7 @@ export const handler = async (event: EventBridgeEvent<"OrderStatusChanged", Orde
       })
     );
   } catch (err) {
-    if (err instanceof Error && err.name === "MessageRejected") {
+    if (hasErrorName(err, "MessageRejected")) {
       console.warn(`SES rejected the ${status} email for order ${orderId}.`, err);
       return;
     }

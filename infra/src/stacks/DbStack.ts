@@ -1,15 +1,13 @@
 import type { TableIndexes, TableNames } from "@mm/clients";
 import type { StackProps } from "aws-cdk-lib";
-import { CfnOutput, Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
+import { CfnOutput, Duration, Stack } from "aws-cdk-lib";
 import { AttributeType, BillingMode, StreamViewType, Table } from "aws-cdk-lib/aws-dynamodb";
-import { Architecture, FilterCriteria, FilterRule, Runtime, StartingPosition } from "aws-cdk-lib/aws-lambda";
+import { FilterCriteria, FilterRule, StartingPosition } from "aws-cdk-lib/aws-lambda";
 import { DynamoEventSource, SqsDlq } from "aws-cdk-lib/aws-lambda-event-sources";
-import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
-import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import type { Construct } from "constructs";
-import path from "node:path";
 
 import { FailureQueue } from "../constructs/FailureQueue";
+import { createFunction } from "../helpers";
 import type { AlertsStack } from "./AlertsStack";
 
 export const INDEXES: TableIndexes = {
@@ -114,15 +112,8 @@ export class DbStack extends Stack {
       sortKey: { name: "id", type: AttributeType.STRING }
     });
 
-    const stockFlagSync = new NodejsFunction(this, "StockFlagSyncFunction", {
-      entry: path.resolve(__dirname, "../lambdas/stockFlagSync.ts"),
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+    const stockFlagSync = createFunction(this, "StockFlagSync", "stockFlagSync", {
       timeout: Duration.seconds(30),
-      logGroup: new LogGroup(this, "StockFlagSyncLogs", {
-        retention: RetentionDays.ONE_WEEK,
-        removalPolicy: RemovalPolicy.DESTROY
-      }),
       environment: {
         PRODUCTS_TABLE_NAME: productsTable.tableName
       }

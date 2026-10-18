@@ -4,7 +4,7 @@ import type { InvokeErrorResponse, PaymentMethodMetadata, VaultCard } from "@mm/
 import { PaymentMethodIdEvent } from "@mm/lib/lambdas";
 import type { Handler } from "aws-lambda";
 
-import { isRetriableError } from "./helpers";
+import { toInvokeError } from "./helpers";
 
 const { VAULT_CARD_TABLE_NAME } = process.env;
 
@@ -30,12 +30,7 @@ export const handler: Handler<
       };
     }
   } catch (err) {
-    if (isRetriableError(err)) {
-      throw err;
-    }
-
-    console.error(err);
-    return { errorName: err instanceof Error ? err.name : "Unknown" };
+    return toInvokeError(err);
   }
 
   return null;

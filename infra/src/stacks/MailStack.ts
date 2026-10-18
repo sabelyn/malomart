@@ -1,12 +1,13 @@
 import type { StackProps } from "aws-cdk-lib";
-import { CfnOutput, Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
+import { CfnOutput, Duration, Stack } from "aws-cdk-lib";
 import type { IPublicHostedZone } from "aws-cdk-lib/aws-route53";
 import { CfnRecordSet, MxRecord, TxtRecord } from "aws-cdk-lib/aws-route53";
-import { BlockPublicAccess, Bucket, BucketEncryption } from "aws-cdk-lib/aws-s3";
 import { EmailIdentity, Identity, ReceiptRuleSet } from "aws-cdk-lib/aws-ses";
 import { S3 } from "aws-cdk-lib/aws-ses-actions";
 import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from "aws-cdk-lib/custom-resources";
 import type { Construct } from "constructs";
+
+import { createPrivateBucket } from "../helpers";
 
 type Props = StackProps & {
   zone: IPublicHostedZone;
@@ -45,12 +46,7 @@ export class MailStack extends Stack {
       values: [{ priority: 10, hostName: `inbound-smtp.${this.region}.amazonaws.com` }]
     });
 
-    const inboxBucket = new Bucket(this, "InboxBucket", {
-      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-      encryption: BucketEncryption.S3_MANAGED,
-      enforceSSL: true,
-      removalPolicy: RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
+    const inboxBucket = createPrivateBucket(this, "InboxBucket", {
       lifecycleRules: [{ expiration: Duration.days(7) }]
     });
 

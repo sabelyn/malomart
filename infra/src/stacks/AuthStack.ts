@@ -11,11 +11,10 @@ import {
   UserPoolOperation
 } from "aws-cdk-lib/aws-cognito";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
-import { Architecture, Runtime } from "aws-cdk-lib/aws-lambda";
-import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
+import type { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import type { Construct } from "constructs";
-import path from "node:path";
 
+import { createFunction } from "../helpers";
 import type { DbStack } from "./DbStack";
 
 type Props = StackProps & {
@@ -85,10 +84,7 @@ export class AuthStack extends Stack {
       authSessionValidity: Duration.minutes(10)
     });
 
-    const preTokenGeneration = new NodejsFunction(this, "PreTokenGeneration", {
-      entry: path.resolve(__dirname, "../lambdas/preTokenGeneration.ts"),
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+    const preTokenGeneration = createFunction(this, "PreTokenGeneration", "preTokenGeneration", {
       environment: {
         ADMIN_GROUP,
         ADMIN_SCOPE: this.adminScope
@@ -97,10 +93,7 @@ export class AuthStack extends Stack {
     this.userPool.addTrigger(UserPoolOperation.PRE_TOKEN_GENERATION_CONFIG, preTokenGeneration, LambdaVersion.V2_0);
 
     const { customers } = props.dbStack.tables;
-    const postConfirmation = new NodejsFunction(this, "PostConfirmation", {
-      entry: path.resolve(__dirname, "../lambdas/postConfirmation.ts"),
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+    const postConfirmation = createFunction(this, "PostConfirmation", "postConfirmation", {
       environment: {
         CUSTOMER_GROUP,
         CUSTOMERS_TABLE_NAME: customers.tableName
@@ -115,10 +108,7 @@ export class AuthStack extends Stack {
     );
     this.userPool.addTrigger(UserPoolOperation.POST_CONFIRMATION, postConfirmation);
 
-    this.cookieAuthorizerFunction = new NodejsFunction(this, "CookieAuthorizerFunction", {
-      entry: path.resolve(__dirname, "../lambdas/cookieAuthorizer.ts"),
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+    this.cookieAuthorizerFunction = createFunction(this, "CookieAuthorizer", "cookieAuthorizer", {
       environment: {
         USER_POOL_ID: this.userPool.userPoolId,
         USER_POOL_CLIENT_ID: this.userPoolClient.userPoolClientId

@@ -6,7 +6,7 @@ import type { ChargeCardResult, InvokeErrorResponse, VaultCard } from "@mm/lib/l
 import { ChargeCardEvent, DeclineReason } from "@mm/lib/lambdas";
 import type { Handler } from "aws-lambda";
 
-import { isRetriableError } from "./helpers";
+import { toInvokeError } from "./helpers";
 
 const { VAULT_CARD_TABLE_NAME, VAULT_KEY_ID } = process.env;
 const kmsClient = new KMSClient({});
@@ -45,11 +45,6 @@ export const handler: Handler<ChargeCardEvent, ChargeCardResult | InvokeErrorRes
 
     return { approved: true, chargeId: crypto.randomUUID() };
   } catch (err) {
-    if (isRetriableError(err)) {
-      throw err;
-    }
-
-    console.error(err);
-    return { errorName: err instanceof Error ? err.name : "Unknown" };
+    return toInvokeError(err);
   }
 };

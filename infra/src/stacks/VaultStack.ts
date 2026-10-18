@@ -7,14 +7,12 @@ import { HttpLambdaAuthorizer, HttpLambdaResponseType } from "aws-cdk-lib/aws-ap
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { AttributeType, BillingMode, Table } from "aws-cdk-lib/aws-dynamodb";
 import { Key } from "aws-cdk-lib/aws-kms";
-import { Architecture, Runtime } from "aws-cdk-lib/aws-lambda";
 import { SqsDestination } from "aws-cdk-lib/aws-lambda-destinations";
-import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
-import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
+import type { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import type { Construct } from "constructs";
-import { resolve } from "path";
 
 import { FailureQueue } from "../constructs/FailureQueue";
+import { createFunction } from "../helpers";
 import type { AlertsStack } from "./AlertsStack";
 import type { AuthStack } from "./AuthStack";
 import type { GatewayStack } from "./GatewayStack";
@@ -44,15 +42,8 @@ export class VaultStack extends Stack {
       billingMode: BillingMode.PAY_PER_REQUEST
     });
 
-    const tokenizer = new NodejsFunction(this, "TokenizerFunction", {
-      entry: resolve(__dirname, "../lambdas/vaultCardTokenizer.ts"),
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+    const tokenizer = createFunction(this, "Tokenizer", "vaultCardTokenizer", {
       timeout: Duration.seconds(10),
-      logGroup: new LogGroup(this, "TokenizerLogs", {
-        retention: RetentionDays.ONE_WEEK,
-        removalPolicy: RemovalPolicy.DESTROY
-      }),
       environment: {
         VAULT_CARD_TABLE_NAME: cardTable.tableName,
         VAULT_KEY_ID: cardKey.keyArn
@@ -75,14 +66,7 @@ export class VaultStack extends Stack {
       authorizer
     });
 
-    const describeCard = new NodejsFunction(this, "DescribeCardFunction", {
-      entry: resolve(__dirname, "../lambdas/vaultDescribeCard.ts"),
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
-      logGroup: new LogGroup(this, "DescribeCardLogs", {
-        retention: RetentionDays.ONE_WEEK,
-        removalPolicy: RemovalPolicy.DESTROY
-      }),
+    const describeCard = createFunction(this, "DescribeCard", "vaultDescribeCard", {
       environment: {
         VAULT_CARD_TABLE_NAME: cardTable.tableName
       }
@@ -93,16 +77,9 @@ export class VaultStack extends Stack {
       description: "Async card deletions failed after retries",
       alarmTopic: props.alertsStack.alarmTopic
     });
-    const deleteCard = new NodejsFunction(this, "DeleteCardFunction", {
-      entry: resolve(__dirname, "../lambdas/vaultDeleteCard.ts"),
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+    const deleteCard = createFunction(this, "DeleteCard", "vaultDeleteCard", {
       retryAttempts: 2,
       onFailure: new SqsDestination(deleteCardFailures.queue),
-      logGroup: new LogGroup(this, "DeleteCardLogs", {
-        retention: RetentionDays.ONE_WEEK,
-        removalPolicy: RemovalPolicy.DESTROY
-      }),
       environment: {
         VAULT_CARD_TABLE_NAME: cardTable.tableName
       }
@@ -113,31 +90,17 @@ export class VaultStack extends Stack {
       description: "Async card expiration updates failed after retries",
       alarmTopic: props.alertsStack.alarmTopic
     });
-    const updateCard = new NodejsFunction(this, "UpdateCardFunction", {
-      entry: resolve(__dirname, "../lambdas/vaultUpdateCardExpiration.ts"),
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+    const updateCard = createFunction(this, "UpdateCard", "vaultUpdateCardExpiration", {
       retryAttempts: 2,
       onFailure: new SqsDestination(updateCardFailures.queue),
-      logGroup: new LogGroup(this, "UpdateCardLogs", {
-        retention: RetentionDays.ONE_WEEK,
-        removalPolicy: RemovalPolicy.DESTROY
-      }),
       environment: {
         VAULT_CARD_TABLE_NAME: cardTable.tableName
       }
     });
     cardTable.grant(updateCard, "dynamodb:UpdateItem");
 
-    this.chargeCardFunction = new NodejsFunction(this, "ChargeCardFunction", {
-      entry: resolve(__dirname, "../lambdas/vaultChargeCard.ts"),
-      runtime: Runtime.NODEJS_24_X,
-      architecture: Architecture.ARM_64,
+    this.chargeCardFunction = createFunction(this, "ChargeCard", "vaultChargeCard", {
       timeout: Duration.seconds(10),
-      logGroup: new LogGroup(this, "ChargeCardLogs", {
-        retention: RetentionDays.ONE_WEEK,
-        removalPolicy: RemovalPolicy.DESTROY
-      }),
       environment: {
         VAULT_CARD_TABLE_NAME: cardTable.tableName,
         VAULT_KEY_ID: cardKey.keyArn

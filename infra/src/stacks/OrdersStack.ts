@@ -1,21 +1,18 @@
 import { ORDER_EVENT_SOURCE, OrderEventType, OrderStatus } from "@mm/lib/orders";
 import type { StackProps } from "aws-cdk-lib";
-import { CfnOutput, Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
+import { CfnOutput, Duration, Stack } from "aws-cdk-lib";
 import { Alarm, ComparisonOperator, TreatMissingData } from "aws-cdk-lib/aws-cloudwatch";
 import { SnsAction } from "aws-cdk-lib/aws-cloudwatch-actions";
 import { EventBus, Rule } from "aws-cdk-lib/aws-events";
 import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
-import { Alias, Architecture, FilterCriteria, FilterRule, Runtime, StartingPosition } from "aws-cdk-lib/aws-lambda";
+import { Alias, FilterCriteria, FilterRule, StartingPosition } from "aws-cdk-lib/aws-lambda";
 import { SqsDestination } from "aws-cdk-lib/aws-lambda-destinations";
 import { DynamoEventSource, SqsDlq } from "aws-cdk-lib/aws-lambda-event-sources";
-import type { NodejsFunctionProps } from "aws-cdk-lib/aws-lambda-nodejs";
-import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
-import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import type { Construct } from "constructs";
-import path from "node:path";
 
 import { FailureQueue } from "../constructs/FailureQueue";
+import { createFunction } from "../helpers";
 import type { AlertsStack } from "./AlertsStack";
 import type { AuthStack } from "./AuthStack";
 import type { DbStack } from "./DbStack";
@@ -45,26 +42,14 @@ export class OrdersStack extends Stack {
     const { orders, products } = props.dbStack.tables;
     const { chargeCardFunction } = props.vaultStack;
 
-    const createFunction = (name: string, entry: string, overrides: NodejsFunctionProps) =>
-      new NodejsFunction(this, `${name}Function`, {
-        entry: path.resolve(__dirname, `../lambdas/${entry}.ts`),
-        runtime: Runtime.NODEJS_24_X,
-        architecture: Architecture.ARM_64,
-        timeout: Duration.seconds(30),
-        logGroup: new LogGroup(this, `${name}Logs`, {
-          retention: RetentionDays.ONE_WEEK,
-          removalPolicy: RemovalPolicy.DESTROY
-        }),
-        ...overrides
-      });
-
     const eventBus = new EventBus(this, "EventBus");
 
     const invalidRecords = new FailureQueue(this, "InvalidOrderRecords", {
       description: "Order records in the table failed validation and need investigating",
       alarmTopic
     }).queue;
-    const publisher = createFunction("StreamPublisher", "orderStreamPublisher", {
+    const publisher = createFunction(this, "StreamPublisher", "orderStreamPublisher", {
+      timeout: Duration.seconds(30),
       environment: {
         EVENT_BUS_NAME: eventBus.eventBusName,
         INVALID_RECORDS_QUEUE_URL: invalidRecords.queueUrl
@@ -90,7 +75,8 @@ export class OrdersStack extends Stack {
       })
     );
 
-    const fulfillment = createFunction("Fulfillment", "orderFulfillment", {
+    const fulfillment = createFunction(this, "Fulfillment", "orderFulfillment", {
+      timeout: Duration.seconds(30),
       durableConfig: {
         executionTimeout: Duration.hours(1),
         retentionPeriod: Duration.days(7)
@@ -130,7 +116,8 @@ export class OrdersStack extends Stack {
       description: "Cancelled orders failed to restore product stock",
       alarmTopic
     });
-    const restock = createFunction("Restock", "orderRestock", {
+    const restock = createFunction(this, "Restock", "orderRestock", {
+      timeout: Duration.seconds(30),
       retryAttempts: 2,
       onFailure: new SqsDestination(restockFailures.queue),
       environment: {
@@ -152,7 +139,8 @@ export class OrdersStack extends Stack {
         description: "Order status emails failed to send",
         alarmTopic
       });
-      const notifier = createFunction("Notifier", "orderNotifier", {
+      const notifier = createFunction(this, "Notifier", "orderNotifier", {
+        timeout: Duration.seconds(30),
         retryAttempts: 2,
         onFailure: new SqsDestination(notifierFailures.queue),
         environment: {
