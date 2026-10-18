@@ -46,9 +46,11 @@ beforeEach(() => {
   eventBridge.reset();
   sqs.reset();
   sqs.on(SendMessageCommand).resolves({});
-  eventBridge.on(PutEventsCommand).callsFake(({ Entries }) =>
-    Promise.resolve({ FailedEntryCount: 0, Entries: Entries.map(() => ({ EventId: crypto.randomUUID() })) })
-  );
+  eventBridge
+    .on(PutEventsCommand)
+    .callsFake(({ Entries }) =>
+      Promise.resolve({ FailedEntryCount: 0, Entries: Entries.map(() => ({ EventId: crypto.randomUUID() })) })
+    );
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 });
 
@@ -56,7 +58,13 @@ it("publishes a placed event with no previous status for a new order", async () 
   await expect(run(record("1", placed))).resolves.toEqual({ batchItemFailures: [] });
 
   expect(eventBridge).toHaveReceivedCommandWith(PutEventsCommand, {
-    Entries: [expect.objectContaining({ EventBusName: "order-events", Source: "malomart.orders", DetailType: "OrderStatusChanged" })]
+    Entries: [
+      expect.objectContaining({
+        EventBusName: "order-events",
+        Source: "malomart.orders",
+        DetailType: "OrderStatusChanged"
+      })
+    ]
   });
   expect(publishedDetails()).toEqual([{ orderId, customerId, previousStatus: null, status: "Placed", at: placedAt }]);
 });

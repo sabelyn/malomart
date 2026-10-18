@@ -72,9 +72,7 @@ export const handler: DynamoDBStreamHandler = async event => {
   }
 
   if (published.length > 0) {
-    const { Entries } = await eventBridge.send(
-      new PutEventsCommand({ Entries: published.map(({ entry }) => entry) })
-    );
+    const { Entries } = await eventBridge.send(new PutEventsCommand({ Entries: published.map(({ entry }) => entry) }));
     Entries?.forEach((result, i) => {
       if (result.ErrorCode) {
         console.error(`Failed to publish order event for record ${published[i].sequenceNumber}.`, result);

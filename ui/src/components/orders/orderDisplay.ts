@@ -17,5 +17,4 @@ export const shippingSummary = ({ method, cost }: OrderDto["shipping"]) => {
   return `${name}, ${description.toLowerCase()}. ${shippingCostLabel(cost)}.`;
 };
 
-export const isCancellable = (status: OrderStatus) =>
-  status === OrderStatus.Placed || status === OrderStatus.Confirmed;
+export const isCancellable = (status: OrderStatus) => status === OrderStatus.Placed || status === OrderStatus.Confirmed;

@@ -18,7 +18,13 @@ const order: Order = {
   id: "8a2be9e3-ee3a-4357-9a7a-de01c096f5c7",
   customerId: crypto.randomUUID(),
   address: { recipient: "Link", street: "1 Ordon Way", city: "Ordon", region: "Faron", postalCode: "12345" },
-  paymentMethod: { brand: "Castle One", expirationMonth: 4, expirationYear: 2030, lastFour: "4242", token: "card-token" },
+  paymentMethod: {
+    brand: "Castle One",
+    expirationMonth: 4,
+    expirationYear: 2030,
+    lastFour: "4242",
+    token: "card-token"
+  },
   orderDate: "2026-10-16T12:00:00.000Z",
   currentStatus: "Confirmed",
   statusUpdates: { Placed: "2026-10-16T12:00:00.000Z", Confirmed: "2026-10-16T12:00:10.000Z" },
@@ -61,7 +67,7 @@ it("emails the customer about their order's new status", async () => {
   });
   expect(sentEmail()).toEqual(
     expect.objectContaining({
-      FromEmailAddress: "\"Malo Mart\" <noreply@malomart.test>",
+      FromEmailAddress: '"Malo Mart" <noreply@malomart.test>',
       Destination: { ToAddresses: ["link@inbox.malomart.link"] }
     })
   );

@@ -56,8 +56,7 @@ const copyFor = (status: NotifiedStatus, number: string, reason?: CancellationRe
 
 const rupees = (amount: number) => `${amount.toLocaleString("en-US")} rupees`;
 
-const escapeHtml = (value: string) =>
-  value.replace(/[&<>"']/g, char => `&#${char.charCodeAt(0)};`);
+const escapeHtml = (value: string) => value.replace(/[&<>"']/g, char => `&#${char.charCodeAt(0)};`);
 
 export const orderNumber = (order: Pick<Order, "id">) => order.id.slice(0, 8).toUpperCase();
 

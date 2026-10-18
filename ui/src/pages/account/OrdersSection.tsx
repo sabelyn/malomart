@@ -93,7 +93,10 @@ const OrdersSection = () => {
       </div>
       <fieldset className={orderClasses.filter}>
         <legend className={orderClasses.filterLegend}>Status</legend>
-        <Chip.Group value={status ?? ALL} onChange={value => updateSearch({ status: value === ALL ? undefined : value })}>
+        <Chip.Group
+          value={status ?? ALL}
+          onChange={value => updateSearch({ status: value === ALL ? undefined : value })}
+        >
           <Group gap="xs">
             <Chip type="radio" name="status" value={ALL} classNames={{ label: orderClasses.chip }}>
               All

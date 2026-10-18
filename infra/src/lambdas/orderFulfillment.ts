@@ -1,12 +1,19 @@
-import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import type { DurableContext } from "@aws/durable-execution-sdk-js";
 import { withDurableExecution } from "@aws/durable-execution-sdk-js";
+import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { dbClient } from "@mm/clients/db";
 import { invoke, lambdaClient } from "@mm/clients/lambda";
 import type { ChargeCardEvent } from "@mm/lib/lambdas";
 import { ChargeCardResult } from "@mm/lib/lambdas";
 import type { OrderStatusChangedDetail, SecondsRange, ShippingMethod } from "@mm/lib/orders";
-import { CancellationReason, getOrderTotal, Order, OrderStatus, PAYMENT_SECONDS, ShippingOptions } from "@mm/lib/orders";
+import {
+  CancellationReason,
+  getOrderTotal,
+  Order,
+  OrderStatus,
+  PAYMENT_SECONDS,
+  ShippingOptions
+} from "@mm/lib/orders";
 import type { EventBridgeEvent } from "aws-lambda";
 
 const { CHARGE_CARD_FUNCTION_NAME, ORDERS_TABLE_NAME, TIME_SCALE } = process.env;
@@ -17,8 +24,7 @@ type FulfillmentEvent = EventBridgeEvent<"OrderStatusChanged", OrderStatusChange
 
 type ClaimedOrder = Omit<ChargeCardEvent, "orderId"> & { shippingMethod: ShippingMethod };
 
-const isConditionFailure = (err: unknown) =>
-  err instanceof Error && err.name === "ConditionalCheckFailedException";
+const isConditionFailure = (err: unknown) => err instanceof Error && err.name === "ConditionalCheckFailedException";
 
 const claim = async (id: string): Promise<ClaimedOrder | null> => {
   try {

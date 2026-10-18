@@ -37,10 +37,7 @@ export const handler = async (event: EventBridgeEvent<"OrderStatusChanged", Orde
     return;
   }
 
-  const [item, recipient] = await Promise.all([
-    getItemById(db, ORDERS_TABLE_NAME!, orderId),
-    getRecipient(customerId)
-  ]);
+  const [item, recipient] = await Promise.all([getItemById(db, ORDERS_TABLE_NAME!, orderId), getRecipient(customerId)]);
   if (!item) {
     console.warn(`Order ${orderId} no longer exists, skipping the ${status} email.`);
     return;

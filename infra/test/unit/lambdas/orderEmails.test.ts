@@ -9,7 +9,13 @@ const order: Order = {
   id: crypto.randomUUID(),
   customerId: crypto.randomUUID(),
   address: { recipient: "Link", street: "1 Ordon Way", city: "Ordon", region: "Faron", postalCode: "12345" },
-  paymentMethod: { brand: "Castle One", expirationMonth: 4, expirationYear: 2030, lastFour: "4242", token: "card-token" },
+  paymentMethod: {
+    brand: "Castle One",
+    expirationMonth: 4,
+    expirationYear: 2030,
+    lastFour: "4242",
+    token: "card-token"
+  },
   orderDate: "2026-10-16T12:00:00.000Z",
   currentStatus: "Delivered",
   statusUpdates: { Placed: "2026-10-16T12:00:00.000Z" },

@@ -69,7 +69,11 @@ const OrderDetailsPage = () => {
           </Title>
           <Text className={orderClasses.placedOn}>
             Placed {formatOrderDate(orderDate)}.{" "}
-            <Badge component="span" variant="outline" color={currentStatus === OrderStatus.Cancelled ? "red.4" : "gold"}>
+            <Badge
+              component="span"
+              variant="outline"
+              color={currentStatus === OrderStatus.Cancelled ? "red.4" : "gold"}
+            >
               <VisuallyHidden>Status: </VisuallyHidden>
               {currentStatus}
             </Badge>

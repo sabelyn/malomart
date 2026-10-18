@@ -15,7 +15,13 @@ const order: Order = {
   id: crypto.randomUUID(),
   customerId: crypto.randomUUID(),
   address: { recipient: "Link", street: "1 Ordon Way", city: "Ordon", region: "Faron", postalCode: "12345" },
-  paymentMethod: { brand: "Castle One", expirationMonth: 4, expirationYear: 2030, lastFour: "4242", token: "card-token" },
+  paymentMethod: {
+    brand: "Castle One",
+    expirationMonth: 4,
+    expirationYear: 2030,
+    lastFour: "4242",
+    token: "card-token"
+  },
   orderDate: "2026-10-16T12:00:00.000Z",
   currentStatus: "Cancelled",
   statusUpdates: { Placed: "2026-10-16T12:00:00.000Z", Cancelled: "2026-10-16T12:00:10.000Z" },
@@ -55,7 +61,11 @@ beforeEach(() => {
 it("returns each product's stock and marks the order restocked in one transaction", async () => {
   await handler(event);
 
-  expect(db).toHaveReceivedCommandWith(GetCommand, { TableName: "orders", Key: { id: order.id }, ConsistentRead: true });
+  expect(db).toHaveReceivedCommandWith(GetCommand, {
+    TableName: "orders",
+    Key: { id: order.id },
+    ConsistentRead: true
+  });
   const [orderUpdate, ...productUpdates] = db.commandCalls(TransactWriteCommand)[0].args[0].input.TransactItems!;
   expect(orderUpdate.Update).toEqual({
     TableName: "orders",

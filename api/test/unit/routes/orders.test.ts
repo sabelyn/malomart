@@ -32,7 +32,9 @@ const order: OrderDto = {
 };
 
 const listResponse: ListOrdersResponse = {
-  data: [{ id: ID, customerId: CUSTOMER_ID, orderDate: ORDER_DATE, currentStatus: "Placed", total: 1000, itemCount: 2 }],
+  data: [
+    { id: ID, customerId: CUSTOMER_ID, orderDate: ORDER_DATE, currentStatus: "Placed", total: 1000, itemCount: 2 }
+  ],
   pagination: { hasNext: false, limit: 20 }
 };
 
