@@ -1,6 +1,6 @@
 import { notifications } from "@mantine/notifications";
 
-import classes from "./notifications.module.css";
+import classes from "@/styles/notifications.module.css";
 
 export type NotifyTone = "success" | "info" | "error";
 

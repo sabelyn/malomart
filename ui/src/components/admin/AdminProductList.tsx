@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 
 import { productImageSrc } from "@/components/product/productDisplay";
+import { adminProductPath } from "@/routes/paths";
 import classes from "./admin.module.css";
-import { adminProductPath, priceLabel, stockLabel } from "./adminDisplay";
+import { priceLabel, stockLabel } from "./adminDisplay";
 
 const THUMBNAIL_WIDTH = 320;
 

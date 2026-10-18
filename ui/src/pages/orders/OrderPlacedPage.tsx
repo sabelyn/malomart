@@ -1,4 +1,4 @@
-import { Button, Container, Group, Title } from "@mantine/core";
+import { Button, Container, Group } from "@mantine/core";
 import { getOrder, getOrderTotal } from "@mm/lib/orders";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router";
@@ -11,12 +11,13 @@ import MaloSays from "@/components/MaloSays";
 import { orderNumber } from "@/components/orders/orderDisplay";
 import OrderFacts from "@/components/orders/OrderFacts";
 import OrderLoadError from "@/components/orders/OrderLoadError";
-import orderClasses from "@/components/orders/orders.module.css";
+import OrderSection from "@/components/orders/OrderSection";
 import { useOrderItems } from "@/components/orders/useOrderItems";
 import PageLoader from "@/components/PageLoader";
-import { formatRupees } from "@/components/PriceTag";
+import { formatRupees } from "@/components/product/PriceTag";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import classes from "../pages.module.css";
+import { CATALOG_PATH, orderPath } from "@/routes/paths";
+import classes from "@/styles/pages.module.css";
 
 const OrderPlacedPage = () => {
   useDocumentTitle("Order placed");
@@ -38,10 +39,7 @@ const OrderPlacedPage = () => {
       <ChudleyHype>Sold! A purchase for the ages!</ChudleyHype>
       <MaloSays>Order {number} is in. Now go away so I can pack it.</MaloSays>
 
-      <section aria-labelledby="order-placed-details" className={orderClasses.section}>
-        <Title order={2} id="order-placed-details" className={orderClasses.sectionTitle}>
-          The details
-        </Title>
+      <OrderSection id="order-placed-details" title="The details">
         <OrderFacts
           order={order.data}
           before={
@@ -59,20 +57,17 @@ const OrderPlacedPage = () => {
             </>
           }
         />
-      </section>
+      </OrderSection>
 
-      <section aria-labelledby="order-placed-items" className={orderClasses.section}>
-        <Title order={2} id="order-placed-items" className={orderClasses.sectionTitle}>
-          What you bought
-        </Title>
+      <OrderSection id="order-placed-items" title="What you bought">
         {itemsPending ? <PageLoader /> : <CheckoutItems items={items} />}
-      </section>
+      </OrderSection>
 
       <Group mt="xl">
-        <Button component={Link} to={`/orders/${order.data.id}`}>
+        <Button component={Link} to={orderPath(order.data.id)}>
           View order details
         </Button>
-        <Button component={Link} to="/products" variant="outline">
+        <Button component={Link} to={CATALOG_PATH} variant="outline">
           Keep shopping
         </Button>
       </Group>

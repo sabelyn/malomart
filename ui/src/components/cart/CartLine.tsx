@@ -2,8 +2,9 @@ import { Button, NativeSelect, Text, Title, VisuallyHidden } from "@mantine/core
 import type { ProductOverview } from "@mm/lib/products";
 import { Link } from "react-router";
 
-import { formatRupees } from "@/components/PriceTag";
+import { formatRupees } from "@/components/product/PriceTag";
 import { productImageSrc } from "@/components/product/productDisplay";
+import { productPath } from "@/routes/paths";
 import classes from "./cart.module.css";
 
 const THUMBNAIL_WIDTH = 320;
@@ -32,7 +33,7 @@ const CartLine = ({ product, amount, onChangeAmount, onRemove }: CartLineProps) 
       )}
       <div className={classes.details}>
         <Title order={2} id={headingId} className={classes.title}>
-          <Link to={`/products/${product.id}`} className={classes.link}>
+          <Link to={productPath(product.id)} className={classes.link}>
             {product.title}
           </Link>
         </Title>

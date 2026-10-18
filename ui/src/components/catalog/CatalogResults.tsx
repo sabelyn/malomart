@@ -1,4 +1,4 @@
-import { Button, Text, Title, VisuallyHidden } from "@mantine/core";
+import { Text, Title, VisuallyHidden } from "@mantine/core";
 import { listProducts } from "@mm/lib/products";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
@@ -7,7 +7,8 @@ import type { CatalogFilterValues } from "@/components/catalog/CatalogFilters";
 import CatalogGrid from "@/components/catalog/CatalogGrid";
 import MaloSays from "@/components/MaloSays";
 import PageLoader from "@/components/PageLoader";
-import type { PlacardProduct } from "@/components/ProductPlacard";
+import type { PlacardProduct } from "@/components/product/ProductPlacard";
+import RetryAlert from "@/components/RetryAlert";
 import classes from "./CatalogResults.module.css";
 
 const PAGE_SIZE = 24;
@@ -47,12 +48,9 @@ const CatalogResults = ({ category, inStock, onAddToCart }: CatalogResultsProps)
     }
     if (!data) {
       return (
-        <div role="alert">
+        <RetryAlert onRetry={() => void refetch()}>
           <MaloSays>Couldn't get the stock list. Not my fault.</MaloSays>
-          <Button mt="lg" variant="outline" onClick={() => void refetch()}>
-            Try again
-          </Button>
-        </div>
+        </RetryAlert>
       );
     }
     if (products.length === 0) {

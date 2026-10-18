@@ -6,8 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router";
 
 import { endpointQuery, useSession } from "@/api";
-import { useCart } from "@/cart/CartProvider";
-import { adminProductPath } from "@/components/admin/adminDisplay";
+import { useCart } from "@/components/cart/CartProvider";
 import PageLoader from "@/components/PageLoader";
 import ProductBreadcrumbs from "@/components/product/ProductBreadcrumbs";
 import { percentOff } from "@/components/product/productDisplay";
@@ -15,7 +14,8 @@ import ProductGallery from "@/components/product/ProductGallery";
 import ProductNotFound from "@/components/product/ProductNotFound";
 import ProductSummary from "@/components/product/ProductSummary";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import classes from "./pages.module.css";
+import { adminProductPath } from "@/routes/paths";
+import classes from "@/styles/pages.module.css";
 
 const isMissing = (err: unknown) => err instanceof ApiRequestError && (err.status === 404 || err.status === 400);
 

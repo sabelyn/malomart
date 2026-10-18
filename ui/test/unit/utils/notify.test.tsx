@@ -1,6 +1,6 @@
 import { act } from "@testing-library/react";
 
-import { notify } from "@/notifications/notify";
+import { notify } from "@/utils/notify";
 import { announced, renderWithProviders, toasts } from "../../utils";
 
 describe("notify", () => {

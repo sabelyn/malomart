@@ -1,7 +1,7 @@
 import { screen } from "@testing-library/react";
 import { Route, Routes } from "react-router";
 
-import ErrorBoundary from "@/components/ErrorBoundary";
+import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import { GuestOnly, RequireAdmin, RequireUser } from "@/routes/guards";
 import { admin, customer, LocationDisplay, neverResolvingFetch, renderWithProviders } from "../../utils";
 

@@ -4,10 +4,10 @@ import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { apiCall, routeKey, useSession } from "@/api";
-import { notify } from "@/notifications/notify";
-import { addItems, applyQuantities, countItems, isEmptyCart } from "./cartItems";
-import type { CartItems } from "./guestCart";
-import { readGuestCart, subscribeGuestCart, writeGuestCart } from "./guestCart";
+import { addItems, applyQuantities, countItems, isEmptyCart } from "@/utils/cartItems";
+import type { CartItems } from "@/utils/guestCart";
+import { readGuestCart, subscribeGuestCart, writeGuestCart } from "@/utils/guestCart";
+import { notify } from "@/utils/notify";
 
 export type CartProduct = { id: string; title: string; stockCount: number };
 

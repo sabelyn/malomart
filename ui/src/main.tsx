@@ -13,8 +13,8 @@ import { BrowserRouter } from "react-router";
 
 import { queryClient } from "@/api";
 import App from "@/App";
-import { CartProvider } from "@/cart/CartProvider";
-import AppNotifications from "@/notifications/AppNotifications";
+import { CartProvider } from "@/components/cart/CartProvider";
+import AppNotifications from "@/components/layout/AppNotifications";
 import { SessionExitProvider } from "@/routes/sessionExit";
 import theme from "./theme";
 

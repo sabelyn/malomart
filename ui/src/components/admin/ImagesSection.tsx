@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { endpointKey, routeKey, useEndpointMutation } from "@/api";
 import ConfirmModal from "@/components/ConfirmModal";
 import { productImageSrc } from "@/components/product/productDisplay";
-import { announce } from "@/notifications/notify";
+import { announce } from "@/utils/notify";
 import classes from "./admin.module.css";
 import type { ImageUploadItem, UploadState } from "./useImageUploads";
 import { isUploadDone, useImageUploads } from "./useImageUploads";

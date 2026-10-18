@@ -1,8 +1,8 @@
 import { fireEvent, screen } from "@testing-library/react";
 import { Link, Route, Routes } from "react-router";
 
-import Layout from "@/components/Layout";
-import { admin, customer, json, renderWithProviders, stubApi } from "../../utils";
+import Layout from "@/components/layout/Layout";
+import { admin, customer, json, renderWithProviders, stubApi } from "../../../utils";
 
 const CUSTOMER_ID = "9b1e4c2a-5d3f-4a6b-8c7d-1e2f3a4b5c6d";
 

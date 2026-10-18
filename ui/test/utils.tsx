@@ -6,8 +6,8 @@ import type { ReactNode } from "react";
 import { MemoryRouter, useLocation } from "react-router";
 
 import { sessionKey } from "@/api";
-import { CartProvider } from "@/cart/CartProvider";
-import AppNotifications from "@/notifications/AppNotifications";
+import { CartProvider } from "@/components/cart/CartProvider";
+import AppNotifications from "@/components/layout/AppNotifications";
 import { SessionExitProvider } from "@/routes/sessionExit";
 
 export const customer: CurrentUser = {

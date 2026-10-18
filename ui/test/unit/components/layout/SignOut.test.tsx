@@ -4,9 +4,9 @@ import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router";
 
 import { sessionKey } from "@/api";
-import Layout from "@/components/Layout";
+import Layout from "@/components/layout/Layout";
 import { RequireUser } from "@/routes/guards";
-import { customer, json, LocationDisplay, renderWithProviders, requestsTo, stubApi } from "../../utils";
+import { customer, json, LocationDisplay, renderWithProviders, requestsTo, stubApi } from "../../../utils";
 
 const CUSTOMER_ID = "9b1e4c2a-5d3f-4a6b-8c7d-1e2f3a4b5c6d";
 const PRODUCT_ID = "5d0a4c1e-3b1f-4c55-9a51-7f3c2e1b8a01";

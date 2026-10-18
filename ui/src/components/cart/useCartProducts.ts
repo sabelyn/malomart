@@ -4,7 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
 import { endpointQuery } from "@/api";
-import { isEmptyCart, stockAdjustments } from "./cartItems";
+import { isEmptyCart, stockAdjustments } from "@/utils/cartItems";
 import { useCart } from "./CartProvider";
 
 const byTitle = (a: ProductOverview, b: ProductOverview) => a.title.localeCompare(b.title);

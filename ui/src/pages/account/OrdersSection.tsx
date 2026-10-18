@@ -1,18 +1,20 @@
-import { Button, Text, Title } from "@mantine/core";
+import { Button, Text } from "@mantine/core";
 import type { OrderStatus } from "@mm/lib/orders";
 import { ListOrdersQuery, listOrders } from "@mm/lib/orders";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 
 import { endpointInfiniteQuery } from "@/api";
+import SectionHeader from "@/components/layout/SectionHeader";
 import MaloSays from "@/components/MaloSays";
 import OrderList from "@/components/orders/OrderList";
 import orderClasses from "@/components/orders/orders.module.css";
 import OrderStatusFilter from "@/components/orders/OrderStatusFilter";
 import PageLoader from "@/components/PageLoader";
+import RetryAlert from "@/components/RetryAlert";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useSchemaSearch } from "@/hooks/useSchemaSearch";
-import classes from "./account.module.css";
+import { CATALOG_PATH } from "@/routes/paths";
 
 const PAGE_SIZE = 20;
 
@@ -52,12 +54,9 @@ const OrdersSection = () => {
     }
     if (!data) {
       return (
-        <div role="alert">
+        <RetryAlert onRetry={() => void refetch()}>
           <MaloSays>Couldn't find your orders. Not my fault.</MaloSays>
-          <Button mt="lg" variant="outline" onClick={() => void refetch()}>
-            Try again
-          </Button>
-        </div>
+        </RetryAlert>
       );
     }
     if (orders.length === 0) {
@@ -66,7 +65,7 @@ const OrdersSection = () => {
       ) : (
         <>
           <MaloSays>No orders yet. The shelves aren't going to empty themselves.</MaloSays>
-          <Button mt="lg" component={Link} to="/products">
+          <Button mt="lg" component={Link} to={CATALOG_PATH}>
             Browse the catalog
           </Button>
         </>
@@ -86,11 +85,7 @@ const OrdersSection = () => {
 
   return (
     <section aria-labelledby="orders-heading">
-      <div className={classes.sectionHeader}>
-        <Title order={2} id="orders-heading" className={classes.sectionTitle}>
-          Orders
-        </Title>
-      </div>
+      <SectionHeader id="orders-heading" title="Orders" />
       <OrderStatusFilter status={status} onChange={value => updateSearch({ status: value })} />
       <Text role="status" className={orderClasses.count}>
         {data && statusText(orders.length, hasNextPage, status)}

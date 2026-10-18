@@ -1,10 +1,16 @@
-import SectionNavLayout from "@/components/SectionNavLayout";
+import SectionNavLayout from "@/components/layout/SectionNavLayout";
+import {
+  ACCOUNT_PATH,
+  ACCOUNT_ADDRESSES_PATH,
+  ACCOUNT_PAYMENT_METHODS_PATH,
+  ACCOUNT_ORDERS_PATH
+} from "@/routes/paths";
 
 const SECTIONS = [
-  { to: "/account", label: "Profile", end: true },
-  { to: "/account/addresses", label: "Addresses" },
-  { to: "/account/payment-methods", label: "Payment methods" },
-  { to: "/account/orders", label: "Orders" }
+  { to: ACCOUNT_PATH, label: "Profile", end: true },
+  { to: ACCOUNT_ADDRESSES_PATH, label: "Addresses" },
+  { to: ACCOUNT_PAYMENT_METHODS_PATH, label: "Payment methods" },
+  { to: ACCOUNT_ORDERS_PATH, label: "Orders" }
 ];
 
 const AccountPage = () => <SectionNavLayout title="Your account" navLabel="Account sections" sections={SECTIONS} />;

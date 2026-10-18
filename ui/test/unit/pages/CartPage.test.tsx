@@ -3,8 +3,8 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router";
 
-import { GUEST_CART_KEY } from "@/cart/guestCart";
 import CartPage from "@/pages/CartPage";
+import { GUEST_CART_KEY } from "@/utils/guestCart";
 import { announced, customer, json, renderWithProviders, toasts } from "../../utils";
 
 const CUSTOMER_ID = "9b1e4c2a-5d3f-4a6b-8c7d-1e2f3a4b5c6d";

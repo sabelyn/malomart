@@ -1,0 +1,14 @@
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-md);
+  padding-bottom: var(--mantine-spacing-xs);
+  margin-bottom: var(--mantine-spacing-xl);
+  border-bottom: var(--mm-rule);
+}
+
+.title {
+  color: var(--mantine-color-gilt-3);
+}

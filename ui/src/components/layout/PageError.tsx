@@ -2,7 +2,7 @@ import { Button, Container, Title } from "@mantine/core";
 
 import MaloSays from "@/components/MaloSays";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import classes from "@/pages/pages.module.css";
+import classes from "@/styles/pages.module.css";
 
 type PageErrorProps = {
   onRetry: () => void;

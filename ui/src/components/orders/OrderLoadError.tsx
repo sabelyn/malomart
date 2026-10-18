@@ -3,7 +3,8 @@ import { ApiRequestError } from "@mm/lib/api";
 import { Link } from "react-router";
 
 import MaloSays from "@/components/MaloSays";
-import classes from "@/pages/pages.module.css";
+import { ACCOUNT_ORDERS_PATH } from "@/routes/paths";
+import classes from "@/styles/pages.module.css";
 
 type OrderLoadErrorProps = {
   error: unknown;
@@ -21,7 +22,7 @@ const OrderLoadError = ({ error, onRetry }: OrderLoadErrorProps) => {
           {missing ? "No order by that number. Check your orders." : "Couldn't find that order. Not my fault."}
         </MaloSays>
         {missing ? (
-          <Button component={Link} to="/account/orders" mt="lg" variant="outline">
+          <Button component={Link} to={ACCOUNT_ORDERS_PATH} mt="lg" variant="outline">
             Your orders
           </Button>
         ) : (

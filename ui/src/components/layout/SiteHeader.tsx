@@ -2,7 +2,7 @@ import { Container, Group, UnstyledButton, VisuallyHidden } from "@mantine/core"
 import { Link, NavLink, useLocation } from "react-router";
 
 import { useSession, useSignOut } from "@/api";
-import { signInPath } from "@/routes/paths";
+import { ACCOUNT_PATH, ADMIN_PATH, CART_PATH, CATALOG_PATH, HOME_PATH, signInPath } from "@/routes/paths";
 import { useExitSession } from "@/routes/sessionExit";
 import classes from "./SiteHeader.module.css";
 
@@ -12,9 +12,9 @@ type SiteHeaderProps = {
 
 const CartLink = ({ count }: { count?: number }) =>
   count === undefined ? (
-    <NavLink to="/cart">Cart</NavLink>
+    <NavLink to={CART_PATH}>Cart</NavLink>
   ) : (
-    <NavLink to="/cart" aria-label={`Cart, ${count} ${count === 1 ? "item" : "items"}`}>
+    <NavLink to={CART_PATH} aria-label={`Cart, ${count} ${count === 1 ? "item" : "items"}`}>
       Cart ({count})
     </NavLink>
   );
@@ -52,8 +52,8 @@ const AccountLinks = () => {
   if (user) {
     return (
       <>
-        {user.isAdmin && <NavLink to="/admin">Back office</NavLink>}
-        <NavLink to="/account">Account</NavLink>
+        {user.isAdmin && <NavLink to={ADMIN_PATH}>Back office</NavLink>}
+        <NavLink to={ACCOUNT_PATH}>Account</NavLink>
         <SignOutButton />
       </>
     );
@@ -66,7 +66,7 @@ const SiteHeader = ({ cartCount }: SiteHeaderProps) => (
     <Container size="lg">
       <Group justify="space-between" align="center" wrap="wrap" gap="md">
         <div className={classes.brand}>
-          <Link to="/" className={classes.logo}>
+          <Link to={HOME_PATH} className={classes.logo}>
             Malo Mart
           </Link>
           <p className={classes.formerly}>
@@ -77,7 +77,7 @@ const SiteHeader = ({ cartCount }: SiteHeaderProps) => (
         </div>
         <nav aria-label="Main" className={classes.nav}>
           <Group gap="lg">
-            <NavLink to="/products">Shop</NavLink>
+            <NavLink to={CATALOG_PATH}>Shop</NavLink>
             <CartLink count={cartCount} />
             <AccountLinks />
           </Group>

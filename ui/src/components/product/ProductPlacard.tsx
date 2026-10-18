@@ -2,9 +2,10 @@ import { Button, Group, Text, Title } from "@mantine/core";
 import type { Product, ProductOverview } from "@mm/lib/products";
 import { Link } from "react-router";
 
-import PriceTag from "@/components/PriceTag";
+import PriceTag from "@/components/product/PriceTag";
 import { percentOff, productImageSrc, stockLine } from "@/components/product/productDisplay";
 import SaleSticker from "@/components/product/SaleSticker";
+import { productPath } from "@/routes/paths";
 import classes from "./ProductPlacard.module.css";
 
 export type PlacardProduct = ProductOverview & Partial<Pick<Product, "category" | "description">>;
@@ -28,7 +29,7 @@ const ProductPlacard = ({ product, onAddToCart }: ProductPlacardProps) => {
         <div>
           {product.category && <Text className={classes.category}>{product.category}</Text>}
           <Title order={3} id={`product-${product.id}`} className={classes.title}>
-            <Link to={`/products/${product.id}`} className={classes.link}>
+            <Link to={productPath(product.id)} className={classes.link}>
               {product.title}
             </Link>
           </Title>

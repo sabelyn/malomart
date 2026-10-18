@@ -1,7 +1,7 @@
 import { Alert, Button, Text, Title } from "@mantine/core";
 
 import cartClasses from "@/components/cart/cart.module.css";
-import PriceTag, { formatRupees } from "@/components/PriceTag";
+import PriceTag, { formatRupees } from "@/components/product/PriceTag";
 import classes from "./checkout.module.css";
 import { itemsLabel, shippingCostLabel } from "./checkoutDisplay";
 

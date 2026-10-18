@@ -1,8 +1,9 @@
 import { Text, Title, VisuallyHidden } from "@mantine/core";
 import { Link } from "react-router";
 
-import { formatRupees } from "@/components/PriceTag";
+import { formatRupees } from "@/components/product/PriceTag";
 import { productImageSrc } from "@/components/product/productDisplay";
+import { productPath } from "@/routes/paths";
 import classes from "./checkout.module.css";
 
 const THUMBNAIL_WIDTH = 320;
@@ -30,7 +31,7 @@ const CheckoutItems = ({ items }: CheckoutItemsProps) => (
         )}
         <div>
           <Title order={3} className={classes.itemTitle}>
-            <Link to={`/products/${id}`}>{title}</Link>
+            <Link to={productPath(id)}>{title}</Link>
           </Title>
           <Text className={classes.itemMeta}>
             Quantity {amount}, {formatRupees(pricePerUnit)} rupees each

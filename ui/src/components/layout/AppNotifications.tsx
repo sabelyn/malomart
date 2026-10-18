@@ -2,7 +2,7 @@ import { VisuallyHidden } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { useSyncExternalStore } from "react";
 
-import { getAnnouncement, subscribeAnnouncements } from "./notify";
+import { getAnnouncement, subscribeAnnouncements } from "@/utils/notify";
 
 const AppNotifications = () => {
   const { id, message, urgent } = useSyncExternalStore(subscribeAnnouncements, getAnnouncement);

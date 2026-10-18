@@ -1,19 +1,20 @@
-import { Alert, Button, Container, Group, Stack, Text, TextInput } from "@mantine/core";
+import { Button, Container, Group, Text } from "@mantine/core";
 import { schemaResolver, useForm } from "@mantine/form";
 import { SignInBody, signIn, verifySignIn } from "@mm/lib/auth";
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
 
 import { isUnauthorized, useEndpointMutation, useSetSession } from "@/api";
+import classes from "@/components/auth/auth.module.css";
 import { authErrorMessage, SESSION_TIMED_OUT } from "@/components/auth/authErrors";
 import CodeForm from "@/components/auth/CodeForm";
+import SignInEmailForm from "@/components/auth/SignInEmailForm";
 import ChudleyHype from "@/components/ChudleyHype";
 import MaloSays from "@/components/MaloSays";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { SIGN_UP_PATH } from "@/routes/paths";
 import type { SignInState } from "@/routes/paths";
-import pages from "../pages.module.css";
-import classes from "./auth.module.css";
+import pages from "@/styles/pages.module.css";
 
 const SignInPage = () => {
   useDocumentTitle("Sign in");
@@ -79,31 +80,16 @@ const SignInPage = () => {
           </Group>
         </CodeForm>
       ) : (
-        <form
-          className={classes.form}
-          onSubmit={form.onSubmit(({ email }) => {
+        <SignInEmailForm
+          form={form}
+          pending={start.isPending}
+          error={start.error}
+          notice={notice}
+          onSubmit={email => {
             setNotice(undefined);
-            start.mutate({ body: { email: email.trim() } });
-          })}
-          noValidate
-        >
-          <Stack>
-            {start.error && (
-              <Alert color="red" variant="light">
-                {authErrorMessage(start.error)}
-              </Alert>
-            )}
-            {notice && (
-              <Alert variant="light" role="status">
-                {notice}
-              </Alert>
-            )}
-            <TextInput label="Email" type="email" autoComplete="email" required {...form.getInputProps("email")} />
-            <Button type="submit" loading={start.isPending}>
-              Email me a code
-            </Button>
-          </Stack>
-        </form>
+            start.mutate({ body: { email } });
+          }}
+        />
       )}
 
       <Text className={classes.switch}>

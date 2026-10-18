@@ -1,14 +1,14 @@
 import { Container, Title } from "@mantine/core";
 import { ListProductsQuery } from "@mm/lib/products";
 
-import { useCart } from "@/cart/CartProvider";
+import { useCart } from "@/components/cart/CartProvider";
 import CatalogFilters from "@/components/catalog/CatalogFilters";
 import CatalogResults from "@/components/catalog/CatalogResults";
 import ChudleyHype from "@/components/ChudleyHype";
 import MaloSays from "@/components/MaloSays";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useSchemaSearch } from "@/hooks/useSchemaSearch";
-import classes from "./pages.module.css";
+import classes from "@/styles/pages.module.css";
 
 const CatalogSearch = ListProductsQuery.pick({ category: true, inStock: true });
 

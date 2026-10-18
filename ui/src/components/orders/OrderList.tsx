@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 
 import { itemsLabel } from "@/components/checkout/checkoutDisplay";
-import { formatRupees } from "@/components/PriceTag";
+import { formatRupees } from "@/components/product/PriceTag";
+import { orderPath as customerOrderPath } from "@/routes/paths";
 import { formatOrderDate, orderNumber } from "./orderDisplay";
 import classes from "./orders.module.css";
 
@@ -19,8 +20,6 @@ type OrderListProps = {
   loadMoreFailed: boolean;
   onShowMore: () => void;
 };
-
-const customerOrderPath = (id: string) => `/orders/${id}`;
 
 const OrderList = ({
   orders,

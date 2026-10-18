@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { NavLink, Outlet } from "react-router";
 
 import PageLoader from "@/components/PageLoader";
-import pages from "@/pages/pages.module.css";
+import pages from "@/styles/pages.module.css";
 import classes from "./SectionNavLayout.module.css";
 
 export type SectionLink = { to: string; label: string; end?: boolean };

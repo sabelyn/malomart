@@ -1,7 +1,7 @@
 import { Button, Text, Title } from "@mantine/core";
 import type { ProductDto } from "@mm/lib/products";
 
-import PriceTag from "@/components/PriceTag";
+import PriceTag from "@/components/product/PriceTag";
 import { stockLine } from "@/components/product/productDisplay";
 import classes from "./ProductSummary.module.css";
 

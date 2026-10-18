@@ -1,16 +1,18 @@
-import { Button, Text, Title } from "@mantine/core";
+import { Text } from "@mantine/core";
 import type { OrderStatus } from "@mm/lib/orders";
 import { ListOrdersQuery, listOrders } from "@mm/lib/orders";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
 import { endpointInfiniteQuery } from "@/api";
+import SectionHeader from "@/components/layout/SectionHeader";
 import OrderList from "@/components/orders/OrderList";
 import orderClasses from "@/components/orders/orders.module.css";
 import OrderStatusFilter from "@/components/orders/OrderStatusFilter";
 import PageLoader from "@/components/PageLoader";
+import RetryAlert from "@/components/RetryAlert";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useSchemaSearch } from "@/hooks/useSchemaSearch";
-import accountClasses from "../account/account.module.css";
+import { adminOrderPath } from "@/routes/paths";
 
 const PAGE_SIZE = 25;
 
@@ -23,8 +25,6 @@ const statusText = (count: number, hasMore: boolean, status?: OrderStatus) => {
   const kind = status ? `${status.toLowerCase()} ` : "";
   return `Showing ${hasMore ? "the newest " : ""}${count} ${kind}order${count === 1 ? "" : "s"}.`;
 };
-
-export const adminOrderPath = (id: string) => `/admin/orders/${id}`;
 
 const AdminOrdersSection = () => {
   useDocumentTitle("Orders · Back office");
@@ -52,12 +52,9 @@ const AdminOrdersSection = () => {
     }
     if (!data) {
       return (
-        <div role="alert">
+        <RetryAlert onRetry={() => void refetch()}>
           <Text>Couldn't load orders.</Text>
-          <Button mt="lg" variant="outline" onClick={() => void refetch()}>
-            Try again
-          </Button>
-        </div>
+        </RetryAlert>
       );
     }
     if (orders.length === 0) {
@@ -79,11 +76,7 @@ const AdminOrdersSection = () => {
 
   return (
     <section aria-labelledby="admin-orders-heading">
-      <div className={accountClasses.sectionHeader}>
-        <Title order={2} id="admin-orders-heading" className={accountClasses.sectionTitle}>
-          Orders
-        </Title>
-      </div>
+      <SectionHeader id="admin-orders-heading" title="Orders" />
       <OrderStatusFilter status={status} onChange={value => updateSearch({ status: value })} />
       <Text role="status" className={orderClasses.count}>
         {data && statusText(orders.length, hasNextPage, status)}

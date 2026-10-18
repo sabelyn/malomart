@@ -1,11 +1,9 @@
 import { Button, Text, Title } from "@mantine/core";
 import { Link } from "react-router";
 
-import PriceTag from "@/components/PriceTag";
-import { signInPath, signUpPath } from "@/routes/paths";
+import PriceTag from "@/components/product/PriceTag";
+import { CART_PATH, CHECKOUT_PATH, signInPath, signUpPath } from "@/routes/paths";
 import classes from "./cart.module.css";
-
-const CART_PATH = "/cart";
 
 type CartSummaryProps = {
   count: number;
@@ -23,7 +21,7 @@ const CartSummary = ({ count, subtotal, signedIn }: CartSummaryProps) => (
     </Text>
     <PriceTag price={subtotal} />
     {signedIn ? (
-      <Button component={Link} to="/checkout" size="lg" fullWidth>
+      <Button component={Link} to={CHECKOUT_PATH} size="lg" fullWidth>
         Proceed to checkout
       </Button>
     ) : (

@@ -1,31 +1,31 @@
-import { Button, Text, Title } from "@mantine/core";
+import { Button, Text } from "@mantine/core";
 import type { PaymentMethodDto } from "@mm/lib/customers";
 import { customers, deletePaymentMethod, listPaymentMethods, updatePaymentMethod } from "@mm/lib/customers";
 import { useQuery } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 
 import { endpointQuery, useEndpointMutation } from "@/api";
+import classes from "@/components/account/account.module.css";
 import { paymentMethodName } from "@/components/account/accountDisplay";
 import AddPaymentMethodModal from "@/components/account/AddPaymentMethodModal";
 import EditPaymentMethodModal from "@/components/account/EditPaymentMethodModal";
-import PaymentMethodCard from "@/components/account/PaymentMethodCard";
+import PaymentMethodList from "@/components/account/PaymentMethodList";
 import ConfirmModal from "@/components/ConfirmModal";
+import SectionHeader from "@/components/layout/SectionHeader";
 import MaloSays from "@/components/MaloSays";
 import PageLoader from "@/components/PageLoader";
+import RetryAlert from "@/components/RetryAlert";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import classes from "./account.module.css";
 
-type ModalState<T> = { opened: boolean; target?: T };
-
-const defaultFirst = (a: PaymentMethodDto, b: PaymentMethodDto) => Number(b.isDefault) - Number(a.isDefault);
+type EditState = { opened: boolean; target?: PaymentMethodDto };
 
 const PaymentMethodsSection = () => {
   useDocumentTitle("Payment methods");
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const deletedRef = useRef(false);
+  const deleting = useConfirmDialog<PaymentMethodDto>(headingRef);
   const [adding, setAdding] = useState(false);
-  const [editing, setEditing] = useState<ModalState<PaymentMethodDto>>({ opened: false });
-  const [deleting, setDeleting] = useState<ModalState<PaymentMethodDto>>({ opened: false });
+  const [editing, setEditing] = useState<EditState>({ opened: false });
   const [focusEditId, setFocusEditId] = useState<string>();
   const [status, setStatus] = useState("");
 
@@ -34,9 +34,8 @@ const PaymentMethodsSection = () => {
   const remove = useEndpointMutation(deletePaymentMethod, {
     invalidates: [customers],
     onSuccess: () => {
-      deletedRef.current = true;
       setStatus(`Removed ${deleting.target ? paymentMethodName(deleting.target) : "the card"}.`);
-      setDeleting(current => ({ ...current, opened: false }));
+      deleting.complete();
     }
   });
 
@@ -50,14 +49,7 @@ const PaymentMethodsSection = () => {
 
   const openDelete = (method: PaymentMethodDto) => {
     remove.reset();
-    setDeleting({ opened: true, target: method });
-  };
-
-  const afterDeleteClosed = () => {
-    if (deletedRef.current) {
-      deletedRef.current = false;
-      headingRef.current?.focus();
-    }
+    deleting.open(method);
   };
 
   const added = (method: PaymentMethodDto) => {
@@ -76,43 +68,31 @@ const PaymentMethodsSection = () => {
     }
     if (!methods) {
       return (
-        <div role="alert">
+        <RetryAlert onRetry={() => void refetch()}>
           <MaloSays>Couldn't find your cards. Not my fault.</MaloSays>
-          <Button mt="lg" variant="outline" onClick={() => void refetch()}>
-            Try again
-          </Button>
-        </div>
+        </RetryAlert>
       );
     }
     if (methods.length === 0) {
       return <MaloSays>No cards on file. I don't do IOUs.</MaloSays>;
     }
     return (
-      <ul className={classes.cards}>
-        {[...methods].sort(defaultFirst).map(method => (
-          <li key={method.id}>
-            <PaymentMethodCard
-              method={method}
-              focusEdit={focusEditId === method.id}
-              makingDefault={makeDefault.isPending && makeDefault.variables?.params.id === method.id}
-              onEdit={target => setEditing({ opened: true, target })}
-              onDelete={openDelete}
-              onMakeDefault={({ id }) => makeDefault.mutate({ params: { id }, body: { setAsDefault: true } })}
-            />
-          </li>
-        ))}
-      </ul>
+      <PaymentMethodList
+        methods={methods}
+        focusEditId={focusEditId}
+        makingDefaultId={makeDefault.isPending ? makeDefault.variables.params.id : undefined}
+        onEdit={target => setEditing({ opened: true, target })}
+        onDelete={openDelete}
+        onMakeDefault={({ id }) => makeDefault.mutate({ params: { id }, body: { setAsDefault: true } })}
+      />
     );
   };
 
   return (
     <section aria-labelledby="payment-methods-heading">
-      <div className={classes.sectionHeader}>
-        <Title order={2} id="payment-methods-heading" ref={headingRef} tabIndex={-1} className={classes.sectionTitle}>
-          Payment methods
-        </Title>
+      <SectionHeader id="payment-methods-heading" title="Payment methods" headingRef={headingRef}>
         <Button onClick={() => setAdding(true)}>Add a card</Button>
-      </div>
+      </SectionHeader>
       <Text role="status" className={classes.status}>
         {status}
       </Text>
@@ -137,8 +117,8 @@ const PaymentMethodsSection = () => {
         pending={remove.isPending}
         error={remove.isError ? "Couldn't remove that card. Try again." : undefined}
         onConfirm={() => deleting.target && remove.mutate({ params: { id: deleting.target.id } })}
-        onClose={() => setDeleting(current => ({ ...current, opened: false }))}
-        onExitTransitionEnd={afterDeleteClosed}
+        onClose={deleting.close}
+        onExitTransitionEnd={deleting.afterClose}
       >
         {deleting.target && `${paymentMethodName(deleting.target)} will be wiped from the vault.`}
       </ConfirmModal>

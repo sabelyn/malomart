@@ -1,8 +1,8 @@
 import { Button, Group, SimpleGrid, Text } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
 
-import type { PlacardProduct } from "@/components/ProductPlacard";
-import ProductPlacard from "@/components/ProductPlacard";
+import type { PlacardProduct } from "@/components/product/ProductPlacard";
+import ProductPlacard from "@/components/product/ProductPlacard";
 import classes from "./CatalogGrid.module.css";
 
 type CatalogGridProps = {

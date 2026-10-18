@@ -1,4 +1,4 @@
-import { clearNotifications } from "@/notifications/notify";
+import { clearNotifications } from "@/utils/notify";
 
 Object.defineProperty(window, "matchMedia", {
   writable: true,

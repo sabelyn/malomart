@@ -1,22 +1,20 @@
-import { Alert, Button, Container, Group, Stack, Text, TextInput } from "@mantine/core";
+import { Button, Container, Group, Text } from "@mantine/core";
 import { schemaResolver, useForm } from "@mantine/form";
-import { ApiRequestError, ErrorCode } from "@mm/lib/api";
 import { confirmSignUp, SignUpBody, signUp } from "@mm/lib/auth";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 
 import { useEndpointMutation, useSetSession } from "@/api";
+import classes from "@/components/auth/auth.module.css";
 import { authErrorMessage } from "@/components/auth/authErrors";
 import CodeForm from "@/components/auth/CodeForm";
+import SignUpForm from "@/components/auth/SignUpForm";
 import ChudleyHype from "@/components/ChudleyHype";
 import MaloSays from "@/components/MaloSays";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { SIGN_IN_PATH } from "@/routes/paths";
 import type { SignInState } from "@/routes/paths";
-import pages from "../pages.module.css";
-import classes from "./auth.module.css";
-
-const isAccountExists = (error: unknown) => error instanceof ApiRequestError && error.code === ErrorCode.AccountExists;
+import pages from "@/styles/pages.module.css";
 
 const SignUpPage = () => {
   useDocumentTitle("Sign up");
@@ -53,8 +51,6 @@ const SignUpPage = () => {
     confirm.reset();
   };
 
-  const existingEmail = form.values.email.trim();
-
   return (
     <Container size="xs" className={pages.page}>
       <ChudleyHype>Join the Malo Mart family! Membership is free!</ChudleyHype>
@@ -79,34 +75,13 @@ const SignUpPage = () => {
           </Group>
         </CodeForm>
       ) : (
-        <form
-          className={classes.form}
-          onSubmit={form.onSubmit(({ name, email }) =>
-            register.mutate({ body: { name: name.trim(), email: email.trim() } })
-          )}
-          noValidate
-        >
-          <Stack>
-            {register.error && (
-              <Alert color="red" variant="light">
-                {authErrorMessage(register.error)}
-                {isAccountExists(register.error) && (
-                  <>
-                    {" "}
-                    <Link to={signInLocation} state={{ email: existingEmail } satisfies SignInState}>
-                      Sign in instead
-                    </Link>
-                  </>
-                )}
-              </Alert>
-            )}
-            <TextInput label="Name" autoComplete="name" required {...form.getInputProps("name")} />
-            <TextInput label="Email" type="email" autoComplete="email" required {...form.getInputProps("email")} />
-            <Button type="submit" loading={register.isPending}>
-              Email me a code
-            </Button>
-          </Stack>
-        </form>
+        <SignUpForm
+          form={form}
+          pending={register.isPending}
+          error={register.error}
+          signInLocation={signInLocation}
+          onSubmit={body => register.mutate({ body })}
+        />
       )}
 
       <Text className={classes.switch}>

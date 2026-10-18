@@ -3,6 +3,7 @@ import type { ReactNode, Ref } from "react";
 
 import MaloSays from "@/components/MaloSays";
 import PageLoader from "@/components/PageLoader";
+import RetryAlert from "@/components/RetryAlert";
 import classes from "./checkout.module.css";
 
 export type Choice = {
@@ -58,12 +59,9 @@ const ChoiceSection = ({
     }
     if (!choices) {
       return (
-        <div role="alert">
+        <RetryAlert onRetry={onRetry}>
           <MaloSays>{loadFailedMessage}</MaloSays>
-          <Button mt="lg" variant="outline" onClick={onRetry}>
-            Try again
-          </Button>
-        </div>
+        </RetryAlert>
       );
     }
     if (choices.length === 0) {

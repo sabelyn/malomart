@@ -3,11 +3,11 @@ import { useQueryErrorResetBoundary } from "@tanstack/react-query";
 import { Suspense, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router";
 
-import { useCart } from "@/cart/CartProvider";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import PageError from "@/components/PageError";
+import { useCart } from "@/components/cart/CartProvider";
+import ErrorBoundary from "@/components/layout/ErrorBoundary";
+import PageError from "@/components/layout/PageError";
+import SiteHeader from "@/components/layout/SiteHeader";
 import PageLoader from "@/components/PageLoader";
-import SiteHeader from "@/components/SiteHeader";
 import classes from "./Layout.module.css";
 
 const Layout = () => {
