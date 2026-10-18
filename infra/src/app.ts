@@ -17,7 +17,12 @@ const app = new App();
 const env: StackProps["env"] = { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION };
 
 const domainStack = new DomainStack(app, "MaloMartDomain", { env, domainName: DOMAIN_NAME });
-new MailStack(app, "MaloMartMail", { env, zone: domainStack.zone, inboxDomain: `inbox.${DOMAIN_NAME}` });
+new MailStack(app, "MaloMartMail", {
+  env,
+  zone: domainStack.zone,
+  inboxDomain: `inbox.${DOMAIN_NAME}`,
+  alarmEmail: process.env.DEV_ALARM_EMAIL
+});
 
 const stages: Record<string, { env: StackProps["env"]; config: StageConfig }> = {
   Dev: {
