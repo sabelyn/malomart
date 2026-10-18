@@ -21,3 +21,6 @@ openapi.json
 
 # Playwright MCP
 .playwright-mcp
+
+# Husky
+.husky/_/**
