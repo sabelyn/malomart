@@ -24,7 +24,10 @@ import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import classes from "@/styles/pages.module.css";
 
 const focusFirstControl = (section: HTMLElement | null) =>
-  section?.querySelector<HTMLElement>("input:not(:disabled), button:not(:disabled)")?.focus();
+  (
+    section?.querySelector<HTMLElement>("input:not(:disabled)") ??
+    section?.querySelector<HTMLElement>("button:not(:disabled)")
+  )?.focus();
 
 const CheckoutPage = () => {
   useDocumentTitle("Checkout");
