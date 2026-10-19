@@ -16,6 +16,12 @@ const verifier = CognitoJwtVerifier.create({
   tokenUse: "access"
 });
 
+export const containerFor = (user: User) => {
+  const scopedContainer = container.createChildContainer();
+  scopedContainer.registerInstance(USER, user);
+  return scopedContainer;
+};
+
 export const identity = async (req: Request, res: Response, next: NextFunction) => {
   req.container = container;
 
@@ -38,10 +44,7 @@ export const identity = async (req: Request, res: Response, next: NextFunction) 
       console.error(err);
     }
 
-    const scopedContainer = container.createChildContainer();
-    scopedContainer.registerInstance(USER, user);
-
-    req.container = scopedContainer;
+    req.container = containerFor(user);
     req.user = user;
   } catch {
     return next();

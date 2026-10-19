@@ -1,5 +1,6 @@
 import { Alert, Button, Group, Stack, Text } from "@mantine/core";
-import { confirmAccountDeletion, requestAccountDeletion } from "@mm/lib/auth";
+import type { SignInMethod } from "@mm/lib/auth";
+import { confirmAccountDeletion, requestAccountDeletion, startGoogleAccountDeletion } from "@mm/lib/auth";
 import { useState } from "react";
 
 import { isUnauthorized, useEndpointMutation } from "@/api";
@@ -94,13 +95,35 @@ const DeleteAccountFlow = ({ email, onCancel, onDeleted }: DeleteAccountFlowProp
   );
 };
 
+const GoogleDeleteAccountFlow = ({ onCancel }: { onCancel: () => void }) => (
+  <Stack>
+    <Text>
+      This deletes your account, saved addresses, and payment methods. There's no undo. We'll send you to Google to make
+      sure it's really you, and your account is deleted as soon as you're back.
+    </Text>
+    <Group justify="flex-end">
+      <Button variant="subtle" onClick={onCancel} data-autofocus>
+        Keep my account
+      </Button>
+      <Button component="a" href={startGoogleAccountDeletion.fullPath} color="red">
+        Confirm with Google
+      </Button>
+    </Group>
+  </Stack>
+);
+
 type DeleteAccountModalProps = DeleteAccountFlowProps & {
   opened: boolean;
+  signInMethod: SignInMethod;
 };
 
-const DeleteAccountModal = ({ opened, email, onCancel, onDeleted }: DeleteAccountModalProps) => (
+const DeleteAccountModal = ({ opened, email, signInMethod, onCancel, onDeleted }: DeleteAccountModalProps) => (
   <AppModal opened={opened} title="Delete your account?" onClose={onCancel}>
-    <DeleteAccountFlow email={email} onCancel={onCancel} onDeleted={onDeleted} />
+    {signInMethod === "google" ? (
+      <GoogleDeleteAccountFlow onCancel={onCancel} />
+    ) : (
+      <DeleteAccountFlow email={email} onCancel={onCancel} onDeleted={onDeleted} />
+    )}
   </AppModal>
 );
 

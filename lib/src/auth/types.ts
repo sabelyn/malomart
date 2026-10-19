@@ -23,11 +23,12 @@ export const SignInMethod = zenum(SignInMethods).meta({
 export type SignInMethod = (typeof SignInMethods)[number];
 
 export const SIGN_IN_PAGE_PATH = "/auth/sign-in";
+export const ACCOUNT_PAGE_PATH = "/account";
 
 export const GOOGLE_ERROR_PARAM = "googleError";
-export const GoogleSignInErrors = ["cancelled", "failed"] as const;
+export const GoogleSignInErrors = ["cancelled", "failed", "wrongAccount"] as const;
 export const GoogleSignInError = zenum(GoogleSignInErrors).meta({
   id: "GoogleSignInError",
-  description: "Why a Google sign-in sent the user back to the sign-in page."
+  description: "Why a Google sign-in or account deletion sent the user back without finishing."
 });
 export type GoogleSignInError = (typeof GoogleSignInErrors)[number];

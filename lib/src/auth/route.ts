@@ -91,13 +91,13 @@ export const startGoogleSignIn = new Endpoint(auth, {
 
 export const completeGoogleSignIn = new Endpoint(auth, {
   description:
-    "The OAuth callback Cognito redirects to after Google sign-in. Exchanges the authorization code for session cookies.",
+    "The OAuth callback Cognito redirects to after Google sign-in. Exchanges the authorization code for session cookies, or deletes the account when the sign-in started from startGoogleAccountDeletion.",
   id: "completeGoogleSignIn",
   method: "GET",
   path: "/google/callback",
   schemas: { query: CompleteGoogleSignInQuery },
   successDescription:
-    "A redirect to the return path with session cookies set, or to the sign-in page with a googleError query param.",
+    "A redirect to the return path with session cookies set, or home after an account deletion. Failures redirect to the sign-in or account page with a googleError query param.",
   successStatus: "302",
   summary: "Complete Google Sign-In"
 });
@@ -205,6 +205,7 @@ export const requestAccountDeletion = new Endpoint(auth, {
   access: "user",
   description: "Emails the user a one-time code to confirm deleting their account.",
   errors: {
+    403: "The user signs in with Google and confirms deletion through startGoogleAccountDeletion instead.",
     429: "Too many attempts. Try again later."
   },
   id: "requestAccountDeletion",
@@ -216,6 +217,22 @@ export const requestAccountDeletion = new Endpoint(auth, {
   summary: "Request Account Deletion"
 });
 
+export const startGoogleAccountDeletion = new Endpoint(auth, {
+  access: "user",
+  description:
+    "Starts deleting a Google user's account by having them sign in with Google again. Navigate the browser here instead of fetching it. The Google callback finishes the deletion.",
+  errors: {
+    403: "The user signs in with email and confirms deletion with an emailed code instead."
+  },
+  id: "startGoogleAccountDeletion",
+  method: "GET",
+  path: "/me/deletion/google",
+  schemas: {},
+  successDescription: "A redirect to Google's sign-in page.",
+  successStatus: "302",
+  summary: "Start Google Account Deletion"
+});
+
 export const confirmAccountDeletion = new Endpoint(auth, {
   access: "user",
   description:
@@ -223,6 +240,7 @@ export const confirmAccountDeletion = new Endpoint(auth, {
   errors: {
     400: "The code was invalid or expired.",
     401: "There is no deletion in progress, or it expired.",
+    403: "The user signs in with Google and confirms deletion through startGoogleAccountDeletion instead.",
     429: "Too many attempts. Try again later."
   },
   id: "confirmAccountDeletion",

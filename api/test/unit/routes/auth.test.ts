@@ -38,8 +38,12 @@ const signedInUser = { id: "user-123", email: EMAIL, name: "Link", isAdmin: fals
 const GOOGLE_URL = "https://auth.malomart.test/oauth2/authorize?mock=true";
 const CALLBACK_URI = "http://localhost:5173/api/auth/google/callback";
 
-const oauthCookie = (overrides: { state?: string; returnTo?: string; retried?: boolean } = {}) =>
-  `${SessionCookie.OAuth}=${encode({ state: "oauth-state", verifier: "oauth-verifier", returnTo: "/cart", retried: false, ...overrides })}`;
+type OAuthOverrides = { purpose?: string; state?: string; returnTo?: string; retried?: boolean; userId?: string };
+
+const oauthCookie = (overrides: OAuthOverrides = {}) =>
+  `${SessionCookie.OAuth}=${encode({ purpose: "signIn", state: "oauth-state", verifier: "oauth-verifier", returnTo: "/cart", retried: false, ...overrides })}`;
+
+const deletionCookie = (userId = "user-123") => oauthCookie({ purpose: "deleteAccount", returnTo: "/", userId });
 
 const decodeCookie = (cookie: string) =>
   JSON.parse(Buffer.from(cookie.slice(cookie.indexOf("=") + 1, cookie.indexOf(";")), "base64url").toString("utf8"));
@@ -381,6 +385,63 @@ describe("GET /api/auth/google/callback", () => {
     expect(res.headers.location).toBe("/auth/sign-in?googleError=failed&returnTo=%2Fcart");
     expect(setCookies(res)[SessionCookie.Access]).toBeUndefined();
   });
+
+  describe("when deleting an account", () => {
+    const completeDeletion = () =>
+      request(app)
+        .get("/api/auth/google/callback")
+        .query({ code: "auth-code", state: "oauth-state" })
+        .set("Cookie", deletionCookie());
+
+    it("removes saved data, deletes the user, clears the session, and goes home", async () => {
+      const res = await completeDeletion();
+
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toBe("/");
+      expect(service.deleteUser).toHaveBeenCalledWith(tokens().accessToken);
+      expect(customerService.deleteSavedData.mock.invocationCallOrder[0]).toBeLessThan(
+        service.deleteUser.mock.invocationCallOrder[0]
+      );
+      expect(customerService.deleteCustomerRecord).toHaveBeenCalled();
+      const cookies = setCookies(res);
+      expect(isCleared(cookies[SessionCookie.Access])).toBe(true);
+      expect(isCleared(cookies[SessionCookie.Refresh])).toBe(true);
+      expect(isCleared(cookies[SessionCookie.OAuth])).toBe(true);
+    });
+
+    it("refuses a different Google account", async () => {
+      service.exchangeAuthorizationCode.mockResolvedValue(
+        tokens({ accessToken: accessToken({ sub: "someone-else" }) })
+      );
+
+      const res = await completeDeletion();
+
+      expect(res.headers.location).toBe("/account?googleError=wrongAccount");
+      expect(customerService.deleteSavedData).not.toHaveBeenCalled();
+      expect(service.deleteUser).not.toHaveBeenCalled();
+      expect(setCookies(res)[SessionCookie.Access]).toBeUndefined();
+    });
+
+    it("sends a cancelled deletion back to the account page", async () => {
+      const res = await request(app)
+        .get("/api/auth/google/callback")
+        .query({ error: "access_denied" })
+        .set("Cookie", deletionCookie());
+
+      expect(res.headers.location).toBe("/account?googleError=cancelled");
+    });
+
+    it("keeps the account when removing saved data fails", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      customerService.deleteSavedData.mockRejectedValue(new Error("boom"));
+
+      const res = await completeDeletion();
+
+      expect(res.headers.location).toBe("/account?googleError=failed");
+      expect(service.deleteUser).not.toHaveBeenCalled();
+      expect(setCookies(res)[SessionCookie.Access]).toBeUndefined();
+    });
+  });
 });
 
 describe("POST /api/auth/refresh", () => {
@@ -654,6 +715,33 @@ describe("POST /api/auth/me/email/confirm", () => {
   });
 });
 
+describe("GET /api/auth/me/deletion/google", () => {
+  it("sends a Google user to Google and remembers who is deleting", async () => {
+    const res = await request(app).get("/api/auth/me/deletion/google").set(asGoogleUser).set("Cookie", sessionCookies);
+
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe(GOOGLE_URL);
+    expect(decodeCookie(setCookies(res)[SessionCookie.OAuth])).toMatchObject({
+      purpose: "deleteAccount",
+      returnTo: "/",
+      userId: "user-123"
+    });
+  });
+
+  it("refuses email users", async () => {
+    const res = await request(app).get("/api/auth/me/deletion/google").set(asRegularUser).set("Cookie", sessionCookies);
+
+    expect(res.status).toBe(403);
+    expect(service.googleSignInUrl).not.toHaveBeenCalled();
+  });
+
+  it("requires a user", async () => {
+    const res = await request(app).get("/api/auth/me/deletion/google");
+
+    expect(res.status).toBe(401);
+  });
+});
+
 describe("POST /api/auth/me/deletion", () => {
   it("emails a code to the user and stores the pending session", async () => {
     service.startSignIn.mockResolvedValue({ email: USER_EMAIL, session: "delete-session" });
@@ -669,6 +757,13 @@ describe("POST /api/auth/me/deletion", () => {
     const res = await request(app).post("/api/auth/me/deletion");
 
     expect(res.status).toBe(401);
+    expect(service.startSignIn).not.toHaveBeenCalled();
+  });
+
+  it("refuses Google users", async () => {
+    const res = await request(app).post("/api/auth/me/deletion").set(asGoogleUser).set("Cookie", sessionCookies);
+
+    expect(res.status).toBe(403);
     expect(service.startSignIn).not.toHaveBeenCalled();
   });
 });

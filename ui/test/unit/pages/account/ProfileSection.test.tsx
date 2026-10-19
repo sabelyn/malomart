@@ -21,7 +21,9 @@ const customerData: CustomerDto = {
 const GET_CUSTOMER = { "GET /api/customers": () => json(200, customerData) };
 const accepted = () => new Response(null, { status: 202 });
 
-const renderProfile = (session: CurrentUser = customer) =>
+const googleCustomer: CurrentUser = { ...customer, signInMethod: "google" };
+
+const renderProfile = (session: CurrentUser = customer, route = "/account") =>
   renderWithProviders(
     <>
       <Routes>
@@ -30,7 +32,7 @@ const renderProfile = (session: CurrentUser = customer) =>
       </Routes>
       <LocationDisplay />
     </>,
-    { route: "/account", session }
+    { route, session }
   );
 
 const dialog = () => screen.getByRole("dialog");
@@ -219,5 +221,30 @@ describe("ProfileSection", () => {
 
     expect(await within(dialog()).findByText("That took too long. Start over.")).toBeTruthy();
     expect(within(dialog()).getByRole("button", { name: "Email me a code" })).toBeTruthy();
+  });
+
+  it("sends Google users to Google to confirm the deletion", async () => {
+    const fetch = stubApi(GET_CUSTOMER);
+    const user = userEvent.setup();
+    renderProfile(googleCustomer);
+
+    await user.click(screen.getByRole("button", { name: "Delete account" }));
+
+    expect(within(dialog()).getByRole("link", { name: "Confirm with Google" }).getAttribute("href")).toBe(
+      "/api/auth/me/deletion/google"
+    );
+    expect(within(dialog()).queryByRole("button", { name: "Email me a code" })).toBeNull();
+    expect(requestsTo(fetch, "POST /api/auth/me/deletion")).toHaveLength(0);
+  });
+
+  it.each([
+    ["cancelled", "Google check cancelled. Your account is still here."],
+    ["failed", "Couldn't confirm with Google, so your account is still here. Try again."],
+    ["wrongAccount", "That's a different Google account. Use the one you sign in with here."]
+  ])("explains a %s Google deletion", (googleError, message) => {
+    stubApi(GET_CUSTOMER);
+    renderProfile(googleCustomer, `/account?${new URLSearchParams({ googleError })}`);
+
+    expect(screen.getByRole("alert").textContent).toBe(message);
   });
 });

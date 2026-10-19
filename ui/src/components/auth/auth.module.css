@@ -13,3 +13,7 @@
 .switch a {
   color: var(--mantine-color-gilt-3);
 }
+
+.alt {
+  margin-top: var(--mantine-spacing-lg);
+}

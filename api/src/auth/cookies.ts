@@ -1,6 +1,6 @@
 import { auth, SessionCookie } from "@mm/lib";
 import type { CookieOptions, Request, Response } from "express";
-import { boolean, strictObject, string } from "zod";
+import { boolean, strictObject, string, enum as zenum } from "zod";
 import type { infer as zinfer, ZodType } from "zod";
 
 import type { AuthTokens, PendingAuth } from "@/contracts";
@@ -15,7 +15,14 @@ const oauthOptions: CookieOptions = { ...baseOptions, sameSite: "lax" };
 
 const PendingCookie = strictObject({ email: string(), session: string() });
 
-const OAuthCookie = strictObject({ state: string(), verifier: string(), returnTo: string(), retried: boolean() });
+const OAuthCookie = strictObject({
+  purpose: zenum(["signIn", "deleteAccount"]),
+  state: string(),
+  verifier: string(),
+  returnTo: string(),
+  retried: boolean(),
+  userId: string().optional()
+});
 export type OAuthState = zinfer<typeof OAuthCookie>;
 
 const encodeCookie = (value: object) => Buffer.from(JSON.stringify(value)).toString("base64url");

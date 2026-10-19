@@ -1,6 +1,7 @@
 import { ErrorCode } from "@mm/lib";
 import type { CurrentUser, GoogleSignInError } from "@mm/lib/auth";
 import {
+  ACCOUNT_PAGE_PATH,
   completeGoogleSignIn,
   confirmAccountDeletion,
   confirmEmailChange,
@@ -16,12 +17,14 @@ import {
   signOut,
   signOutEverywhere,
   signUp,
+  startGoogleAccountDeletion,
   startGoogleSignIn,
   updateProfile,
   verifySignIn
 } from "@mm/lib/auth";
 import type { Request, Response } from "express";
 import { Router } from "express";
+import type { DependencyContainer } from "tsyringe";
 
 import { userFromIssuedToken } from "@/auth/claims";
 import {
@@ -36,11 +39,12 @@ import {
   setPendingAuth,
   setSessionCookies
 } from "@/auth/cookies";
+import type { OAuthState } from "@/auth/cookies";
 import { createPkce } from "@/auth/oauth";
 import { AUTH_SERVICE, CUSTOMER_SERVICE } from "@/contracts/tokens";
 import env from "@/env";
 import { badRequest, forbidden, toApiError, unauthorized } from "@/errors/helpers";
-import { sendCodeLimit, verifyCodeLimit } from "@/middleware";
+import { containerFor, sendCodeLimit, verifyCodeLimit } from "@/middleware";
 import { pathAndMiddleware, respond, respondEmpty, validateRequest } from "./helpers";
 
 const router = Router();
@@ -64,8 +68,8 @@ const accessTokenFor = (req: Request) => {
   return token;
 };
 
-const requireEmailSignIn = (user: CurrentUser) => {
-  if (user.signInMethod !== "email") {
+const requireSignInMethod = (user: CurrentUser, method: CurrentUser["signInMethod"]) => {
+  if (user.signInMethod !== method) {
     throw forbidden();
   }
 };
@@ -85,28 +89,51 @@ const renewSession = async (req: Request, res: Response, fallback: CurrentUser) 
   }
 };
 
-const googleErrorPath = (returnTo: string, error: GoogleSignInError) => {
+type GoogleFlow = Omit<OAuthState, "state" | "verifier">;
+
+const googleErrorPath = (flow: GoogleFlow | undefined, error: GoogleSignInError) => {
   const params = new URLSearchParams({ [GOOGLE_ERROR_PARAM]: error });
-  if (returnTo !== "/") {
-    params.set("returnTo", returnTo);
+  if (flow?.purpose === "deleteAccount") {
+    return `${ACCOUNT_PAGE_PATH}?${params}`;
+  }
+  if (flow && flow.returnTo !== "/") {
+    params.set("returnTo", flow.returnTo);
   }
   return `${SIGN_IN_PAGE_PATH}?${params}`;
 };
 
-const redirectToGoogle = (req: Request, res: Response, returnTo: string, retried: boolean) => {
-  const { state, verifier, challenge } = createPkce();
-  const url = req.container.resolve(AUTH_SERVICE).googleSignInUrl(GOOGLE_CALLBACK_URI, state, challenge);
-  setOAuthState(res, { state, verifier, returnTo, retried });
-  res.redirect(302, url);
+const redirectToGoogle = (req: Request, res: Response, flow: GoogleFlow) => {
+  try {
+    const { state, verifier, challenge } = createPkce();
+    const url = req.container.resolve(AUTH_SERVICE).googleSignInUrl(GOOGLE_CALLBACK_URI, state, challenge);
+    setOAuthState(res, { ...flow, state, verifier });
+    res.redirect(302, url);
+  } catch (err) {
+    console.error("Failed to start Google sign-in.", err);
+    res.redirect(302, googleErrorPath(flow, "failed"));
+  }
+};
+
+const deleteAccount = async (container: DependencyContainer, accessToken: string) => {
+  const customerService = container.resolve(CUSTOMER_SERVICE);
+  await customerService.deleteSavedData();
+  await container.resolve(AUTH_SERVICE).deleteUser(accessToken);
+  await customerService
+    .deleteCustomerRecord()
+    .catch(err => console.error("Failed to delete the customer record after deleting the account.", err));
 };
 
 router.get(...pathAndMiddleware(startGoogleSignIn), (req, res) => {
-  const returnTo = safeReturnTo(req.query.returnTo);
+  redirectToGoogle(req, res, { purpose: "signIn", returnTo: safeReturnTo(req.query.returnTo), retried: false });
+});
+
+router.get(...pathAndMiddleware(startGoogleAccountDeletion), (req, res, next) => {
   try {
-    redirectToGoogle(req, res, returnTo, false);
+    const user = signedInUser(req);
+    requireSignInMethod(user, "google");
+    return redirectToGoogle(req, res, { purpose: "deleteAccount", returnTo: "/", retried: false, userId: user.id });
   } catch (err) {
-    console.error("Failed to start Google sign-in.", err);
-    res.redirect(302, googleErrorPath(returnTo, "failed"));
+    return next(err);
   }
 });
 
@@ -115,7 +142,7 @@ router.get(...pathAndMiddleware(completeGoogleSignIn), async (req, res) => {
   const returnTo = oauth?.returnTo ?? "/";
   const fail = (error: GoogleSignInError) => {
     clearOAuthState(res);
-    res.redirect(302, googleErrorPath(returnTo, error));
+    res.redirect(302, googleErrorPath(oauth, error));
   };
 
   try {
@@ -125,7 +152,7 @@ router.get(...pathAndMiddleware(completeGoogleSignIn), async (req, res) => {
 
     if (error) {
       if (oauth && !oauth.retried && error_description?.includes(LINKED_ACCOUNT_ERROR)) {
-        return redirectToGoogle(req, res, returnTo, true);
+        return redirectToGoogle(req, res, { ...oauth, retried: true });
       }
       if (error === "access_denied") {
         return fail("cancelled");
@@ -141,6 +168,18 @@ router.get(...pathAndMiddleware(completeGoogleSignIn), async (req, res) => {
 
     const service = req.container.resolve(AUTH_SERVICE);
     const tokens = await service.exchangeAuthorizationCode(code, GOOGLE_CALLBACK_URI, oauth.verifier);
+
+    if (oauth.purpose === "deleteAccount") {
+      const user = userFromIssuedToken(tokens.accessToken);
+      if (user.id !== oauth.userId) {
+        return fail("wrongAccount");
+      }
+      await deleteAccount(containerFor({ ...user, customerData: {} }), tokens.accessToken);
+      clearOAuthState(res);
+      clearSessionCookies(res);
+      return res.redirect(302, returnTo);
+    }
+
     clearOAuthState(res);
     setSessionCookies(res, tokens);
     return res.redirect(302, returnTo);
@@ -303,7 +342,7 @@ router.post(...pathAndMiddleware(requestEmailChange, sendCodeLimit), async (req,
       body: { email }
     } = validateRequest(requestEmailChange, req);
     const user = signedInUser(req);
-    requireEmailSignIn(user);
+    requireSignInMethod(user, "email");
     if (email.toLowerCase() === user.email.toLowerCase()) {
       throw badRequest("That's already your email.");
     }
@@ -322,7 +361,7 @@ router.post(...pathAndMiddleware(confirmEmailChange, verifyCodeLimit), async (re
       body: { code }
     } = validateRequest(confirmEmailChange, req);
     const user = signedInUser(req);
-    requireEmailSignIn(user);
+    requireSignInMethod(user, "email");
 
     const service = req.container.resolve(AUTH_SERVICE);
     await service.confirmEmailChange(accessTokenFor(req), code);
@@ -335,6 +374,7 @@ router.post(...pathAndMiddleware(confirmEmailChange, verifyCodeLimit), async (re
 router.post(...pathAndMiddleware(requestAccountDeletion, sendCodeLimit), async (req, res, next) => {
   try {
     const user = signedInUser(req);
+    requireSignInMethod(user, "email");
 
     const service = req.container.resolve(AUTH_SERVICE);
     setPendingAuth(res, await service.startSignIn(user.email));
@@ -350,21 +390,16 @@ router.post(...pathAndMiddleware(confirmAccountDeletion, verifyCodeLimit), async
       body: { code }
     } = validateRequest(confirmAccountDeletion, req);
     const user = signedInUser(req);
+    requireSignInMethod(user, "email");
     const pending = readPendingAuth(req);
     if (pending?.email !== user.email) {
       throw unauthorized(undefined, ErrorCode.NoPendingSignIn);
     }
 
-    const authService = req.container.resolve(AUTH_SERVICE);
-    const customerService = req.container.resolve(CUSTOMER_SERVICE);
-    const tokens = await authService.verifySignIn(pending, code);
+    const tokens = await req.container.resolve(AUTH_SERVICE).verifySignIn(pending, code);
     clearPendingAuth(res);
 
-    await customerService.deleteSavedData();
-    await authService.deleteUser(tokens.accessToken);
-    await customerService
-      .deleteCustomerRecord()
-      .catch(err => console.error("Failed to delete the customer record after deleting the account.", err));
+    await deleteAccount(req.container, tokens.accessToken);
 
     clearSessionCookies(res);
     return respondEmpty(res, confirmAccountDeletion);

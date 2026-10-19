@@ -8,6 +8,7 @@ import { isUnauthorized, useEndpointMutation, useSetSession } from "@/api";
 import classes from "@/components/auth/auth.module.css";
 import { authErrorMessage, SESSION_TIMED_OUT } from "@/components/auth/authErrors";
 import CodeForm from "@/components/auth/CodeForm";
+import GoogleSignIn from "@/components/auth/GoogleSignIn";
 import SignInEmailForm from "@/components/auth/SignInEmailForm";
 import ChudleyHype from "@/components/ChudleyHype";
 import MaloSays from "@/components/MaloSays";
@@ -91,6 +92,8 @@ const SignInPage = () => {
           }}
         />
       )}
+
+      {!pendingEmail && <GoogleSignIn showError />}
 
       <Text className={classes.switch}>
         New here? <Link to={{ pathname: SIGN_UP_PATH, search: location.search }}>Make an account</Link>

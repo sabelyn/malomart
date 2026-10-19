@@ -8,6 +8,7 @@ import { useEndpointMutation, useSetSession } from "@/api";
 import classes from "@/components/auth/auth.module.css";
 import { authErrorMessage } from "@/components/auth/authErrors";
 import CodeForm from "@/components/auth/CodeForm";
+import GoogleSignIn from "@/components/auth/GoogleSignIn";
 import SignUpForm from "@/components/auth/SignUpForm";
 import ChudleyHype from "@/components/ChudleyHype";
 import MaloSays from "@/components/MaloSays";
@@ -83,6 +84,8 @@ const SignUpPage = () => {
           onSubmit={body => register.mutate({ body })}
         />
       )}
+
+      {!pendingEmail && <GoogleSignIn />}
 
       <Text className={classes.switch}>
         Already a member? <Link to={signInLocation}>Sign in</Link>

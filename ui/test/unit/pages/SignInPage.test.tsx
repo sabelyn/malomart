@@ -146,4 +146,40 @@ describe("SignInPage", () => {
       `/auth/sign-up?${new URLSearchParams({ returnTo: "/orders" })}`
     );
   });
+  it("starts Google sign-in with the return path", () => {
+    stubApi({});
+    renderSignIn(`/auth/sign-in?${new URLSearchParams({ returnTo: "/orders" })}`);
+
+    expect(screen.getByRole("link", { name: "Continue with Google" }).getAttribute("href")).toBe(
+      `/api/auth/google?${new URLSearchParams({ returnTo: "/orders" })}`
+    );
+  });
+
+  it.each([
+    ["cancelled", "Google sign-in cancelled."],
+    ["failed", "Google sign-in didn't work. Try again or use your email."]
+  ])("explains a %s Google sign-in", (googleError, message) => {
+    stubApi({});
+    renderSignIn(`/auth/sign-in?${new URLSearchParams({ googleError })}`);
+
+    expect(screen.getByRole("alert").textContent).toBe(message);
+  });
+
+  it("ignores unknown Google errors", () => {
+    stubApi({});
+    renderSignIn(`/auth/sign-in?${new URLSearchParams({ googleError: "nope" })}`);
+
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("hides Google sign-in during the code step", async () => {
+    stubApi({ "POST /api/auth/sign-in": () => new Response(null, { status: 202 }) });
+    const user = userEvent.setup();
+    renderSignIn();
+
+    await requestCode(user);
+    await screen.findByRole("textbox", { name: /code/i });
+
+    expect(screen.queryByRole("link", { name: "Continue with Google" })).toBeNull();
+  });
 });
