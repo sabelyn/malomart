@@ -17,7 +17,6 @@ import { VaultStack } from "./VaultStack";
 export { DomainStack, MailStack };
 
 export type StageConfig = {
-  apiTaskCount: number;
   siteDomain?: SiteDomain;
   emailDomain?: string;
   alarmEmail?: string;
@@ -68,7 +67,6 @@ export const configureStacks = (stage: Stage, config: StageConfig) => {
     imageBucket: frontendStack.imageBucket,
     uploadBucket: frontendStack.uploadBucket,
     gatewayStack,
-    vaultStack,
-    taskCount: config.apiTaskCount
+    vaultStack
   });
 };

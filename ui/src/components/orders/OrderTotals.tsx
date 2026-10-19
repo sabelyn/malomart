@@ -1,19 +1,18 @@
 import type { OrderDto } from "@mm/lib/orders";
 import { getOrderSubtotal, getOrderTotal } from "@mm/lib/orders";
 
-import { itemsLabel, shippingCostLabel } from "@/components/checkout/checkoutDisplay";
+import { shippingCostLabel } from "@/components/checkout/checkoutDisplay";
 import { formatRupees } from "@/components/product/PriceTag";
 import classes from "./orders.module.css";
 
 type OrderTotalsProps = {
   order: OrderDto;
-  count: number;
 };
 
-const OrderTotals = ({ order, count }: OrderTotalsProps) => (
+const OrderTotals = ({ order }: OrderTotalsProps) => (
   <dl className={classes.totals}>
     <div>
-      <dt>Subtotal, {itemsLabel(count)}</dt>
+      <dt>Subtotal</dt>
       <dd>{formatRupees(getOrderSubtotal(order.products))} rupees</dd>
     </div>
     <div>

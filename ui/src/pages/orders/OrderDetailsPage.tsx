@@ -30,7 +30,7 @@ type OrderDetailsPageProps = {
 const OrderDetailsPage = ({ backTo = ACCOUNT_ORDERS_PATH, backLabel = "All your orders" }: OrderDetailsPageProps) => {
   const { id = "" } = useParams();
   const order = useQuery(endpointQuery(getOrder, { params: { id } }));
-  const { items, count, isPending: itemsPending } = useOrderItems(order.data);
+  const { items, isPending: itemsPending } = useOrderItems(order.data);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const confirming = useConfirmDialog(headingRef);
   const [status, setStatus] = useState("");
@@ -73,7 +73,7 @@ const OrderDetailsPage = ({ backTo = ACCOUNT_ORDERS_PATH, backLabel = "All your 
 
       <OrderSection id="order-items-heading" title="Items">
         {itemsPending ? <PageLoader /> : <CheckoutItems items={items} />}
-        <OrderTotals order={order.data} count={count} />
+        <OrderTotals order={order.data} />
       </OrderSection>
 
       <Link to={backTo} className={orderClasses.backLink}>

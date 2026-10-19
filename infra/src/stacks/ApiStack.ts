@@ -36,7 +36,6 @@ type Props = {
   appOrigin: string;
   gatewayStack: GatewayStack;
   vaultStack: VaultStack;
-  taskCount: number;
   imageBucket: IBucket;
   uploadBucket: IBucket;
 };
@@ -139,7 +138,7 @@ export class ApiStack extends Stack {
     const service = new FargateService(this, "Service", {
       cluster,
       taskDefinition,
-      desiredCount: props.taskCount,
+      desiredCount: 1,
       capacityProviderStrategies: [{ capacityProvider: "FARGATE_SPOT", weight: 1 }],
       minHealthyPercent: 100,
       maxHealthyPercent: 200,

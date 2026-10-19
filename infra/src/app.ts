@@ -28,7 +28,6 @@ const stages: Record<string, { env: StackProps["env"]; config: StageConfig }> = 
   Dev: {
     env,
     config: {
-      apiTaskCount: Number(app.node.tryGetContext("apiTasks") ?? 0),
       siteDomain: { zoneName: DOMAIN_NAME, hostName: `dev.${DOMAIN_NAME}` },
       emailDomain: DOMAIN_NAME,
       alarmEmail: process.env.DEV_ALARM_EMAIL,

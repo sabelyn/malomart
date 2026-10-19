@@ -1,5 +1,5 @@
 import type { ProductOverview } from "@mm/lib/products";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router";
 
@@ -76,6 +76,24 @@ describe("CatalogPage", () => {
     expect(screen.getByTestId("location").textContent).toBe("/products?category=Shields&inStock=true");
     expect(requests().at(-1)?.get("inStock")).toBe("true");
     expect(screen.getByRole("status").textContent).toBe("Showing 1 product in Shields.");
+  });
+
+  it("shows each product's category only when no category is selected", async () => {
+    stubProducts(query =>
+      query.get("category") === "Shields"
+        ? { data: [overview("Hylian Shield", { category: "Shields" })] }
+        : { data: [overview("Red Potion", { category: "Potions" })] }
+    );
+    const user = userEvent.setup();
+    renderCatalog();
+
+    const potion = await screen.findByRole("article", { name: "Red Potion" });
+    expect(within(potion).getByText("Potions")).toBeTruthy();
+
+    await user.click(screen.getByRole("radio", { name: "Shields" }));
+
+    const shield = await screen.findByRole("article", { name: "Hylian Shield" });
+    expect(within(shield).queryByText("Shields")).toBeNull();
   });
 
   it("loads the next page and moves focus to the first new product", async () => {

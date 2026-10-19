@@ -43,11 +43,8 @@ const CartLine = ({ product, amount, onChangeAmount, onRemove }: CartLineProps) 
       <div className={classes.controls}>
         <NativeSelect
           className={classes.amount}
-          label={
-            <>
-              Quantity <VisuallyHidden>of {product.title}</VisuallyHidden>
-            </>
-          }
+          label="Quantity"
+          aria-label={`Quantity of ${product.title}`}
           data={amountOptions(product.stockCount, amount)}
           value={String(amount)}
           onChange={event => onChangeAmount(Number(event.currentTarget.value))}
@@ -57,7 +54,8 @@ const CartLine = ({ product, amount, onChangeAmount, onRemove }: CartLineProps) 
         </Button>
       </div>
       <Text className={classes.lineTotal}>
-        {formatRupees(product.price * amount)} <VisuallyHidden>rupees total</VisuallyHidden>
+        <span aria-hidden="true">{formatRupees(product.price * amount)}</span>
+        <VisuallyHidden>{formatRupees(product.price * amount)} rupees total</VisuallyHidden>
       </Text>
     </li>
   );

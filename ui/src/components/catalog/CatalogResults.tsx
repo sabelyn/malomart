@@ -7,15 +7,12 @@ import type { CatalogFilterValues } from "@/components/catalog/CatalogFilters";
 import CatalogGrid from "@/components/catalog/CatalogGrid";
 import MaloSays from "@/components/MaloSays";
 import PageLoader from "@/components/PageLoader";
-import type { PlacardProduct } from "@/components/product/ProductPlacard";
 import RetryAlert from "@/components/RetryAlert";
 import classes from "./CatalogResults.module.css";
 
 const PAGE_SIZE = 24;
 
-type CatalogResultsProps = CatalogFilterValues & {
-  onAddToCart: (product: PlacardProduct) => void;
-};
+type CatalogResultsProps = CatalogFilterValues;
 
 const statusText = (count: number, hasMore: boolean, category?: string) => {
   if (count === 0) {
@@ -25,7 +22,7 @@ const statusText = (count: number, hasMore: boolean, category?: string) => {
   return category ? `Showing ${products} in ${category}.` : `Showing ${products}.`;
 };
 
-const CatalogResults = ({ category, inStock, onAddToCart }: CatalogResultsProps) => {
+const CatalogResults = ({ category, inStock }: CatalogResultsProps) => {
   const {
     data,
     isPending,
@@ -70,7 +67,7 @@ const CatalogResults = ({ category, inStock, onAddToCart }: CatalogResultsProps)
         loadingMore={isFetchingNextPage}
         loadMoreFailed={isFetchNextPageError}
         onShowMore={() => void fetchNextPage()}
-        onAddToCart={onAddToCart}
+        hideCategory={!!category}
       />
     );
   };
@@ -83,7 +80,7 @@ const CatalogResults = ({ category, inStock, onAddToCart }: CatalogResultsProps)
         </Title>
       </VisuallyHidden>
       <Text role="status" className={classes.count}>
-        {data && statusText(products.length, hasNextPage, category)}
+        {data && !isPlaceholderData && statusText(products.length, hasNextPage, category)}
       </Text>
       {renderContent()}
     </section>

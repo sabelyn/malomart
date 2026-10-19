@@ -102,7 +102,7 @@ describe("CartPage", () => {
     expect(await screen.findByRole("heading", { level: 2, name: "Hylian Shield" })).toBeTruthy();
     expect(lineHeadings()).toEqual(["Hylian Shield", "Red Potion", "Summary"]);
     expect((quantity("Hylian Shield") as HTMLSelectElement).value).toBe("2");
-    expect(screen.getByText("Subtotal, 3 items")).toBeTruthy();
+    expect(screen.getByText("Subtotal: 420 rupees")).toBeTruthy();
     const summary = screen.getByRole("region", { name: "Summary" });
     expect(summary.textContent).toContain("420 rupees");
     expect(screen.queryByRole("link", { name: "Proceed to checkout" })).toBeNull();
@@ -144,7 +144,7 @@ describe("CartPage", () => {
     await user.selectOptions(quantity("Red Potion"), "2");
 
     expect(guestCart()).toEqual({ [potion.id]: 2 });
-    expect(screen.getByText("Subtotal, 2 items")).toBeTruthy();
+    expect(screen.getByText("Subtotal: 40 rupees")).toBeTruthy();
   });
 
   it("saves a signed-in customer's quantity change to the server", async () => {
@@ -156,7 +156,7 @@ describe("CartPage", () => {
     await user.selectOptions(quantity("Hylian Shield"), "4");
 
     await waitFor(() => expect(saves).toEqual([{ [shield.id]: 4, [potion.id]: 1 }]));
-    expect(screen.getByText("Subtotal, 5 items")).toBeTruthy();
+    expect(screen.getByText("Subtotal: 820 rupees")).toBeTruthy();
     expect(guestCart()).toEqual({});
   });
 
@@ -200,7 +200,7 @@ describe("CartPage", () => {
     await waitFor(() => expect(saves).toEqual([{ [shield.id]: 3, [potion.id]: 1 }]));
     await waitFor(() => expect(guestCart()).toEqual({}));
     expect((quantity("Hylian Shield") as HTMLSelectElement).value).toBe("3");
-    expect(screen.getByText("Subtotal, 4 items")).toBeTruthy();
+    expect(screen.getByText("Subtotal: 620 rupees")).toBeTruthy();
   });
 
   it("explains quantities the server lowered to match stock", async () => {

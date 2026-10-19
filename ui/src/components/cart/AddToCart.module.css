@@ -1,0 +1,12 @@
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-sm);
+}
+
+.amount {
+  min-width: 5ch;
+  text-align: center;
+  font-weight: 600;
+  color: var(--mantine-color-dark-0);
+}

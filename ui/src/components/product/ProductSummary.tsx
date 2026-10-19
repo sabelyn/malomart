@@ -1,24 +1,22 @@
-import { Button, Text, Title } from "@mantine/core";
+import { Text, Title } from "@mantine/core";
 import type { ProductDto } from "@mm/lib/products";
 
+import AddToCart from "@/components/cart/AddToCart";
 import PriceTag from "@/components/product/PriceTag";
 import { stockLine } from "@/components/product/productDisplay";
 import classes from "./ProductSummary.module.css";
 
 type ProductSummaryProps = {
   product: ProductDto;
-  onAddToCart: (product: ProductDto) => void;
 };
 
-const ProductSummary = ({ product, onAddToCart }: ProductSummaryProps) => (
+const ProductSummary = ({ product }: ProductSummaryProps) => (
   <div className={classes.summary}>
     <Title order={1}>{product.title}</Title>
     <Text className={classes.description}>{product.description}</Text>
     <PriceTag price={product.price} chudleyPrice={product.originalPrice ?? undefined} />
     <div className={classes.purchase}>
-      <Button size="lg" disabled={product.stockCount === 0} onClick={() => onAddToCart(product)}>
-        Add to cart
-      </Button>
+      <AddToCart product={product} size="lg" />
       <Text className={classes.stock}>{stockLine(product.stockCount)}</Text>
     </div>
     {product.features.length > 0 && (

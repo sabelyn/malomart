@@ -1,7 +1,6 @@
 import { Container, Title } from "@mantine/core";
 import { ListProductsQuery } from "@mm/lib/products";
 
-import { useCart } from "@/components/cart/CartProvider";
 import CatalogFilters from "@/components/catalog/CatalogFilters";
 import CatalogResults from "@/components/catalog/CatalogResults";
 import ChudleyHype from "@/components/ChudleyHype";
@@ -13,7 +12,6 @@ import classes from "@/styles/pages.module.css";
 const CatalogSearch = ListProductsQuery.pick({ category: true, inStock: true });
 
 const CatalogPage = () => {
-  const { add: addToCart } = useCart();
   const [{ category, inStock }, updateSearch] = useSchemaSearch(CatalogSearch);
   useDocumentTitle(category ?? "Catalog");
 
@@ -25,7 +23,7 @@ const CatalogPage = () => {
       <ChudleyHype heading={false}>You'll buy it now, if you're smart, at MAAAA-LOOOO MART!</ChudleyHype>
       <MaloSays>Everything here is for sale. Pick something.</MaloSays>
       <CatalogFilters category={category} inStock={inStock} onChange={updateSearch} />
-      <CatalogResults category={category} inStock={inStock} onAddToCart={addToCart} />
+      <CatalogResults category={category} inStock={inStock} />
     </Container>
   );
 };

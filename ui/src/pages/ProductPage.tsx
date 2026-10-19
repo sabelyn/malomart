@@ -6,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router";
 
 import { endpointQuery, useSession } from "@/api";
-import { useCart } from "@/components/cart/CartProvider";
 import PageLoader from "@/components/PageLoader";
 import ProductBreadcrumbs from "@/components/product/ProductBreadcrumbs";
 import { percentOff } from "@/components/product/productDisplay";
@@ -21,7 +20,6 @@ const isMissing = (err: unknown) => err instanceof ApiRequestError && (err.statu
 
 const ProductPage = () => {
   const { id = "" } = useParams();
-  const { add: addToCart } = useCart();
   const { data: user } = useSession();
   const validId = Id.safeParse(id).success;
   const { data: product, error } = useQuery({
@@ -55,7 +53,7 @@ const ProductPage = () => {
             imageKeys={product.imageKeys}
             percentOff={percentOff(product.price, product.originalPrice)}
           />
-          <ProductSummary product={product} onAddToCart={addToCart} />
+          <ProductSummary product={product} />
         </SimpleGrid>
       </>
     );

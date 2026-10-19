@@ -105,7 +105,7 @@ const AdminProductsSection = () => {
       </Text>
       <AdminProductFilters category={category} inStock={inStock} onChange={updateSearch} />
       <Text role="status" className={orderClasses.count}>
-        {data && statusText(items.length, hasNextPage)}
+        {data && !isPlaceholderData && statusText(items.length, hasNextPage)}
       </Text>
       {renderContent()}
 

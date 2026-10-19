@@ -3,10 +3,9 @@ import { Alert, Button, Text, Title } from "@mantine/core";
 import cartClasses from "@/components/cart/cart.module.css";
 import PriceTag, { formatRupees } from "@/components/product/PriceTag";
 import classes from "./checkout.module.css";
-import { itemsLabel, shippingCostLabel } from "./checkoutDisplay";
+import { shippingCostLabel } from "./checkoutDisplay";
 
 type CheckoutSummaryProps = {
-  count: number;
   subtotal: number;
   shippingCost: number;
   error?: string;
@@ -14,14 +13,14 @@ type CheckoutSummaryProps = {
   onPlaceOrder: () => void;
 };
 
-const CheckoutSummary = ({ count, subtotal, shippingCost, error, placing, onPlaceOrder }: CheckoutSummaryProps) => (
+const CheckoutSummary = ({ subtotal, shippingCost, error, placing, onPlaceOrder }: CheckoutSummaryProps) => (
   <section aria-labelledby="checkout-summary-heading" className={`${cartClasses.summary} ${classes.summary}`}>
     <Title order={2} id="checkout-summary-heading" className={cartClasses.summaryHeading}>
       Order summary
     </Title>
     <dl className={classes.totals}>
       <div>
-        <dt>Subtotal, {itemsLabel(count)}</dt>
+        <dt>Subtotal</dt>
         <dd>{formatRupees(subtotal)} rupees</dd>
       </div>
       <div>

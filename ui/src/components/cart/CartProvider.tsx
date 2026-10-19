@@ -20,6 +20,7 @@ type CartContextValue = {
   loadFailed: boolean;
   adjustments: Quantities;
   add: (product: CartProduct) => void;
+  subtract: (product: CartProduct) => void;
   setQuantity: (productId: string, amount: number) => void;
   remove: (productId: string) => void;
   adjust: (quantities: Quantities) => void;
@@ -48,8 +49,6 @@ export const useCart = () => {
   }
   return cart;
 };
-
-const itemsWord = (count: number) => (count === 1 ? "item" : "items");
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const queryClient = useQueryClient();
@@ -130,7 +129,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       notify({ tone: "info", message: "Your cart is still loading. Try again in a moment." });
       return;
     }
-    if ((items[product.id] ?? 0) >= product.stockCount) {
+    const amount = items[product.id] ?? 0;
+    if (amount >= product.stockCount) {
       notify({ tone: "info", message: `Your cart already has every ${product.title} in stock.` });
       return;
     }
@@ -139,7 +139,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       [product.id]: Math.min((current[product.id] ?? 0) + 1, product.stockCount)
     }));
     if (added) {
-      notify({ message: `Added ${product.title} to your cart. ${count + 1} ${itemsWord(count + 1)} in cart.` });
+      notify({ message: `Added ${product.title} to your cart. ${amount + 1} in cart.` });
+    }
+  };
+
+  const subtract = (product: CartProduct) => {
+    const amount = items[product.id] ?? 0;
+    if (amount === 0) {
+      return;
+    }
+    if (update(current => applyQuantities(current, { [product.id]: (current[product.id] ?? 0) - 1 }))) {
+      notify({
+        message:
+          amount === 1
+            ? `Removed ${product.title} from your cart.`
+            : `Removed one ${product.title} from your cart. ${amount - 1} in cart.`
+      });
     }
   };
 
@@ -150,6 +165,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     loadFailed: !!userId && serverCart.isError,
     adjustments,
     add,
+    subtract,
     setQuantity: (productId, amount) => update(current => ({ ...current, [productId]: amount })),
     remove: productId => update(current => applyQuantities(current, { [productId]: 0 })),
     adjust: quantities => {

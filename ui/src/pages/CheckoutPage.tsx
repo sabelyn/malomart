@@ -114,7 +114,6 @@ const CheckoutPage = () => {
             />
           </div>
           <CheckoutSummary
-            count={cart.count}
             subtotal={subtotal}
             shippingCost={shippingCost}
             error={placeOrder.isError ? orderErrorMessage(placeOrder.error) : undefined}

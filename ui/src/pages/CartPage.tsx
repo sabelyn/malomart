@@ -49,7 +49,7 @@ const CartPage = () => {
               />
             ))}
           </ul>
-          <CartSummary count={cart.count} subtotal={subtotal} signedIn={!!user} />
+          <CartSummary subtotal={subtotal} signedIn={!!user} />
         </div>
       </CartGate>
     </Container>

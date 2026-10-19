@@ -19,7 +19,8 @@ const PriceTag = ({ price, chudleyPrice }: PriceTagProps) => (
     )}
     <p className={classes.now}>
       <img src={rupeeImage} alt="" width={23} height={44} className={classes.rupee} />
-      {formatRupees(price)} <VisuallyHidden>rupees</VisuallyHidden>
+      <span aria-hidden="true">{formatRupees(price)}</span>
+      <VisuallyHidden>{formatRupees(price)} rupees</VisuallyHidden>
     </p>
   </div>
 );

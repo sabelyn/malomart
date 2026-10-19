@@ -203,8 +203,8 @@ describe("CheckoutPage", () => {
     expect(within(items).getByRole("link", { name: "Edit cart" }).getAttribute("href")).toBe("/cart");
 
     const summary = section("Order summary");
-    expect(within(summary).getByText("Subtotal, 3 items")).toBeTruthy();
-    expect(within(summary).getByText("420 rupees")).toBeTruthy();
+    expect(within(summary).getByText("Subtotal")).toBeTruthy();
+    expect(within(summary).getByText("420 rupees", { selector: "dd" })).toBeTruthy();
     expect(within(summary).getByText("Free")).toBeTruthy();
     expect(within(summary).getByText("420")).toBeTruthy();
   });

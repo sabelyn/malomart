@@ -78,7 +78,7 @@ describe("CartProvider", () => {
     await user.click(screen.getByRole("button", { name: "Add shield" }));
 
     expect(shown("items")).toEqual({ [potion.id]: 1, [shield.id]: 1 });
-    expect(announced()).toBe("Added Hylian Shield to your cart. 2 items in cart.");
+    expect(announced()).toBe("Added Hylian Shield to your cart. 1 in cart.");
     await waitFor(() => expect(requestsTo(fetch, SAVE)).toEqual([{ [potion.id]: 1, [shield.id]: 1 }]));
     expect(localStorage.getItem(GUEST_CART_KEY)).toBeNull();
   });

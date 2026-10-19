@@ -12,7 +12,7 @@ type CatalogGridProps = {
   loadingMore: boolean;
   loadMoreFailed: boolean;
   onShowMore: () => void;
-  onAddToCart: (product: PlacardProduct) => void;
+  hideCategory?: boolean;
 };
 
 const CatalogGrid = ({
@@ -22,7 +22,7 @@ const CatalogGrid = ({
   loadingMore,
   loadMoreFailed,
   onShowMore,
-  onAddToCart
+  hideCategory
 }: CatalogGridProps) => {
   const gridRef = useRef<HTMLDivElement>(null);
   const [focusIndex, setFocusIndex] = useState<number>();
@@ -51,7 +51,7 @@ const CatalogGrid = ({
         className={classes.grid}
       >
         {products.map(product => (
-          <ProductPlacard key={product.id} product={product} onAddToCart={onAddToCart} />
+          <ProductPlacard key={product.id} product={product} hideCategory={hideCategory} />
         ))}
       </SimpleGrid>
       {hasMore && (

@@ -88,7 +88,7 @@ const OrdersSection = () => {
       <SectionHeader id="orders-heading" title="Orders" />
       <OrderStatusFilter status={status} onChange={value => updateSearch({ status: value })} />
       <Text role="status" className={orderClasses.count}>
-        {data && statusText(orders.length, hasNextPage, status)}
+        {data && !isPlaceholderData && statusText(orders.length, hasNextPage, status)}
       </Text>
       {renderContent()}
     </section>

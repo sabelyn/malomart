@@ -85,8 +85,38 @@ describe("ProductPage", () => {
     await user.click(await screen.findByRole("button", { name: "Add to cart" }));
 
     expect(JSON.parse(localStorage.getItem(GUEST_CART_KEY) ?? "{}")).toEqual({ [ID]: 1 });
-    expect(announced()).toBe("Added Hylian Shield to your cart. 1 item in cart.");
-    expect(toasts()).toEqual(["Added Hylian Shield to your cart. 1 item in cart."]);
+    expect(announced()).toBe("Added Hylian Shield to your cart. 1 in cart.");
+    expect(toasts()).toEqual(["Added Hylian Shield to your cart. 1 in cart."]);
+  });
+
+  it("swaps to quantity buttons after adding and moves focus between them", async () => {
+    stubApi({ [`GET /api/products/${ID}`]: () => json(200, product) });
+    const user = userEvent.setup();
+    renderProduct();
+
+    await user.click(await screen.findByRole("button", { name: "Add to cart" }));
+
+    const more = screen.getByRole("button", { name: "Add one more Hylian Shield" });
+    expect(document.activeElement).toBe(more);
+    expect(screen.getByText("1 in cart")).toBeTruthy();
+
+    await user.click(more);
+
+    expect(screen.getByText("2 in cart")).toBeTruthy();
+    expect(announced()).toBe("Added Hylian Shield to your cart. 2 in cart.");
+    expect(JSON.parse(localStorage.getItem(GUEST_CART_KEY) ?? "{}")).toEqual({ [ID]: 2 });
+
+    const fewer = screen.getByRole("button", { name: "Remove one Hylian Shield" });
+    await user.click(fewer);
+
+    expect(screen.getByText("1 in cart")).toBeTruthy();
+    expect(announced()).toBe("Removed one Hylian Shield from your cart. 1 in cart.");
+
+    await user.click(fewer);
+
+    expect(JSON.parse(localStorage.getItem(GUEST_CART_KEY) ?? "{}")).toEqual({});
+    expect(announced()).toBe("Removed Hylian Shield from your cart.");
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Add to cart" }));
   });
 
   it("won't add more than the stock on hand", async () => {
@@ -95,7 +125,10 @@ describe("ProductPage", () => {
     const user = userEvent.setup();
     renderProduct();
 
-    await user.click(await screen.findByRole("button", { name: "Add to cart" }));
+    const more = await screen.findByRole("button", { name: "Add one more Hylian Shield" });
+    expect(more.getAttribute("aria-disabled")).toBe("true");
+
+    await user.click(more);
 
     expect(JSON.parse(localStorage.getItem(GUEST_CART_KEY) ?? "{}")).toEqual({ [ID]: 2 });
     expect(announced()).toBe("Your cart already has every Hylian Shield in stock.");

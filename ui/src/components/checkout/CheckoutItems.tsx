@@ -38,7 +38,8 @@ const CheckoutItems = ({ items }: CheckoutItemsProps) => (
           </Text>
         </div>
         <Text className={classes.itemTotal}>
-          {formatRupees(amount * pricePerUnit)} <VisuallyHidden>rupees total</VisuallyHidden>
+          <span aria-hidden="true">{formatRupees(amount * pricePerUnit)}</span>
+          <VisuallyHidden>{formatRupees(amount * pricePerUnit)} rupees total</VisuallyHidden>
         </Text>
       </li>
     ))}

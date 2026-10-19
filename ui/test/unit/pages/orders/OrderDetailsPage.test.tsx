@@ -109,7 +109,7 @@ describe("OrderDetailsPage", () => {
     ).toEqual(["Hylian Shield", "Red Potion"]);
     expect(within(items).getByText("Quantity 2, 200 rupees each")).toBeTruthy();
     expect(items.querySelector("img")?.getAttribute("src")).toContain("products/shield/front");
-    expect(within(items).getByText("Subtotal, 3 items")).toBeTruthy();
+    expect(within(items).getByText("Subtotal")).toBeTruthy();
     expect(within(items).getByText("420 rupees")).toBeTruthy();
     expect(within(items).getByText("40 rupees")).toBeTruthy();
     expect(within(items).getByText("460 rupees")).toBeTruthy();
