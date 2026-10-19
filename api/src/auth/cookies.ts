@@ -1,6 +1,7 @@
 import { auth, SessionCookie } from "@mm/lib";
 import type { CookieOptions, Request, Response } from "express";
-import { strictObject, string } from "zod";
+import { boolean, strictObject, string } from "zod";
+import type { infer as zinfer, ZodType } from "zod";
 
 import type { AuthTokens, PendingAuth } from "@/contracts";
 
@@ -10,32 +11,46 @@ export const PENDING_TTL_MS = 10 * 60 * 1000;
 const baseOptions: CookieOptions = { httpOnly: true, secure: true, sameSite: "strict", path: "/" };
 const refreshOptions: CookieOptions = { ...baseOptions, path: auth.fullPath };
 
+const oauthOptions: CookieOptions = { ...baseOptions, sameSite: "lax" };
+
 const PendingCookie = strictObject({ email: string(), session: string() });
 
-export const readAccessToken = (req: Request): string | undefined => req.cookies?.[SessionCookie.Access];
+const OAuthCookie = strictObject({ state: string(), verifier: string(), returnTo: string(), retried: boolean() });
+export type OAuthState = zinfer<typeof OAuthCookie>;
 
-export const readRefreshToken = (req: Request): string | undefined => req.cookies?.[SessionCookie.Refresh];
+const encodeCookie = (value: object) => Buffer.from(JSON.stringify(value)).toString("base64url");
 
-export const readPendingAuth = (req: Request): PendingAuth | undefined => {
-  const raw = req.cookies?.[SessionCookie.Pending];
+const decodeCookie = <T>(raw: unknown, schema: ZodType<T>): T | undefined => {
   if (typeof raw !== "string") {
     return undefined;
   }
   try {
-    const result = PendingCookie.safeParse(JSON.parse(Buffer.from(raw, "base64url").toString("utf8")));
+    const result = schema.safeParse(JSON.parse(Buffer.from(raw, "base64url").toString("utf8")));
     return result.success ? result.data : undefined;
   } catch {
     return undefined;
   }
 };
 
+export const readAccessToken = (req: Request): string | undefined => req.cookies?.[SessionCookie.Access];
+
+export const readRefreshToken = (req: Request): string | undefined => req.cookies?.[SessionCookie.Refresh];
+
+export const readPendingAuth = (req: Request): PendingAuth | undefined =>
+  decodeCookie(req.cookies?.[SessionCookie.Pending], PendingCookie);
+
 export const setPendingAuth = (res: Response, pending: PendingAuth) =>
-  res.cookie(SessionCookie.Pending, Buffer.from(JSON.stringify(pending)).toString("base64url"), {
-    ...baseOptions,
-    maxAge: PENDING_TTL_MS
-  });
+  res.cookie(SessionCookie.Pending, encodeCookie(pending), { ...baseOptions, maxAge: PENDING_TTL_MS });
 
 export const clearPendingAuth = (res: Response) => res.clearCookie(SessionCookie.Pending, baseOptions);
+
+export const readOAuthState = (req: Request): OAuthState | undefined =>
+  decodeCookie(req.cookies?.[SessionCookie.OAuth], OAuthCookie);
+
+export const setOAuthState = (res: Response, state: OAuthState) =>
+  res.cookie(SessionCookie.OAuth, encodeCookie(state), { ...oauthOptions, maxAge: PENDING_TTL_MS });
+
+export const clearOAuthState = (res: Response) => res.clearCookie(SessionCookie.OAuth, oauthOptions);
 
 export const setSessionCookies = (res: Response, tokens: AuthTokens) => {
   res.cookie(SessionCookie.Access, tokens.accessToken, { ...baseOptions, maxAge: tokens.expiresIn * 1000 });

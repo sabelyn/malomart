@@ -101,6 +101,7 @@ export class ApiStack extends Stack {
       INVOKE_FUNCTION_NAMES: JSON.stringify(
         Object.fromEntries(Object.entries(invokeFunctions).map(([key, func]) => [key, func.functionName]))
       ),
+      ...(props.authStack.oauthDomain ? { OAUTH_DOMAIN: props.authStack.oauthDomain } : {}),
       PORT: String(API_PORT),
       TABLE_INDEXES: JSON.stringify(INDEXES),
       TABLE_NAMES: JSON.stringify(

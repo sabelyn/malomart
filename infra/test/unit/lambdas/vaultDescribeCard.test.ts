@@ -13,7 +13,7 @@ const card: VaultCard = {
   token: "card-token",
   customerId,
   cypher: new Uint8Array([1, 2, 3]),
-  brand: "Hyrulian Express",
+  brand: "Hyrulean Express",
   expirationMonth: 4,
   expirationYear: 2030,
   lastFour: "4242"
@@ -33,7 +33,7 @@ it("looks up the card by token", async () => {
 
 it("returns only the card metadata to its owner", async () => {
   await expect(invoke(handler, { token: card.token, customerId })).resolves.toEqual({
-    brand: "Hyrulian Express",
+    brand: "Hyrulean Express",
     expirationMonth: 4,
     expirationYear: 2030,
     lastFour: "4242"

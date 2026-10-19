@@ -1,11 +1,13 @@
 import { apiRoot, Endpoint, Route } from "../api";
 import {
+  CompleteGoogleSignInQuery,
   ConfirmAccountDeletionBody,
   ConfirmEmailChangeBody,
   ConfirmSignUpBody,
   RequestEmailChangeBody,
   SignInBody,
   SignUpBody,
+  StartGoogleSignInQuery,
   UpdateProfileBody,
   VerifySignInBody
 } from "./requests";
@@ -73,6 +75,31 @@ export const verifySignIn = new Endpoint(auth, {
   schemas: { body: VerifySignInBody, response: CurrentUser },
   successDescription: "The signed-in user.",
   summary: "Verify Sign In"
+});
+
+export const startGoogleSignIn = new Endpoint(auth, {
+  description:
+    "Starts a Google sign-in by redirecting through Cognito to Google. Navigate the browser here instead of fetching it.",
+  id: "startGoogleSignIn",
+  method: "GET",
+  path: "/google",
+  schemas: { query: StartGoogleSignInQuery },
+  successDescription: "A redirect to Google's sign-in page.",
+  successStatus: "302",
+  summary: "Start Google Sign-In"
+});
+
+export const completeGoogleSignIn = new Endpoint(auth, {
+  description:
+    "The OAuth callback Cognito redirects to after Google sign-in. Exchanges the authorization code for session cookies.",
+  id: "completeGoogleSignIn",
+  method: "GET",
+  path: "/google/callback",
+  schemas: { query: CompleteGoogleSignInQuery },
+  successDescription:
+    "A redirect to the return path with session cookies set, or to the sign-in page with a googleError query param.",
+  successStatus: "302",
+  summary: "Complete Google Sign-In"
 });
 
 export const refreshSession = new Endpoint(auth, {

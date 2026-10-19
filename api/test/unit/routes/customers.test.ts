@@ -24,7 +24,7 @@ const address: AddressDto = { id: ID, ...addressData, isDefault: false };
 
 const paymentMethod: PaymentMethodDto = {
   id: ID,
-  brand: "Hyrulian Express",
+  brand: "Hyrulean Express",
   expirationMonth: 4,
   expirationYear: 2030,
   lastFour: "4242",

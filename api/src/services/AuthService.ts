@@ -17,13 +17,21 @@ import {
 } from "@aws-sdk/client-cognito-identity-provider";
 import { createHmac } from "node:crypto";
 import { inject, injectable } from "tsyringe";
+import { number, object, string } from "zod";
 
 import type { AuthTokens, IAuthService, PendingAuth } from "@/contracts";
 import { COGNITO } from "@/contracts/tokens";
 import env from "@/env";
-import { internal } from "@/errors/helpers";
+import { internal, unauthorized } from "@/errors/helpers";
 
 const ClientId = env.USER_POOL_CLIENT_ID;
+const OAUTH_SCOPES = "openid email profile aws.cognito.signin.user.admin";
+
+const TokenResponse = object({
+  access_token: string(),
+  expires_in: number(),
+  refresh_token: string().optional()
+});
 
 const toTokens = (result: AuthenticationResultType | undefined): AuthTokens => {
   if (!result?.AccessToken || !result.ExpiresIn) {
@@ -167,6 +175,57 @@ export class AuthService implements IAuthService {
 
   deleteUser = async (accessToken: string) => {
     await this.cognito.send(new DeleteUserCommand({ AccessToken: accessToken }));
+  };
+
+  googleSignInUrl = (redirectUri: string, state: string, codeChallenge: string) => {
+    const params = new URLSearchParams({
+      response_type: "code",
+      client_id: ClientId,
+      redirect_uri: redirectUri,
+      identity_provider: "Google",
+      scope: OAUTH_SCOPES,
+      state,
+      code_challenge: codeChallenge,
+      code_challenge_method: "S256"
+    });
+    return `${this.oauthDomain()}/oauth2/authorize?${params}`;
+  };
+
+  exchangeAuthorizationCode = async (code: string, redirectUri: string, codeVerifier: string) => {
+    const credentials = Buffer.from(`${ClientId}:${await this.getClientSecret()}`).toString("base64");
+    const response = await fetch(`${this.oauthDomain()}/oauth2/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded", Authorization: `Basic ${credentials}` },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        client_id: ClientId,
+        code,
+        redirect_uri: redirectUri,
+        code_verifier: codeVerifier
+      })
+    });
+    if (!response.ok) {
+      throw unauthorized(
+        new Error(`Cognito rejected the authorization code (${response.status}): ${await response.text()}`)
+      );
+    }
+
+    const result = TokenResponse.safeParse(await response.json());
+    if (!result.success) {
+      throw internal(result.error);
+    }
+    return {
+      accessToken: result.data.access_token,
+      expiresIn: result.data.expires_in,
+      refreshToken: result.data.refresh_token
+    };
+  };
+
+  private oauthDomain = () => {
+    if (!env.OAUTH_DOMAIN) {
+      throw internal(new Error("OAUTH_DOMAIN is not configured."));
+    }
+    return env.OAUTH_DOMAIN;
   };
 
   private secretHash = async (username: string) =>

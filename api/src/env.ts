@@ -20,6 +20,7 @@ const EnvSchema = object({
   BUCKET_NAMES: fromJson(BucketNames),
   INVOKE_FUNCTION_NAMES: fromJson(InvokeFunctionNames),
   NODE_ENV: zenum(["development", "production"]).optional().default("development"),
+  OAUTH_DOMAIN: url().optional(),
   PORT: coerce.number().int().positive().optional().default(4000),
   TABLE_INDEXES: fromJson(TableIndexes),
   TABLE_NAMES: fromJson(TableNames),

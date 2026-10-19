@@ -1,17 +1,22 @@
 import { ErrorCode } from "@mm/lib";
-import type { CurrentUser } from "@mm/lib/auth";
+import type { CurrentUser, GoogleSignInError } from "@mm/lib/auth";
 import {
+  completeGoogleSignIn,
   confirmAccountDeletion,
   confirmEmailChange,
   confirmSignUp,
   getCurrentUser,
+  GOOGLE_ERROR_PARAM,
   refreshSession,
   requestAccountDeletion,
   requestEmailChange,
+  safeReturnTo,
+  SIGN_IN_PAGE_PATH,
   signIn,
   signOut,
   signOutEverywhere,
   signUp,
+  startGoogleSignIn,
   updateProfile,
   verifySignIn
 } from "@mm/lib/auth";
@@ -20,20 +25,28 @@ import { Router } from "express";
 
 import { userFromIssuedToken } from "@/auth/claims";
 import {
+  clearOAuthState,
   clearPendingAuth,
   clearSessionCookies,
   readAccessToken,
+  readOAuthState,
   readPendingAuth,
   readRefreshToken,
+  setOAuthState,
   setPendingAuth,
   setSessionCookies
 } from "@/auth/cookies";
+import { createPkce } from "@/auth/oauth";
 import { AUTH_SERVICE, CUSTOMER_SERVICE } from "@/contracts/tokens";
+import env from "@/env";
 import { badRequest, forbidden, toApiError, unauthorized } from "@/errors/helpers";
 import { sendCodeLimit, verifyCodeLimit } from "@/middleware";
 import { pathAndMiddleware, respond, respondEmpty, validateRequest } from "./helpers";
 
 const router = Router();
+
+const GOOGLE_CALLBACK_URI = `${env.APP_ORIGIN}${completeGoogleSignIn.fullPath}`;
+const LINKED_ACCOUNT_ERROR = "Already found an entry for username";
 
 const signedInUser = (req: Request): CurrentUser => {
   if (!req.user) {
@@ -71,6 +84,71 @@ const renewSession = async (req: Request, res: Response, fallback: CurrentUser) 
     return fallback;
   }
 };
+
+const googleErrorPath = (returnTo: string, error: GoogleSignInError) => {
+  const params = new URLSearchParams({ [GOOGLE_ERROR_PARAM]: error });
+  if (returnTo !== "/") {
+    params.set("returnTo", returnTo);
+  }
+  return `${SIGN_IN_PAGE_PATH}?${params}`;
+};
+
+const redirectToGoogle = (req: Request, res: Response, returnTo: string, retried: boolean) => {
+  const { state, verifier, challenge } = createPkce();
+  const url = req.container.resolve(AUTH_SERVICE).googleSignInUrl(GOOGLE_CALLBACK_URI, state, challenge);
+  setOAuthState(res, { state, verifier, returnTo, retried });
+  res.redirect(302, url);
+};
+
+router.get(...pathAndMiddleware(startGoogleSignIn), (req, res) => {
+  const returnTo = safeReturnTo(req.query.returnTo);
+  try {
+    redirectToGoogle(req, res, returnTo, false);
+  } catch (err) {
+    console.error("Failed to start Google sign-in.", err);
+    res.redirect(302, googleErrorPath(returnTo, "failed"));
+  }
+});
+
+router.get(...pathAndMiddleware(completeGoogleSignIn), async (req, res) => {
+  const oauth = readOAuthState(req);
+  const returnTo = oauth?.returnTo ?? "/";
+  const fail = (error: GoogleSignInError) => {
+    clearOAuthState(res);
+    res.redirect(302, googleErrorPath(returnTo, error));
+  };
+
+  try {
+    const {
+      query: { code, state, error, error_description }
+    } = validateRequest(completeGoogleSignIn, req);
+
+    if (error) {
+      if (oauth && !oauth.retried && error_description?.includes(LINKED_ACCOUNT_ERROR)) {
+        return redirectToGoogle(req, res, returnTo, true);
+      }
+      if (error === "access_denied") {
+        return fail("cancelled");
+      }
+      console.warn("Cognito returned a Google sign-in error.", { error, error_description });
+      return fail("failed");
+    }
+
+    if (!oauth || !code || state !== oauth.state) {
+      console.warn("Google sign-in callback had a missing or mismatched state.");
+      return fail("failed");
+    }
+
+    const service = req.container.resolve(AUTH_SERVICE);
+    const tokens = await service.exchangeAuthorizationCode(code, GOOGLE_CALLBACK_URI, oauth.verifier);
+    clearOAuthState(res);
+    setSessionCookies(res, tokens);
+    return res.redirect(302, returnTo);
+  } catch (err) {
+    console.error("Failed to complete Google sign-in.", err);
+    return fail("failed");
+  }
+});
 
 router.post(...pathAndMiddleware(signUp, sendCodeLimit), async (req, res, next) => {
   try {

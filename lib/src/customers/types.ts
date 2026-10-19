@@ -6,22 +6,29 @@ import { Id, PositiveInt } from "../common";
 export const Regions = [
   "Akkala",
   "Central Hyrule",
+  "Dueling Peaks",
+  "East Necluda",
   "Eldin",
   "Faron",
   "Gerudo Highlands",
-  "Gerudo Valley",
+  "Gerudo Wasteland",
   "Great Bay",
+  "Great Hyrule Forest",
+  "Great Plateau",
   "Hebra",
   "Ikana",
   "Lanayru",
-  "Necluda",
+  "Ridgeland",
+  "Snowhead",
   "Snow Peak",
-  "Tabantha"
+  "Southern Swamp",
+  "Tabantha",
+  "Termina Field"
 ] as const;
 export const Region = zenum(Regions, { error: "Choose a region." });
 export type Region = (typeof Regions)[number];
 
-export const CardBrands = ["Hyrulian Express", "Castle One"] as const;
+export const CardBrands = ["Hyrulean Express", "Castle One", "Master Sword Card", "Blupee"] as const;
 export const CardBrand = zenum(CardBrands, { error: "Choose a card brand." });
 export type CardBrand = (typeof CardBrands)[number];
 

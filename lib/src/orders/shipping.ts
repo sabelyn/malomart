@@ -14,7 +14,7 @@ export type ShippingOption = {
 
 export const ShippingOptions: Record<ShippingMethod, ShippingOption> = {
   Standard: {
-    name: "Postman on Foot",
+    name: "Postman Standard",
     description: "5 to 7 days",
     cost: 0,
     fulfillment: { shipSeconds: [120, 240], deliverSeconds: [480, 720] }
@@ -26,7 +26,7 @@ export const ShippingOptions: Record<ShippingMethod, ShippingOption> = {
     fulfillment: { shipSeconds: [60, 120], deliverSeconds: [240, 360] }
   },
   Overnight: {
-    name: "Loftwing Overnight",
+    name: "Oocca Overnight",
     description: "Next day",
     cost: 150,
     fulfillment: { shipSeconds: [30, 60], deliverSeconds: [120, 180] }

@@ -31,6 +31,7 @@ const env = {
   BUCKET_NAMES: frontend.BucketNames,
   INVOKE_FUNCTION_NAMES: vault.InvokeFunctionNames,
   NODE_ENV: "development",
+  OAUTH_DOMAIN: auth.OAuthDomain,
   TABLE_INDEXES: db.TableIndexes,
   TABLE_NAMES: db.TableNames,
   USER_POOL_ID: auth.UserPoolId,
@@ -40,6 +41,7 @@ const env = {
 writeFileSync(
   ENV_FILE,
   Object.entries(env)
+    .filter(([, value]) => value !== undefined)
     .map(([key, value]) => `${key}='${value}'\n`)
     .join("")
 );

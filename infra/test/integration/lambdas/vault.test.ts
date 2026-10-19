@@ -15,13 +15,13 @@ const db = dbClient();
 const kms = new KMSClient({});
 
 const cardData = {
-  brand: "Hyrulian Express",
+  brand: "Hyrulean Express",
   cardNumber: "4111111111114242",
   expirationMonth: 4,
   expirationYear: 2030
 };
 const metadata: PaymentMethodMetadata = {
-  brand: "Hyrulian Express",
+  brand: "Hyrulean Express",
   expirationMonth: 4,
   expirationYear: 2030,
   lastFour: "4242"

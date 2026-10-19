@@ -33,7 +33,11 @@ const stages: Record<string, { env: StackProps["env"]; config: StageConfig }> = 
       emailDomain: DOMAIN_NAME,
       alarmEmail: process.env.DEV_ALARM_EMAIL,
       fulfillmentTimeScale: 0.1,
-      localDevOrigin: "http://localhost:5173"
+      localDevOrigin: "http://localhost:5173",
+      googleAuth: {
+        authDomain: { zoneName: DOMAIN_NAME, hostName: `auth.dev.${DOMAIN_NAME}` },
+        secretName: "malomart/dev/google-oauth"
+      }
     }
   }
 };

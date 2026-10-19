@@ -13,6 +13,8 @@ export interface IAuthService {
   confirmEmailChange: (accessToken: string, code: string) => Promise<void>;
   confirmSignUp: (email: string, code: string, session?: string) => Promise<AuthTokens | undefined>;
   deleteUser: (accessToken: string) => Promise<void>;
+  exchangeAuthorizationCode: (code: string, redirectUri: string, codeVerifier: string) => Promise<AuthTokens>;
+  googleSignInUrl: (redirectUri: string, state: string, codeChallenge: string) => string;
   refresh: (refreshToken: string) => Promise<AuthTokens>;
   requestEmailChange: (accessToken: string, email: string) => Promise<void>;
   signOut: (refreshToken: string) => Promise<void>;

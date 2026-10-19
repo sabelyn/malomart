@@ -1,5 +1,5 @@
 import type { infer as zinfer } from "zod";
-import { strictObject } from "zod";
+import { object, string, strictObject } from "zod";
 
 import { DisplayName, Email, OtpCode } from "./types";
 
@@ -44,3 +44,16 @@ export const ConfirmAccountDeletionBody = strictObject({
   code: OtpCode
 }).meta({ id: "ConfirmAccountDeletionBody" });
 export type ConfirmAccountDeletionBody = zinfer<typeof ConfirmAccountDeletionBody>;
+
+export const StartGoogleSignInQuery = object({
+  returnTo: string().optional().meta({ description: "The app path to land on after signing in.", example: "/cart" })
+}).meta({ id: "StartGoogleSignInQuery" });
+export type StartGoogleSignInQuery = zinfer<typeof StartGoogleSignInQuery>;
+
+export const CompleteGoogleSignInQuery = object({
+  code: string().optional(),
+  state: string().optional(),
+  error: string().optional(),
+  error_description: string().optional()
+}).meta({ id: "CompleteGoogleSignInQuery" });
+export type CompleteGoogleSignInQuery = zinfer<typeof CompleteGoogleSignInQuery>;

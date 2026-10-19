@@ -43,7 +43,7 @@ const productService = new ProductService(db, s3Client());
 
 const paymentMethodDto: PaymentMethodDto = {
   id: crypto.randomUUID(),
-  brand: "Hyrulian Express",
+  brand: "Hyrulean Express",
   expirationMonth: 4,
   expirationYear: 2030,
   lastFour: "4242",

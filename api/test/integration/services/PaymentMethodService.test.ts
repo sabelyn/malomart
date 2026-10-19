@@ -18,7 +18,7 @@ const ASYNC_TIMEOUT = 20_000;
 const waitForVault = { timeout: ASYNC_TIMEOUT, interval: 500 };
 
 const metadata: PaymentMethodMetadata = {
-  brand: "Hyrulian Express",
+  brand: "Hyrulean Express",
   expirationMonth: 4,
   expirationYear: 2030,
   lastFour: "4242"

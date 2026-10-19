@@ -2,6 +2,8 @@ import type { Stage } from "aws-cdk-lib";
 
 import { AlertsStack } from "./AlertsStack";
 import { ApiStack } from "./ApiStack";
+import { AuthDomainStack } from "./AuthDomainStack";
+import type { GoogleAuthConfig } from "./AuthStack";
 import { AuthStack } from "./AuthStack";
 import { DbStack } from "./DbStack";
 import { DomainStack } from "./DomainStack";
@@ -21,6 +23,7 @@ export type StageConfig = {
   alarmEmail?: string;
   fulfillmentTimeScale?: number;
   localDevOrigin?: string;
+  googleAuth?: GoogleAuthConfig;
 };
 
 export const configureStacks = (stage: Stage, config: StageConfig) => {
@@ -34,7 +37,20 @@ export const configureStacks = (stage: Stage, config: StageConfig) => {
     siteDomain: config.siteDomain,
     localDevOrigin: config.localDevOrigin
   });
-  const authStack = new AuthStack(stage, "MaloMartAuthStack", { dbStack, emailDomain: config.emailDomain });
+  const authStack = new AuthStack(stage, "MaloMartAuthStack", {
+    dbStack,
+    appOrigin: frontendStack.appOrigin,
+    localDevOrigin: config.localDevOrigin,
+    emailDomain: config.emailDomain,
+    googleAuth: config.googleAuth
+  });
+  if (config.googleAuth) {
+    const authDomainStack = new AuthDomainStack(stage, "MaloMartAuthDomainStack", {
+      userPool: authStack.userPool,
+      authDomain: config.googleAuth.authDomain
+    });
+    authDomainStack.addStackDependency(frontendStack);
+  }
   const vaultStack = new VaultStack(stage, "MaloMartVaultStack", { alertsStack, authStack, gatewayStack });
   new OrdersStack(stage, "MaloMartOrdersStack", {
     alertsStack,

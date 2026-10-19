@@ -14,6 +14,7 @@ import {
 } from "@aws-sdk/client-cognito-identity-provider";
 import { mockClient } from "aws-sdk-client-mock";
 import { createHmac } from "node:crypto";
+import type { MockInstance } from "vitest";
 
 import { ApiError } from "@/errors/ApiError";
 import { AuthService } from "@/services";
@@ -256,6 +257,67 @@ describe("confirmEmailChange", () => {
       AttributeName: "email",
       Code: "123456"
     });
+  });
+});
+
+describe("googleSignInUrl", () => {
+  it("builds a Cognito authorize URL that goes straight to Google with PKCE", () => {
+    const url = new URL(service.googleSignInUrl("https://shop.test/callback", "state-123", "challenge-abc"));
+
+    expect(`${url.origin}${url.pathname}`).toBe("https://auth.malomart.test/oauth2/authorize");
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      response_type: "code",
+      client_id: CLIENT_ID,
+      redirect_uri: "https://shop.test/callback",
+      identity_provider: "Google",
+      scope: "openid email profile aws.cognito.signin.user.admin",
+      state: "state-123",
+      code_challenge: "challenge-abc",
+      code_challenge_method: "S256"
+    });
+  });
+});
+
+describe("exchangeAuthorizationCode", () => {
+  let fetchMock: MockInstance<typeof fetch>;
+
+  beforeEach(() => {
+    fetchMock = vi.spyOn(globalThis, "fetch");
+  });
+
+  afterEach(() => {
+    fetchMock.mockRestore();
+  });
+
+  it("trades the code for tokens using the client secret", async () => {
+    fetchMock.mockResolvedValue(
+      Response.json({ access_token: "access", expires_in: 900, refresh_token: "refresh", token_type: "Bearer" })
+    );
+
+    await expect(service.exchangeAuthorizationCode("code", "https://shop.test/callback", "verifier")).resolves.toEqual(
+      tokens
+    );
+
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe("https://auth.malomart.test/oauth2/token");
+    expect(init?.headers).toMatchObject({
+      Authorization: `Basic ${Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString("base64")}`
+    });
+    expect(Object.fromEntries(init?.body as URLSearchParams)).toEqual({
+      grant_type: "authorization_code",
+      client_id: CLIENT_ID,
+      code: "code",
+      redirect_uri: "https://shop.test/callback",
+      code_verifier: "verifier"
+    });
+  });
+
+  it("rejects with a 401 when Cognito refuses the code", async () => {
+    fetchMock.mockResolvedValue(Response.json({ error: "invalid_grant" }, { status: 400 }));
+
+    await expect(service.exchangeAuthorizationCode("code", "https://shop.test/callback", "verifier")).rejects.toSatisfy(
+      err => err instanceof ApiError && err.statusCode === 401
+    );
   });
 });
 

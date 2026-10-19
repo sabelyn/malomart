@@ -38,7 +38,7 @@ const addressDto: AddressDto = {
 
 const paymentMethodDto: PaymentMethodDto & { token: string } = {
   id: crypto.randomUUID(),
-  brand: "Hyrulian Express",
+  brand: "Hyrulean Express",
   expirationMonth: 4,
   expirationYear: 2030,
   lastFour: "4242",
@@ -81,7 +81,7 @@ const makeOrder = (overrides: Partial<Order> = {}): Order => {
       postalCode: "12345"
     },
     paymentMethod: {
-      brand: "Hyrulian Express",
+      brand: "Hyrulean Express",
       lastFour: "4242",
       expirationMonth: 4,
       expirationYear: 2030,
@@ -217,13 +217,13 @@ describe("createOrder", () => {
       shipping: { method: ShippingMethod.Express, cost: expressCost },
       address
     };
-    expect(created).toEqual({ ...expected, paymentMethod: { brand: "Hyrulian Express", lastFour: "4242" } });
+    expect(created).toEqual({ ...expected, paymentMethod: { brand: "Hyrulean Express", lastFour: "4242" } });
     expect(await getRawOrder(body.id)).toEqual({
       ...expected,
       entityType: ORDER_ENTITY_TYPE,
       orderDate: created.orderDate,
       paymentMethod: {
-        brand: "Hyrulian Express",
+        brand: "Hyrulean Express",
         lastFour: "4242",
         expirationMonth: 4,
         expirationYear: 2030,

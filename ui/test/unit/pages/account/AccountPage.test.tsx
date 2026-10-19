@@ -21,7 +21,7 @@ const customerData: CustomerDto = {
   },
   defaultPaymentMethod: {
     id: "8f2b6d3a-1c4e-4b7f-9a2d-3e5f7a9c1b20",
-    brand: "Hyrulian Express",
+    brand: "Hyrulean Express",
     lastFour: "4242",
     expirationMonth: 4,
     expirationYear: 2030,
@@ -57,7 +57,7 @@ describe("AccountPage", () => {
     expect(screen.getByText("Link")).toBeTruthy();
     expect(screen.getByText("link@hyrule.com")).toBeTruthy();
     expect(await screen.findByText("Ordon Village, Faron 11111")).toBeTruthy();
-    expect(screen.getByText("Hyrulian Express ending in 4242")).toBeTruthy();
+    expect(screen.getByText("Hyrulean Express ending in 4242")).toBeTruthy();
     expect(screen.getByText("Expires 05/2030")).toBeTruthy();
     expect(document.title).toBe("Your account · Malo Mart");
   });

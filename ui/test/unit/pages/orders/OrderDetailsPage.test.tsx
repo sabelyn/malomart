@@ -47,7 +47,7 @@ const confirmed: OrderDto = {
     postalCode: "22222"
   },
   shipping: { method: "Express", cost: 40 },
-  paymentMethod: { brand: "Hyrulian Express", lastFour: "4242" }
+  paymentMethod: { brand: "Hyrulean Express", lastFour: "4242" }
 };
 
 let order: OrderDto;
@@ -98,7 +98,7 @@ describe("OrderDetailsPage", () => {
     expect(within(details).getByText("Malon")).toBeTruthy();
     expect(within(details).getByText("Lon Lon Ranch, Central Hyrule 22222")).toBeTruthy();
     expect(within(details).getByText("Epona Express, 2 to 3 days. 40 rupees.")).toBeTruthy();
-    expect(within(details).getByText("Hyrulian Express ending in 4242")).toBeTruthy();
+    expect(within(details).getByText("Hyrulean Express ending in 4242")).toBeTruthy();
 
     const items = section("Items");
     await waitFor(() => expect(within(items).getAllByRole("listitem")).toHaveLength(2));

@@ -16,7 +16,6 @@
     "deploy:domain": "pnpm --filter @mm/infra cdk deploy MaloMartDomain MaloMartMail --outputs-file ../local/domain-outputs.json",
     "inbox": "pnpm --filter @mm/tools inbox",
     "seed": "turbo run build --filter=@mm/tools... --output-logs=errors-only && pnpm --filter @mm/tools seed",
-    "backfill:orders": "turbo run build --filter=@mm/tools... --output-logs=errors-only && pnpm --filter @mm/tools backfill:orders",
     "dev:session": "turbo run build --filter=@mm/tools... --output-logs=errors-only && pnpm --filter @mm/tools dev:session",
     "prepare": "husky"
   },

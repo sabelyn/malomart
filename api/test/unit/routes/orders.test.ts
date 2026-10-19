@@ -23,7 +23,7 @@ const order: OrderDto = {
     region: "Eldin",
     postalCode: "12345"
   },
-  paymentMethod: { brand: "Hyrulian Express", lastFour: "4242" },
+  paymentMethod: { brand: "Hyrulean Express", lastFour: "4242" },
   orderDate: ORDER_DATE,
   currentStatus: "Placed",
   statusUpdates: { Placed: ORDER_DATE },

@@ -1,5 +1,6 @@
 import { CognitoIdentityProviderServiceException } from "@aws-sdk/client-cognito-identity-provider";
 import { ErrorCode, SessionCookie } from "@mm/lib";
+import { createHash } from "node:crypto";
 import request from "supertest";
 import type { Response } from "supertest";
 import { container } from "tsyringe";
@@ -34,6 +35,15 @@ const tokens = (overrides: Partial<AuthTokens> = {}): AuthTokens => ({
 
 const signedInUser = { id: "user-123", email: EMAIL, name: "Link", isAdmin: false, signInMethod: "email" };
 
+const GOOGLE_URL = "https://auth.malomart.test/oauth2/authorize?mock=true";
+const CALLBACK_URI = "http://localhost:5173/api/auth/google/callback";
+
+const oauthCookie = (overrides: { state?: string; returnTo?: string; retried?: boolean } = {}) =>
+  `${SessionCookie.OAuth}=${encode({ state: "oauth-state", verifier: "oauth-verifier", returnTo: "/cart", retried: false, ...overrides })}`;
+
+const decodeCookie = (cookie: string) =>
+  JSON.parse(Buffer.from(cookie.slice(cookie.indexOf("=") + 1, cookie.indexOf(";")), "base64url").toString("utf8"));
+
 const pendingCookie = (email = EMAIL, session = "pending-session") =>
   `${SessionCookie.Pending}=${encode({ email, session })}`;
 
@@ -59,6 +69,8 @@ beforeEach(() => {
     confirmEmailChange: vi.fn<IAuthService["confirmEmailChange"]>().mockResolvedValue(),
     confirmSignUp: vi.fn<IAuthService["confirmSignUp"]>().mockResolvedValue(tokens()),
     deleteUser: vi.fn<IAuthService["deleteUser"]>().mockResolvedValue(),
+    exchangeAuthorizationCode: vi.fn<IAuthService["exchangeAuthorizationCode"]>().mockResolvedValue(tokens()),
+    googleSignInUrl: vi.fn<IAuthService["googleSignInUrl"]>().mockReturnValue(GOOGLE_URL),
     refresh: vi.fn<IAuthService["refresh"]>().mockResolvedValue(tokens()),
     requestEmailChange: vi.fn<IAuthService["requestEmailChange"]>().mockResolvedValue(),
     signOut: vi.fn<IAuthService["signOut"]>().mockResolvedValue(),
@@ -255,6 +267,119 @@ describe("POST /api/auth/sign-in/verify", () => {
 
     expect(res.status).toBe(401);
     expect(isCleared(setCookies(res)[SessionCookie.Pending])).toBe(true);
+  });
+});
+
+describe("GET /api/auth/google", () => {
+  it("redirects to Google and stores the PKCE state in a Lax cookie", async () => {
+    const res = await request(app).get("/api/auth/google").query({ returnTo: "/cart" });
+
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe(GOOGLE_URL);
+    const cookie = setCookies(res)[SessionCookie.OAuth];
+    expect(cookie).toMatch(/HttpOnly/);
+    expect(cookie).toMatch(/Secure/);
+    expect(cookie).toMatch(/SameSite=Lax/);
+    const stored = decodeCookie(cookie);
+    expect(stored).toMatchObject({ returnTo: "/cart", retried: false });
+    expect(service.googleSignInUrl).toHaveBeenCalledWith(
+      CALLBACK_URI,
+      stored.state,
+      createHash("sha256").update(stored.verifier).digest("base64url")
+    );
+  });
+
+  it("falls back to the home page for an unsafe return path", async () => {
+    const res = await request(app).get("/api/auth/google").query({ returnTo: "https://evil.test" });
+
+    expect(decodeCookie(setCookies(res)[SessionCookie.OAuth])).toMatchObject({ returnTo: "/" });
+  });
+
+  it("sends the user back to sign in when Google sign-in can't start", async () => {
+    service.googleSignInUrl.mockImplementation(() => {
+      throw new Error("not configured");
+    });
+
+    const res = await request(app).get("/api/auth/google").query({ returnTo: "/cart" });
+
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe("/auth/sign-in?googleError=failed&returnTo=%2Fcart");
+  });
+});
+
+describe("GET /api/auth/google/callback", () => {
+  const LINKING_ERROR = {
+    error: "invalid_request",
+    error_description: "Already found an entry for username Google_1 "
+  };
+
+  it("exchanges the code, sets the session, and returns the user to where they started", async () => {
+    const res = await request(app)
+      .get("/api/auth/google/callback")
+      .query({ code: "auth-code", state: "oauth-state" })
+      .set("Cookie", oauthCookie());
+
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe("/cart");
+    expect(service.exchangeAuthorizationCode).toHaveBeenCalledWith("auth-code", CALLBACK_URI, "oauth-verifier");
+    const cookies = setCookies(res);
+    expect(cookies[SessionCookie.Access]).toBeDefined();
+    expect(cookies[SessionCookie.Refresh]).toBeDefined();
+    expect(isCleared(cookies[SessionCookie.OAuth])).toBe(true);
+  });
+
+  it("rejects a mismatched state", async () => {
+    const res = await request(app)
+      .get("/api/auth/google/callback")
+      .query({ code: "auth-code", state: "forged" })
+      .set("Cookie", oauthCookie());
+
+    expect(res.headers.location).toBe("/auth/sign-in?googleError=failed&returnTo=%2Fcart");
+    expect(service.exchangeAuthorizationCode).not.toHaveBeenCalled();
+  });
+
+  it("rejects a callback without the state cookie", async () => {
+    const res = await request(app).get("/api/auth/google/callback").query({ code: "auth-code", state: "oauth-state" });
+
+    expect(res.headers.location).toBe("/auth/sign-in?googleError=failed");
+    expect(service.exchangeAuthorizationCode).not.toHaveBeenCalled();
+  });
+
+  it("reports a cancelled sign-in", async () => {
+    const res = await request(app)
+      .get("/api/auth/google/callback")
+      .query({ error: "access_denied" })
+      .set("Cookie", oauthCookie());
+
+    expect(res.headers.location).toBe("/auth/sign-in?googleError=cancelled&returnTo=%2Fcart");
+  });
+
+  it("retries once when Cognito fails the first sign-in after linking accounts", async () => {
+    const res = await request(app).get("/api/auth/google/callback").query(LINKING_ERROR).set("Cookie", oauthCookie());
+
+    expect(res.headers.location).toBe(GOOGLE_URL);
+    expect(decodeCookie(setCookies(res)[SessionCookie.OAuth])).toMatchObject({ returnTo: "/cart", retried: true });
+  });
+
+  it("gives up when the linking error repeats", async () => {
+    const res = await request(app)
+      .get("/api/auth/google/callback")
+      .query(LINKING_ERROR)
+      .set("Cookie", oauthCookie({ retried: true }));
+
+    expect(res.headers.location).toBe("/auth/sign-in?googleError=failed&returnTo=%2Fcart");
+  });
+
+  it("does not sign the user in when the code exchange fails", async () => {
+    service.exchangeAuthorizationCode.mockRejectedValue(new Error("invalid_grant"));
+
+    const res = await request(app)
+      .get("/api/auth/google/callback")
+      .query({ code: "auth-code", state: "oauth-state" })
+      .set("Cookie", oauthCookie());
+
+    expect(res.headers.location).toBe("/auth/sign-in?googleError=failed&returnTo=%2Fcart");
+    expect(setCookies(res)[SessionCookie.Access]).toBeUndefined();
   });
 });
 

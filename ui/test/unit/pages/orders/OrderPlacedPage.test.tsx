@@ -46,7 +46,7 @@ const order: OrderDto = {
     postalCode: "22222"
   },
   shipping: { method: "Standard", cost: 0 },
-  paymentMethod: { brand: "Hyrulian Express", lastFour: "4242" }
+  paymentMethod: { brand: "Hyrulean Express", lastFour: "4242" }
 };
 
 const renderPlaced = () =>
@@ -79,7 +79,7 @@ describe("OrderPlacedPage", () => {
     expect(within(details).getByText("Order number").nextElementSibling?.textContent).toBe(ORDER_NUMBER);
     expect(within(details).getByText("2 Lon Lon Road")).toBeTruthy();
     expect(within(details).getByText("Postman on Foot, 5 to 7 days. Free.")).toBeTruthy();
-    expect(within(details).getByText("Hyrulian Express ending in 4242")).toBeTruthy();
+    expect(within(details).getByText("Hyrulean Express ending in 4242")).toBeTruthy();
     expect(within(details).getByText("Total").nextElementSibling?.textContent).toBe("420 rupees for 3 items");
 
     const items = section("What you bought");

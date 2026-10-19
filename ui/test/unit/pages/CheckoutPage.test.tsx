@@ -53,7 +53,7 @@ const ranch: AddressDto = {
 
 const express: PaymentMethodDto = {
   id: "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e",
-  brand: "Hyrulian Express",
+  brand: "Hyrulean Express",
   lastFour: "4242",
   expirationMonth: 4,
   expirationYear: 2030,
@@ -186,7 +186,7 @@ describe("CheckoutPage", () => {
     expect(document.title).toBe("Checkout · Malo Mart");
     expect(isChecked(radio("Ship to", "2 Lon Lon Road"))).toBe(true);
     expect(isChecked(radio("Ship to", "Home"))).toBe(false);
-    expect(isChecked(radio("Pay with", "Hyrulian Express ending in 4242"))).toBe(true);
+    expect(isChecked(radio("Pay with", "Hyrulean Express ending in 4242"))).toBe(true);
     expect((radio("Pay with", "Castle One ending in 1111") as HTMLInputElement).disabled).toBe(true);
     expect(
       within(section("Pay with")).getByRole("link", { name: "Update them in your account" }).getAttribute("href")
@@ -283,9 +283,9 @@ describe("CheckoutPage", () => {
     expect(within(section("Ship to")).queryByText("Choose where this is going.")).toBeNull();
     await user.click(placeOrderButton());
 
-    expect(document.activeElement).toBe(radio("Pay with", "Hyrulian Express ending in 4242"));
+    expect(document.activeElement).toBe(radio("Pay with", "Hyrulean Express ending in 4242"));
 
-    await user.click(radio("Pay with", "Hyrulian Express ending in 4242"));
+    await user.click(radio("Pay with", "Hyrulean Express ending in 4242"));
     expect(within(section("Pay with")).queryByText("Choose a card to pay with.")).toBeNull();
     await user.click(placeOrderButton());
 
@@ -347,7 +347,7 @@ describe("CheckoutPage", () => {
 
     await user.click(within(section("Pay with")).getByRole("button", { name: "Add a card" }));
     const form = within(dialog());
-    await user.click(form.getByLabelText("Hyrulian Express"));
+    await user.click(form.getByLabelText("Hyrulean Express"));
     await user.type(form.getByLabelText(/^Card number/), "4111 1111 1111 9999");
     await user.selectOptions(form.getByLabelText(/^Expiration month/), "05");
     await user.selectOptions(form.getByLabelText(/^Expiration year/), "2030");
@@ -355,9 +355,9 @@ describe("CheckoutPage", () => {
 
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(within(section("Pay with")).getByRole("status").textContent).toBe(
-      "Added Hyrulian Express ending in 9999 and picked it for this order."
+      "Added Hyrulean Express ending in 9999 and picked it for this order."
     );
-    await waitFor(() => expect(isChecked(radio("Pay with", "Hyrulian Express ending in 9999"))).toBe(true));
+    await waitFor(() => expect(isChecked(radio("Pay with", "Hyrulean Express ending in 9999"))).toBe(true));
 
     await user.click(placeOrderButton());
 

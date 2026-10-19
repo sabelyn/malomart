@@ -13,7 +13,7 @@ const CREATE = "POST /api/customers/payment-methods";
 
 const express: PaymentMethodDto = {
   id: EXPRESS_ID,
-  brand: "Hyrulian Express",
+  brand: "Hyrulean Express",
   lastFour: "4242",
   expirationMonth: 4,
   expirationYear: 2030,
@@ -29,7 +29,7 @@ const castle: PaymentMethodDto = {
   isDefault: true
 };
 
-const EXPRESS_NAME = "Hyrulian Express ending in 4242";
+const EXPRESS_NAME = "Hyrulean Express ending in 4242";
 const CASTLE_NAME = "Castle One ending in 1111";
 
 let methods: PaymentMethodDto[];
@@ -43,7 +43,7 @@ const dialog = () => screen.getByRole("dialog");
 const loaded = () => screen.findByRole("heading", { name: EXPRESS_NAME });
 
 const fillNewCard = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.click(screen.getByLabelText("Hyrulian Express"));
+  await user.click(screen.getByLabelText("Hyrulean Express"));
   await user.type(screen.getByLabelText(/^Card number/), "4111 1111 1111 4242");
   await user.selectOptions(screen.getByLabelText(/^Expiration month/), "05");
   await user.selectOptions(screen.getByLabelText(/^Expiration year/), "2030");
@@ -103,7 +103,7 @@ describe("PaymentMethodsSection", () => {
 
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(requestsTo(fetch, TOKENIZE)).toEqual([
-      { brand: "Hyrulian Express", cardNumber: "4111111111114242", expirationMonth: 4, expirationYear: 2030 }
+      { brand: "Hyrulean Express", cardNumber: "4111111111114242", expirationMonth: 4, expirationYear: 2030 }
     ]);
     expect(requestsTo(fetch, CREATE)).toEqual([{ token: "vault-token", setAsDefault: true }]);
     expect(screen.getByRole("status").textContent).toBe(`Added ${EXPRESS_NAME}.`);

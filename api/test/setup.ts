@@ -14,6 +14,7 @@ Object.assign(process.env, {
     updateCard: "update-card"
   }),
   NODE_ENV: "development",
+  OAUTH_DOMAIN: "https://auth.malomart.test",
   PORT: "4000",
   TABLE_INDEXES: JSON.stringify({
     addressesByCustomer: "addresses-by-customer",
