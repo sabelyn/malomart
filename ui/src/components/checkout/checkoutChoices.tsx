@@ -3,6 +3,7 @@ import type { AddressDto, PaymentMethodDto } from "@mm/lib/customers";
 import { isCardExpired } from "@mm/lib/customers";
 
 import { addressLines, addressName, paymentMethodExpiry, paymentMethodName } from "@/components/account/accountDisplay";
+import { alerts, ui } from "@/copy";
 import type { Choice } from "./ChoiceSection";
 
 type Saved = { id: string; isDefault: boolean };
@@ -24,7 +25,7 @@ export const pickChoice = <T extends Saved>(
 export const toChoices = <T extends Saved>(saved: T[] | undefined, toChoice: (item: T) => Choice) =>
   saved && [...saved].sort(defaultFirst).map(toChoice);
 
-const defaultBadge = (isDefault: boolean) => isDefault && <Badge variant="outline">Default</Badge>;
+const defaultBadge = (isDefault: boolean) => isDefault && <Badge variant="outline">{ui.common.defaultBadge}</Badge>;
 
 export const addressChoice = (address: AddressDto): Choice => ({
   id: address.id,
@@ -55,14 +56,10 @@ export const stepErrors = (
   paymentMethodId: string | null,
   paymentMethods: PaymentMethodDto[] | undefined
 ): StepErrors => ({
-  address: addressId
-    ? undefined
-    : addresses?.length
-      ? "Choose where this is going."
-      : "Add an address first. I need somewhere to send it.",
+  address: addressId ? undefined : addresses?.length ? alerts.checkout.chooseAddress : alerts.checkout.needAddress,
   payment: paymentMethodId
     ? undefined
     : paymentMethods?.some(method => !isCardExpired(method))
-      ? "Choose a card to pay with."
-      : "Add a card first. No rupees, no goods."
+      ? alerts.checkout.chooseCard
+      : alerts.checkout.needCard
 });

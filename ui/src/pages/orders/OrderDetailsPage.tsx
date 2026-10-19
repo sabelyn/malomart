@@ -17,6 +17,7 @@ import OrderTotals from "@/components/orders/OrderTotals";
 import OrderUpdates from "@/components/orders/OrderUpdates";
 import { useOrderItems } from "@/components/orders/useOrderItems";
 import PageLoader from "@/components/PageLoader";
+import { alerts, statusMessages, ui } from "@/copy";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { ACCOUNT_ORDERS_PATH } from "@/routes/paths";
@@ -27,19 +28,22 @@ type OrderDetailsPageProps = {
   backLabel?: string;
 };
 
-const OrderDetailsPage = ({ backTo = ACCOUNT_ORDERS_PATH, backLabel = "All your orders" }: OrderDetailsPageProps) => {
+const OrderDetailsPage = ({
+  backTo = ACCOUNT_ORDERS_PATH,
+  backLabel = ui.orders.allYourOrders
+}: OrderDetailsPageProps) => {
   const { id = "" } = useParams();
   const order = useQuery(endpointQuery(getOrder, { params: { id } }));
   const { items, isPending: itemsPending } = useOrderItems(order.data);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const confirming = useConfirmDialog(headingRef);
   const [status, setStatus] = useState("");
-  useDocumentTitle(order.data ? `Order ${orderNumber(order.data.id)}` : "Order");
+  useDocumentTitle(ui.pageTitles.order(order.data && orderNumber(order.data.id)));
 
   const cancel = useEndpointMutation(cancelOrder, {
     invalidates: [orders],
     onSuccess: () => {
-      setStatus("Order cancelled.");
+      setStatus(statusMessages.orders.cancelled);
       confirming.complete();
     }
   });
@@ -63,15 +67,15 @@ const OrderDetailsPage = ({ backTo = ACCOUNT_ORDERS_PATH, backLabel = "All your 
         {status}
       </Text>
 
-      <OrderSection id="order-updates-heading" title="Order updates">
+      <OrderSection id="order-updates-heading" title={ui.orders.updates}>
         <OrderUpdates order={order.data} />
       </OrderSection>
 
-      <OrderSection id="order-details-heading" title="Details">
+      <OrderSection id="order-details-heading" title={ui.orders.details}>
         <OrderFacts order={order.data} />
       </OrderSection>
 
-      <OrderSection id="order-items-heading" title="Items">
+      <OrderSection id="order-items-heading" title={ui.orders.items}>
         {itemsPending ? <PageLoader /> : <CheckoutItems items={items} />}
         <OrderTotals order={order.data} />
       </OrderSection>
@@ -82,16 +86,16 @@ const OrderDetailsPage = ({ backTo = ACCOUNT_ORDERS_PATH, backLabel = "All your 
 
       <ConfirmModal
         opened={confirming.opened}
-        title="Cancel this order?"
-        confirmLabel="Cancel order"
-        dismissLabel="Keep order"
+        title={ui.orders.cancelTitle}
+        confirmLabel={ui.orders.cancel}
+        dismissLabel={ui.orders.keepOrder}
         pending={cancel.isPending}
-        error={cancel.isError ? "Couldn't cancel the order. It may have already shipped." : undefined}
+        error={cancel.isError ? alerts.orders.cancelFailed : undefined}
         onConfirm={() => cancel.mutate({ params: { id: order.data.id } })}
         onClose={confirming.close}
         onExitTransitionEnd={confirming.afterClose}
       >
-        {`Order ${orderNumber(order.data.id)} won't ship. No take-backs.`}
+        {ui.orders.cancelWarning(orderNumber(order.data.id))}
       </ConfirmModal>
     </Container>
   );

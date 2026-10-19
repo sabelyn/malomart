@@ -17,6 +17,7 @@ import { useRef, useState } from "react";
 import { number, object, preprocess, enum as zenum } from "zod";
 
 import { useEndpointMutation } from "@/api";
+import { alerts, statusMessages, ui } from "@/copy";
 import classes from "./admin.module.css";
 
 const MAX_DESCRIPTION = 500;
@@ -25,14 +26,14 @@ const blankTo = (fallback: undefined | null) => (value: unknown) =>
   typeof value === "string" && value.trim() === "" ? fallback : value;
 
 const rupees = (missing: string) =>
-  number({ error: missing }).int({ error: "Use whole rupees." }).positive({ error: "Has to be at least 1 rupee." });
+  number({ error: missing }).int({ error: alerts.admin.wholeRupees }).positive({ error: alerts.admin.atLeastOneRupee });
 
 const EditFields = object({
   title: Product.shape.title,
-  category: preprocess(blankTo(undefined), zenum(Category, { error: "Choose a category." })),
+  category: preprocess(blankTo(undefined), zenum(Category, { error: alerts.admin.chooseCategory })),
   description: Product.shape.description,
-  price: preprocess(blankTo(undefined), rupees("Enter a price.")),
-  originalPrice: preprocess(blankTo(null), rupees("Enter the original price or leave it blank.").nullable()),
+  price: preprocess(blankTo(undefined), rupees(alerts.admin.enterPrice)),
+  originalPrice: preprocess(blankTo(null), rupees(alerts.admin.enterOriginalPrice).nullable()),
   features: Product.shape.features
 });
 
@@ -43,7 +44,7 @@ const Prices = EditFields.pick({ price: true, originalPrice: true });
 
 const priceBelowOriginalError = {
   path: ["originalPrice"],
-  error: "The original price has to be higher than the price, or leave it blank.",
+  error: alerts.admin.priceBelowOriginal,
   when: ({ value }: { value: unknown }) => Prices.safeParse(value).success
 };
 
@@ -52,9 +53,9 @@ const EditForm = EditFields.refine(priceBelowOriginal, priceBelowOriginalError);
 const CreateForm = EditFields.extend({
   stockCount: preprocess(
     blankTo(undefined),
-    number({ error: "Enter how many are in stock." })
-      .int({ error: "Use a whole number." })
-      .nonnegative({ error: "Stock can't be negative." })
+    number({ error: alerts.admin.enterStock })
+      .int({ error: alerts.admin.wholeNumber })
+      .nonnegative({ error: alerts.admin.negativeStock })
   )
 }).refine(priceBelowOriginal, priceBelowOriginalError);
 
@@ -85,12 +86,12 @@ const changedFields = (product: ProductDto, values: ReturnType<typeof EditForm.p
 
 const saveErrorMessage = (error: unknown) => {
   if (error instanceof ApiRequestError && error.status === 404) {
-    return "That product is gone. Someone deleted it.";
+    return alerts.admin.productGone;
   }
   if (error instanceof ApiRequestError && error.status === 413) {
-    return "That's too much text to store. Trim the description or features.";
+    return alerts.admin.productTooLarge;
   }
-  return "Couldn't save the product. Try again.";
+  return alerts.admin.productSaveFailed;
 };
 
 type ProductFormProps = {
@@ -133,7 +134,7 @@ const ProductForm = ({ product, onSaved }: ProductFormProps) => {
     }
     const changes = changedFields(product, EditForm.parse(values));
     if (Object.keys(changes).length === 0) {
-      setNotice("Nothing changed.");
+      setNotice(statusMessages.admin.nothingChanged);
       return;
     }
     update.mutate({ params: { id: product.id }, body: changes });
@@ -169,16 +170,16 @@ const ProductForm = ({ product, onSaved }: ProductFormProps) => {
             {saveErrorMessage(save.error)}
           </Alert>
         )}
-        <TextInput label="Title" required maxLength={64} {...form.getInputProps("title")} />
+        <TextInput label={ui.admin.form.title} required maxLength={64} {...form.getInputProps("title")} />
         <NativeSelect
-          label="Category"
+          label={ui.admin.form.category}
           required
-          data={[{ value: "", label: "Choose a category", disabled: true }, ...Object.values(Category)]}
+          data={[{ value: "", label: ui.admin.form.chooseCategory, disabled: true }, ...Object.values(Category)]}
           {...form.getInputProps("category")}
         />
         <Textarea
-          label="Description"
-          description={`${descriptionLength} of ${MAX_DESCRIPTION} characters.`}
+          label={ui.admin.form.description}
+          description={ui.admin.form.descriptionCount(descriptionLength, MAX_DESCRIPTION)}
           required
           rows={5}
           maxLength={MAX_DESCRIPTION}
@@ -186,8 +187,8 @@ const ProductForm = ({ product, onSaved }: ProductFormProps) => {
         />
         <div className={classes.priceRow}>
           <NumberInput
-            label="Price"
-            description="In rupees."
+            label={ui.admin.form.price}
+            description={ui.admin.form.priceHint}
             required
             min={1}
             allowDecimal={false}
@@ -196,8 +197,8 @@ const ProductForm = ({ product, onSaved }: ProductFormProps) => {
             {...form.getInputProps("price")}
           />
           <NumberInput
-            label="Original price"
-            description="Optional. Set it above the price to put the product on sale."
+            label={ui.admin.form.originalPrice}
+            description={ui.admin.form.originalPriceHint}
             min={1}
             allowDecimal={false}
             allowNegative={false}
@@ -207,7 +208,7 @@ const ProductForm = ({ product, onSaved }: ProductFormProps) => {
         </div>
         {!product && (
           <NumberInput
-            label="Starting stock"
+            label={ui.admin.form.startingStock}
             required
             min={0}
             allowDecimal={false}
@@ -217,17 +218,21 @@ const ProductForm = ({ product, onSaved }: ProductFormProps) => {
           />
         )}
         <fieldset className={classes.features}>
-          <legend className={classes.featuresLegend}>Features</legend>
+          <legend className={classes.featuresLegend}>{ui.admin.form.features}</legend>
           <ul ref={featureListRef} className={classes.featureList}>
             {features.map((_, index) => (
               <li key={form.key(`features.${index}`)} className={classes.featureRow}>
-                <TextInput aria-label={`Feature ${index + 1}`} {...form.getInputProps(`features.${index}`)} />
-                <CloseButton aria-label={`Remove feature ${index + 1}`} mt={4} onClick={() => removeFeature(index)} />
+                <TextInput aria-label={ui.admin.form.feature(index + 1)} {...form.getInputProps(`features.${index}`)} />
+                <CloseButton
+                  aria-label={ui.admin.form.removeFeature(index + 1)}
+                  mt={4}
+                  onClick={() => removeFeature(index)}
+                />
               </li>
             ))}
           </ul>
           <Button variant="subtle" size="compact-sm" data-add-feature onClick={addFeature}>
-            Add a feature
+            {ui.admin.form.addFeature}
           </Button>
         </fieldset>
         <Group justify="flex-end" align="center">
@@ -235,7 +240,7 @@ const ProductForm = ({ product, onSaved }: ProductFormProps) => {
             {notice}
           </span>
           <Button type="submit" loading={save.isPending}>
-            {product ? "Save changes" : "Create product"}
+            {product ? ui.admin.form.saveChanges : ui.admin.form.create}
           </Button>
         </Group>
       </Stack>

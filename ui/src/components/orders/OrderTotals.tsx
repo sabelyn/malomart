@@ -1,8 +1,7 @@
 import type { OrderDto } from "@mm/lib/orders";
 import { getOrderSubtotal, getOrderTotal } from "@mm/lib/orders";
 
-import { shippingCostLabel } from "@/components/checkout/checkoutDisplay";
-import { formatRupees } from "@/components/product/PriceTag";
+import { rupees, ui } from "@/copy";
 import classes from "./orders.module.css";
 
 type OrderTotalsProps = {
@@ -12,16 +11,16 @@ type OrderTotalsProps = {
 const OrderTotals = ({ order }: OrderTotalsProps) => (
   <dl className={classes.totals}>
     <div>
-      <dt>Subtotal</dt>
-      <dd>{formatRupees(getOrderSubtotal(order.products))} rupees</dd>
+      <dt>{ui.common.subtotal}</dt>
+      <dd>{rupees(getOrderSubtotal(order.products))}</dd>
     </div>
     <div>
-      <dt>Delivery</dt>
-      <dd>{shippingCostLabel(order.shipping.cost)}</dd>
+      <dt>{ui.common.delivery}</dt>
+      <dd>{ui.common.shippingCost(order.shipping.cost)}</dd>
     </div>
     <div className={classes.grandTotal}>
-      <dt>Total</dt>
-      <dd>{formatRupees(getOrderTotal(order))} rupees</dd>
+      <dt>{ui.common.total}</dt>
+      <dd>{rupees(getOrderTotal(order))}</dd>
     </div>
   </dl>
 );

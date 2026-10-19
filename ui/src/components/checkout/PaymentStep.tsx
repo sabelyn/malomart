@@ -7,6 +7,7 @@ import { Link } from "react-router";
 
 import { paymentMethodName } from "@/components/account/accountDisplay";
 import AddPaymentMethodModal from "@/components/account/AddPaymentMethodModal";
+import { malo, statusMessages, ui } from "@/copy";
 import { ACCOUNT_PAYMENT_METHODS_PATH } from "@/routes/paths";
 import { paymentChoice, toChoices } from "./checkoutChoices";
 import ChoiceSection from "./ChoiceSection";
@@ -25,7 +26,7 @@ const PaymentStep = ({ ref, paymentMethods, value, error, onChange }: PaymentSte
 
   const added = (method: PaymentMethodDto) => {
     onChange(method.id);
-    setStatus(`Added ${paymentMethodName(method)} and picked it for this order.`);
+    setStatus(statusMessages.cards.addedToOrder(paymentMethodName(method)));
     setAdding(false);
   };
 
@@ -36,20 +37,21 @@ const PaymentStep = ({ ref, paymentMethods, value, error, onChange }: PaymentSte
       <ChoiceSection
         ref={ref}
         id="checkout-payment"
-        title="Pay with"
-        groupLabel="Payment card"
+        title={ui.checkout.payWith}
+        groupLabel={ui.checkout.paymentCard}
         choices={toChoices(paymentMethods.data, paymentChoice)}
         isPending={paymentMethods.isPending}
-        loadFailedMessage="Couldn't find your cards. Not my fault."
-        emptyMessage="No cards on file. I don't do IOUs."
-        addLabel="Add a card"
+        loadFailedMessage={malo.cards.loadFailed}
+        emptyMessage={malo.cards.empty}
+        addLabel={ui.cards.add}
         value={value}
         error={error}
         status={status}
         note={
           hasExpiredCard && (
             <>
-              Expired cards can't be used. <Link to={ACCOUNT_PAYMENT_METHODS_PATH}>Update them in your account</Link>.
+              {ui.checkout.expiredCardsNote}{" "}
+              <Link to={ACCOUNT_PAYMENT_METHODS_PATH}>{ui.checkout.expiredCardsLink}</Link>.
             </>
           )
         }

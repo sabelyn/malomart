@@ -1,3 +1,4 @@
+import { ui } from "@/copy";
 import classes from "./SaleSticker.module.css";
 
 type SaleStickerProps = {
@@ -7,7 +8,7 @@ type SaleStickerProps = {
 
 const SaleSticker = ({ percentOff, className }: SaleStickerProps) =>
   percentOff > 0 ? (
-    <p className={className ? `${classes.sticker} ${className}` : classes.sticker}>{percentOff}% off? Why not!</p>
+    <p className={className ? `${classes.sticker} ${className}` : classes.sticker}>{ui.product.sale(percentOff)}</p>
   ) : null;
 
 export default SaleSticker;

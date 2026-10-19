@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 
 import type { PlacardProduct } from "@/components/product/ProductPlacard";
 import ProductPlacard from "@/components/product/ProductPlacard";
+import { alerts, ui } from "@/copy";
 import classes from "./CatalogGrid.module.css";
 
 type CatalogGridProps = {
@@ -57,13 +58,13 @@ const CatalogGrid = ({
       {hasMore && (
         <Group justify="center" mt="xl">
           <Button variant="outline" onClick={showMore} loading={loadingMore}>
-            Show more
+            {ui.common.showMore}
           </Button>
         </Group>
       )}
       {loadMoreFailed && (
         <Text role="alert" ta="center" mt="md" c="red.4">
-          Couldn't load more. Try again.
+          {alerts.loadMoreFailed}
         </Text>
       )}
     </>

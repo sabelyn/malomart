@@ -5,8 +5,9 @@ import { useState } from "react";
 
 import { isUnauthorized, useEndpointMutation } from "@/api";
 import AppModal from "@/components/AppModal";
-import { authErrorMessage, SESSION_TIMED_OUT } from "@/components/auth/authErrors";
+import { authErrorMessage } from "@/components/auth/authErrors";
 import CodeForm from "@/components/auth/CodeForm";
+import { alerts, ui } from "@/copy";
 
 type DeleteAccountFlowProps = {
   email: string;
@@ -27,21 +28,21 @@ const DeleteAccountFlow = ({ email, onCancel, onDeleted }: DeleteAccountFlowProp
     onError: error => {
       if (isUnauthorized(error)) {
         setCodeSent(false);
-        setNotice(SESSION_TIMED_OUT);
+        setNotice(alerts.auth.sessionTimedOut);
       }
     }
   });
 
   const resend = () => {
     confirm.reset();
-    request.mutate({}, { onSuccess: () => setNotice("New code sent.") });
+    request.mutate({}, { onSuccess: () => setNotice(alerts.auth.newCodeSent) });
   };
 
   if (codeSent) {
     return (
       <CodeForm
         email={email}
-        submitLabel="Delete my account"
+        submitLabel={ui.profile.deleteMyAccount}
         submitColor="red"
         pending={confirm.isPending}
         error={confirm.error && !isUnauthorized(confirm.error) ? authErrorMessage(confirm.error) : undefined}
@@ -50,10 +51,10 @@ const DeleteAccountFlow = ({ email, onCancel, onDeleted }: DeleteAccountFlowProp
       >
         <Group justify="space-between">
           <Button variant="subtle" onClick={resend} loading={request.isPending}>
-            Send a new code
+            {ui.auth.sendNewCode}
           </Button>
           <Button variant="subtle" onClick={onCancel}>
-            Keep my account
+            {ui.profile.keepMyAccount}
           </Button>
         </Group>
       </CodeForm>
@@ -72,13 +73,10 @@ const DeleteAccountFlow = ({ email, onCancel, onDeleted }: DeleteAccountFlowProp
           {notice}
         </Alert>
       )}
-      <Text>
-        This deletes your account, saved addresses, and payment methods. There's no undo. We'll email a code to {email}{" "}
-        to make sure it's really you.
-      </Text>
+      <Text>{ui.profile.deleteWarning(email)}</Text>
       <Group justify="flex-end">
         <Button variant="subtle" onClick={onCancel} data-autofocus>
-          Keep my account
+          {ui.profile.keepMyAccount}
         </Button>
         <Button
           color="red"
@@ -88,7 +86,7 @@ const DeleteAccountFlow = ({ email, onCancel, onDeleted }: DeleteAccountFlowProp
             request.mutate({});
           }}
         >
-          Email me a code
+          {ui.auth.emailMeACode}
         </Button>
       </Group>
     </Stack>
@@ -97,16 +95,13 @@ const DeleteAccountFlow = ({ email, onCancel, onDeleted }: DeleteAccountFlowProp
 
 const GoogleDeleteAccountFlow = ({ onCancel }: { onCancel: () => void }) => (
   <Stack>
-    <Text>
-      This deletes your account, saved addresses, and payment methods. There's no undo. We'll send you to Google to make
-      sure it's really you, and your account is deleted as soon as you're back.
-    </Text>
+    <Text>{ui.profile.googleDeleteWarning}</Text>
     <Group justify="flex-end">
       <Button variant="subtle" onClick={onCancel} data-autofocus>
-        Keep my account
+        {ui.profile.keepMyAccount}
       </Button>
       <Button component="a" href={startGoogleAccountDeletion.fullPath} color="red">
-        Confirm with Google
+        {ui.profile.confirmWithGoogle}
       </Button>
     </Group>
   </Stack>
@@ -118,7 +113,7 @@ type DeleteAccountModalProps = DeleteAccountFlowProps & {
 };
 
 const DeleteAccountModal = ({ opened, email, signInMethod, onCancel, onDeleted }: DeleteAccountModalProps) => (
-  <AppModal opened={opened} title="Delete your account?" onClose={onCancel}>
+  <AppModal opened={opened} title={ui.profile.deleteTitle} onClose={onCancel}>
     {signInMethod === "google" ? (
       <GoogleDeleteAccountFlow onCancel={onCancel} />
     ) : (

@@ -4,6 +4,7 @@ import type { SyntheticEvent } from "react";
 
 import { productImageSrc, productImageSrcSet } from "@/components/product/productDisplay";
 import SaleSticker from "@/components/product/SaleSticker";
+import { ui } from "@/copy";
 import classes from "./ProductGallery.module.css";
 
 type ProductGalleryProps = {
@@ -39,20 +40,20 @@ const ProductGallery = ({ title, thumbnailKey, imageKeys, percentOff }: ProductG
             src={productImageSrc(current, THUMBNAIL_WIDTH)}
             srcSet={productImageSrcSet(current)}
             sizes="(min-width: 62em) 36rem, 100vw"
-            alt={images.length > 1 ? `${title}, image ${selected + 1} of ${images.length}` : title}
+            alt={ui.product.imageAlt(title, selected + 1, images.length)}
             onLoad={capUpscale}
             className={classes.image}
           />
         ) : (
-          <p className={classes.empty}>No picture. Use your imagination.</p>
+          <p className={classes.empty}>{ui.product.noImage}</p>
         )}
       </div>
       {images.length > 1 && (
-        <div role="group" aria-label="Product images" className={classes.thumbnails}>
+        <div role="group" aria-label={ui.product.imagesGroup} className={classes.thumbnails}>
           {images.map((key, index) => (
             <UnstyledButton
               key={key}
-              aria-label={`Show image ${index + 1} of ${images.length}`}
+              aria-label={ui.product.showImage(index + 1, images.length)}
               aria-pressed={index === selected}
               onClick={() => setSelected(index)}
               className={classes.thumbnail}

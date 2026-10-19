@@ -8,19 +8,12 @@ import CatalogGrid from "@/components/catalog/CatalogGrid";
 import MaloSays from "@/components/MaloSays";
 import PageLoader from "@/components/PageLoader";
 import RetryAlert from "@/components/RetryAlert";
+import { malo, statusMessages, ui } from "@/copy";
 import classes from "./CatalogResults.module.css";
 
 const PAGE_SIZE = 24;
 
 type CatalogResultsProps = CatalogFilterValues;
-
-const statusText = (count: number, hasMore: boolean, category?: string) => {
-  if (count === 0) {
-    return "No products found.";
-  }
-  const products = `${hasMore ? "the first " : ""}${count} product${count === 1 ? "" : "s"}`;
-  return category ? `Showing ${products} in ${category}.` : `Showing ${products}.`;
-};
 
 const CatalogResults = ({ category, inStock }: CatalogResultsProps) => {
   const {
@@ -46,18 +39,12 @@ const CatalogResults = ({ category, inStock }: CatalogResultsProps) => {
     if (!data) {
       return (
         <RetryAlert onRetry={() => void refetch()}>
-          <MaloSays>Couldn't get the stock list. Not my fault.</MaloSays>
+          <MaloSays>{malo.catalog.loadFailed}</MaloSays>
         </RetryAlert>
       );
     }
     if (products.length === 0) {
-      return (
-        <MaloSays>
-          {inStock
-            ? "Nothing on that shelf right now. Come back after restocking."
-            : "Nothing on that shelf. Try another."}
-        </MaloSays>
-      );
+      return <MaloSays>{inStock ? malo.catalog.emptyInStock : malo.catalog.empty}</MaloSays>;
     }
     return (
       <CatalogGrid
@@ -76,11 +63,11 @@ const CatalogResults = ({ category, inStock }: CatalogResultsProps) => {
     <section aria-labelledby="products-heading">
       <VisuallyHidden>
         <Title order={2} id="products-heading">
-          Products
+          {ui.catalog.productsHeading}
         </Title>
       </VisuallyHidden>
       <Text role="status" className={classes.count}>
-        {data && !isPlaceholderData && statusText(products.length, hasNextPage, category)}
+        {data && !isPlaceholderData && statusMessages.catalogCount(products.length, hasNextPage, category)}
       </Text>
       {renderContent()}
     </section>

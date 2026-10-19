@@ -2,8 +2,8 @@ import { Radio, Title, VisuallyHidden } from "@mantine/core";
 import type { ShippingMethod } from "@mm/lib/orders";
 import { ShippingOptions } from "@mm/lib/orders";
 
+import { ui } from "@/copy";
 import classes from "./checkout.module.css";
-import { shippingCostLabel } from "./checkoutDisplay";
 
 type ShippingSectionProps = {
   value: ShippingMethod;
@@ -16,11 +16,11 @@ const ShippingSection = ({ value, onChange }: ShippingSectionProps) => (
   <section aria-labelledby="checkout-shipping-heading">
     <div className={classes.sectionHeader}>
       <Title order={2} id="checkout-shipping-heading" className={classes.sectionTitle}>
-        Delivery
+        {ui.checkout.delivery}
       </Title>
     </div>
     <Radio.Group
-      label={<VisuallyHidden>Delivery speed</VisuallyHidden>}
+      label={<VisuallyHidden>{ui.checkout.deliverySpeed}</VisuallyHidden>}
       labelProps={{ "aria-hidden": true }}
       value={value}
       onChange={method => onChange(method)}
@@ -33,7 +33,7 @@ const ShippingSection = ({ value, onChange }: ShippingSectionProps) => (
               key={method}
               value={method}
               label={name}
-              description={`${description}. ${shippingCostLabel(cost)}.`}
+              description={ui.checkout.shippingOption(description, cost)}
               classNames={{ root: classes.choice, label: classes.choiceLabel, description: classes.choiceDescription }}
             />
           );

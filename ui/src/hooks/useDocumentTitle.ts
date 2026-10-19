@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 
-const SITE_NAME = "Malo Mart";
+import { ui } from "@/copy";
 
 export const useDocumentTitle = (title?: string) => {
   useEffect(() => {
-    document.title = title ? `${title} · ${SITE_NAME}` : SITE_NAME;
+    document.title = title ? `${title} · ${ui.site.name}` : ui.site.name;
   }, [title]);
 };

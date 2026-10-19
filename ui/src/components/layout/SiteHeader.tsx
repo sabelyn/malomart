@@ -2,6 +2,7 @@ import { Container, Group, UnstyledButton, VisuallyHidden } from "@mantine/core"
 import { Link, NavLink, useLocation } from "react-router";
 
 import { useSession, useSignOut } from "@/api";
+import { alerts, ui } from "@/copy";
 import { ACCOUNT_PATH, ADMIN_PATH, CART_PATH, CATALOG_PATH, HOME_PATH, signInPath } from "@/routes/paths";
 import { useExitSession } from "@/routes/sessionExit";
 import classes from "./SiteHeader.module.css";
@@ -12,10 +13,10 @@ type SiteHeaderProps = {
 
 const CartLink = ({ count }: { count?: number }) =>
   count === undefined ? (
-    <NavLink to={CART_PATH}>Cart</NavLink>
+    <NavLink to={CART_PATH}>{ui.site.cart}</NavLink>
   ) : (
-    <NavLink to={CART_PATH} aria-label={`Cart, ${count} ${count === 1 ? "item" : "items"}`}>
-      Cart ({count})
+    <NavLink to={CART_PATH} aria-label={ui.site.cartLabel(count)}>
+      {ui.site.cartWithCount(count)}
     </NavLink>
   );
 
@@ -31,11 +32,11 @@ const SignOutButton = () => {
   return (
     <>
       <UnstyledButton className={classes.navButton} onClick={() => signOut.mutate({})} disabled={signOut.isPending}>
-        Sign out
+        {ui.site.signOut}
       </UnstyledButton>
       {signOut.isError && (
         <span role="alert" className={classes.navError}>
-          Couldn't sign you out. Try again.
+          {alerts.signOutFailed}
         </span>
       )}
     </>
@@ -52,13 +53,13 @@ const AccountLinks = () => {
   if (user) {
     return (
       <>
-        {user.isAdmin && <NavLink to={ADMIN_PATH}>Back office</NavLink>}
-        <NavLink to={ACCOUNT_PATH}>Account</NavLink>
+        {user.isAdmin && <NavLink to={ADMIN_PATH}>{ui.site.backOffice}</NavLink>}
+        <NavLink to={ACCOUNT_PATH}>{ui.site.account}</NavLink>
         <SignOutButton />
       </>
     );
   }
-  return <NavLink to={signInPath(`${pathname}${search}`)}>Sign in</NavLink>;
+  return <NavLink to={signInPath(`${pathname}${search}`)}>{ui.site.signIn}</NavLink>;
 };
 
 const SiteHeader = ({ cartCount }: SiteHeaderProps) => (
@@ -67,17 +68,17 @@ const SiteHeader = ({ cartCount }: SiteHeaderProps) => (
       <Group justify="space-between" align="center" wrap="wrap" gap="md">
         <div className={classes.brand}>
           <Link to={HOME_PATH} className={classes.logo}>
-            Malo Mart
+            {ui.site.name}
           </Link>
           <p className={classes.formerly}>
-            <VisuallyHidden>Formerly </VisuallyHidden>
-            <span className={classes.struck}>Chudley's Fine Goods and Fancy Trinkets Emporium</span>
+            <VisuallyHidden>{ui.site.formerlyPrefix}</VisuallyHidden>
+            <span className={classes.struck}>{ui.site.formerName}</span>
           </p>
-          <p className={classes.branch}>Castle Town branch</p>
+          <p className={classes.branch}>{ui.site.branch}</p>
         </div>
-        <nav aria-label="Main" className={classes.nav}>
+        <nav aria-label={ui.site.mainNav} className={classes.nav}>
           <Group gap="lg">
-            <NavLink to={CATALOG_PATH}>Shop</NavLink>
+            <NavLink to={CATALOG_PATH}>{ui.site.shop}</NavLink>
             <CartLink count={cartCount} />
             <AccountLinks />
           </Group>

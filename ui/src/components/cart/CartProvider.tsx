@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { apiCall, routeKey, useSession } from "@/api";
+import { toasts } from "@/copy";
 import { addItems, applyQuantities, countItems, isEmptyCart } from "@/utils/cartItems";
 import type { CartItems } from "@/utils/guestCart";
 import { readGuestCart, subscribeGuestCart, writeGuestCart } from "@/utils/guestCart";
@@ -84,7 +85,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       addAdjustments(savedFor, reduced);
     },
     onError: async (_, { userId: savedFor }) => {
-      notify({ tone: "error", title: "Couldn't save your cart", message: "It's back to how it was. Try again." });
+      notify({ tone: "error", title: toasts.cart.saveFailedTitle, message: toasts.cart.saveFailed });
       if (queryClient.isMutating({ mutationKey: CART_MUTATION_KEY }) === 1) {
         await queryClient.invalidateQueries({ queryKey: serverCartQuery(savedFor).queryKey });
       }
@@ -126,12 +127,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const add = (product: CartProduct) => {
     if (!ready) {
-      notify({ tone: "info", message: "Your cart is still loading. Try again in a moment." });
+      notify({ tone: "info", message: toasts.cart.stillLoading });
       return;
     }
     const amount = items[product.id] ?? 0;
     if (amount >= product.stockCount) {
-      notify({ tone: "info", message: `Your cart already has every ${product.title} in stock.` });
+      notify({ tone: "info", message: toasts.cart.allInStock(product.title) });
       return;
     }
     const added = update(current => ({
@@ -139,7 +140,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       [product.id]: Math.min((current[product.id] ?? 0) + 1, product.stockCount)
     }));
     if (added) {
-      notify({ message: `Added ${product.title} to your cart. ${amount + 1} in cart.` });
+      notify({ message: toasts.cart.added(product.title, amount + 1) });
     }
   };
 
@@ -150,10 +151,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
     if (update(current => applyQuantities(current, { [product.id]: (current[product.id] ?? 0) - 1 }))) {
       notify({
-        message:
-          amount === 1
-            ? `Removed ${product.title} from your cart.`
-            : `Removed one ${product.title} from your cart. ${amount - 1} in cart.`
+        message: amount === 1 ? toasts.cart.removed(product.title) : toasts.cart.removedOne(product.title, amount - 1)
       });
     }
   };

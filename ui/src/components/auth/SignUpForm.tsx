@@ -4,6 +4,7 @@ import { ApiRequestError, ErrorCode } from "@mm/lib/api";
 import type { To } from "react-router";
 import { Link } from "react-router";
 
+import { ui } from "@/copy";
 import type { SignInState } from "@/routes/paths";
 import classes from "./auth.module.css";
 import { authErrorMessage } from "./authErrors";
@@ -34,16 +35,16 @@ const SignUpForm = ({ form, pending, error, signInLocation, onSubmit }: SignUpFo
             <>
               {" "}
               <Link to={signInLocation} state={{ email: form.values.email.trim() } satisfies SignInState}>
-                Sign in instead
+                {ui.auth.signInInstead}
               </Link>
             </>
           )}
         </Alert>
       )}
-      <TextInput label="Name" autoComplete="name" required {...form.getInputProps("name")} />
-      <TextInput label="Email" type="email" autoComplete="email" required {...form.getInputProps("email")} />
+      <TextInput label={ui.auth.name} autoComplete="name" required {...form.getInputProps("name")} />
+      <TextInput label={ui.auth.email} type="email" autoComplete="email" required {...form.getInputProps("email")} />
       <Button type="submit" loading={pending}>
-        Email me a code
+        {ui.auth.emailMeACode}
       </Button>
     </Stack>
   </form>

@@ -1,6 +1,7 @@
 import { Anchor } from "@mantine/core";
 import type { CurrentUser } from "@mm/lib/auth";
 
+import { ui } from "@/copy";
 import classes from "./account.module.css";
 
 type ProfileFactsProps = {
@@ -11,14 +12,14 @@ type ProfileFactsProps = {
 
 const ProfileFacts = ({ user, onChangeName, onChangeEmail }: ProfileFactsProps) => (
   <dl className={classes.facts}>
-    <dt>Name</dt>
+    <dt>{ui.profile.name}</dt>
     <dd>
       <span>{user.name}</span>
       <Anchor component="button" type="button" underline="always" className={classes.factLink} onClick={onChangeName}>
-        Change name
+        {ui.profile.changeName}
       </Anchor>
     </dd>
-    <dt>Email</dt>
+    <dt>{ui.profile.email}</dt>
     <dd>
       <span>{user.email}</span>
       {user.signInMethod === "email" ? (
@@ -29,10 +30,10 @@ const ProfileFacts = ({ user, onChangeName, onChangeEmail }: ProfileFactsProps) 
           className={classes.factLink}
           onClick={onChangeEmail}
         >
-          Change email
+          {ui.profile.changeEmail}
         </Anchor>
       ) : (
-        <span className={classes.factNote}>You sign in with Google, so Google manages this one.</span>
+        <span className={classes.factNote}>{ui.profile.googleManagesEmail}</span>
       )}
     </dd>
   </dl>

@@ -3,6 +3,7 @@ import type { PaymentMethodDto } from "@mm/lib/customers";
 import { isCardExpired } from "@mm/lib/customers";
 
 import { paymentMethodExpiry, paymentMethodName } from "@/components/account/accountDisplay";
+import { ui } from "@/copy";
 import AccountCard from "./AccountCard";
 import classes from "./AccountCard.module.css";
 
@@ -30,7 +31,7 @@ const PaymentMethodCard = ({
     badges={
       isCardExpired(method) && (
         <Badge variant="outline" color="red.4">
-          Expired
+          {ui.cards.expiredBadge}
         </Badge>
       )
     }

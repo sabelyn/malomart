@@ -10,6 +10,7 @@ import { boolean, preprocess, strictObject } from "zod";
 
 import { apiCall, routeKey } from "@/api";
 import AppModal from "@/components/AppModal";
+import { alerts, ui } from "@/copy";
 import ExpirationFields, { expirationFields, expiredIssue, notExpired } from "./ExpirationFields";
 
 const stripSeparators = (value: unknown) => (typeof value === "string" ? value.replace(/[\s-]/g, "") : value);
@@ -32,9 +33,7 @@ type VaultedCard = {
 };
 
 const saveErrorMessage = (error: unknown) =>
-  error instanceof ApiRequestError && error.status === 400
-    ? "The vault didn't like that card. Check the details and try again."
-    : "Couldn't save that card. Try again.";
+  error instanceof ApiRequestError && error.status === 400 ? alerts.cards.vaultRejected : alerts.cards.saveFailed;
 
 type AddPaymentMethodFormProps = {
   onCancel: () => void;
@@ -84,7 +83,7 @@ const AddPaymentMethodForm = ({ onCancel, onSaved }: AddPaymentMethodFormProps) 
             {saveErrorMessage(save.error)}
           </Alert>
         )}
-        <Radio.Group label="Card brand" required {...form.getInputProps("brand")}>
+        <Radio.Group label={ui.cards.brand} required {...form.getInputProps("brand")}>
           <Group mt="xs">
             {CardBrands.map(brand => (
               <Radio key={brand} value={brand} label={brand} data-autofocus={brand === CardBrands[0] || undefined} />
@@ -92,8 +91,8 @@ const AddPaymentMethodForm = ({ onCancel, onSaved }: AddPaymentMethodFormProps) 
           </Group>
         </Radio.Group>
         <TextInput
-          label="Card number"
-          description="Goes straight to the vault. I never see it."
+          label={ui.cards.number}
+          description={ui.cards.numberHint}
           inputMode="numeric"
           autoComplete="cc-number"
           maxLength={19}
@@ -104,16 +103,13 @@ const AddPaymentMethodForm = ({ onCancel, onSaved }: AddPaymentMethodFormProps) 
           monthProps={form.getInputProps("expirationMonth")}
           yearProps={form.getInputProps("expirationYear")}
         />
-        <Checkbox
-          label="Make this my default payment method"
-          {...form.getInputProps("setAsDefault", { type: "checkbox" })}
-        />
+        <Checkbox label={ui.cards.makeDefault} {...form.getInputProps("setAsDefault", { type: "checkbox" })} />
         <Group justify="flex-end">
           <Button variant="subtle" onClick={onCancel}>
-            Cancel
+            {ui.common.cancel}
           </Button>
           <Button type="submit" loading={save.isPending}>
-            Save card
+            {ui.cards.save}
           </Button>
         </Group>
       </Stack>
@@ -126,7 +122,7 @@ type AddPaymentMethodModalProps = AddPaymentMethodFormProps & {
 };
 
 const AddPaymentMethodModal = ({ opened, onCancel, onSaved }: AddPaymentMethodModalProps) => (
-  <AppModal opened={opened} title="Add a card" onClose={onCancel}>
+  <AppModal opened={opened} title={ui.cards.add} onClose={onCancel}>
     <AddPaymentMethodForm onCancel={onCancel} onSaved={onSaved} />
   </AppModal>
 );

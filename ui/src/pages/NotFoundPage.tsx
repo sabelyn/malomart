@@ -3,19 +3,20 @@ import { Link } from "react-router";
 
 import ChudleyHype from "@/components/ChudleyHype";
 import MaloSays from "@/components/MaloSays";
+import { chudley, malo, ui } from "@/copy";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { HOME_PATH } from "@/routes/paths";
 import classes from "@/styles/pages.module.css";
 
 const NotFoundPage = () => {
-  useDocumentTitle("Not found");
+  useDocumentTitle(ui.pageTitles.notFound);
 
   return (
     <Container size="lg" className={classes.page}>
-      <ChudleyHype>Nothing on this shelf! Not even dust!</ChudleyHype>
-      <MaloSays>Wrong aisle.</MaloSays>
+      <ChudleyHype>{chudley.notFound}</ChudleyHype>
+      <MaloSays>{malo.notFound}</MaloSays>
       <Link to={HOME_PATH} className={classes.backLink}>
-        Back to the shop
+        {ui.notFound.backLink}
       </Link>
     </Container>
   );

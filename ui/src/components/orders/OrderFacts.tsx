@@ -1,6 +1,7 @@
 import type { OrderDto } from "@mm/lib/orders";
 import type { ReactNode } from "react";
 
+import { ui } from "@/copy";
 import { shippingSummary } from "./orderDisplay";
 import classes from "./orders.module.css";
 
@@ -13,7 +14,7 @@ type OrderFactsProps = {
 const OrderFacts = ({ order: { address, shipping, paymentMethod }, before, after }: OrderFactsProps) => (
   <dl className={classes.facts}>
     {before}
-    <dt>Ship to</dt>
+    <dt>{ui.orders.shipTo}</dt>
     <dd>
       <address>
         <span>{address.recipient}</span>
@@ -23,14 +24,12 @@ const OrderFacts = ({ order: { address, shipping, paymentMethod }, before, after
         </span>
       </address>
     </dd>
-    <dt>Delivery</dt>
+    <dt>{ui.orders.delivery}</dt>
     <dd>{shippingSummary(shipping)}</dd>
     {paymentMethod && (
       <>
-        <dt>Paid with</dt>
-        <dd>
-          {paymentMethod.brand} ending in {paymentMethod.lastFour}
-        </dd>
+        <dt>{ui.orders.paidWith}</dt>
+        <dd>{ui.cards.name(paymentMethod.brand, paymentMethod.lastFour)}</dd>
       </>
     )}
     {after}

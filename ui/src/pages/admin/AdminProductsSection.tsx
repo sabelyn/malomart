@@ -14,6 +14,7 @@ import SectionHeader from "@/components/layout/SectionHeader";
 import orderClasses from "@/components/orders/orders.module.css";
 import PageLoader from "@/components/PageLoader";
 import RetryAlert from "@/components/RetryAlert";
+import { alerts, statusMessages, ui } from "@/copy";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useSchemaSearch } from "@/hooks/useSchemaSearch";
@@ -23,15 +24,8 @@ const PAGE_SIZE = 50;
 
 const ProductsSearch = ListProductsQuery.pick({ category: true, inStock: true });
 
-const statusText = (count: number, hasMore: boolean) => {
-  if (count === 0) {
-    return "No products found.";
-  }
-  return `Showing ${hasMore ? "the first " : ""}${count} product${count === 1 ? "" : "s"}.`;
-};
-
 const AdminProductsSection = () => {
-  useDocumentTitle("Products · Back office");
+  useDocumentTitle(ui.pageTitles.adminProducts);
   const [{ category, inStock }, updateSearch] = useSchemaSearch(ProductsSearch);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const deleting = useConfirmDialog<ProductOverview>(headingRef);
@@ -54,7 +48,7 @@ const AdminProductsSection = () => {
   const remove = useEndpointMutation(deleteProduct, {
     invalidates: [products],
     onSuccess: () => {
-      setStatus(`Deleted ${deleting.target?.title ?? "the product"}.`);
+      setStatus(statusMessages.admin.productDeleted(deleting.target?.title));
       deleting.complete();
     }
   });
@@ -73,7 +67,7 @@ const AdminProductsSection = () => {
     if (!data) {
       return (
         <RetryAlert onRetry={() => void refetch()}>
-          <Text>Couldn't load products.</Text>
+          <Text>{alerts.admin.productsFailed}</Text>
         </RetryAlert>
       );
     }
@@ -95,9 +89,9 @@ const AdminProductsSection = () => {
 
   return (
     <section aria-labelledby="admin-products-heading">
-      <SectionHeader id="admin-products-heading" title="Products" headingRef={headingRef}>
+      <SectionHeader id="admin-products-heading" title={ui.admin.productsHeading} headingRef={headingRef}>
         <Button component={Link} to={ADMIN_NEW_PRODUCT_PATH}>
-          New product
+          {ui.admin.newProduct}
         </Button>
       </SectionHeader>
       <Text role="status" className={classes.status}>
@@ -105,22 +99,22 @@ const AdminProductsSection = () => {
       </Text>
       <AdminProductFilters category={category} inStock={inStock} onChange={updateSearch} />
       <Text role="status" className={orderClasses.count}>
-        {data && !isPlaceholderData && statusText(items.length, hasNextPage)}
+        {data && !isPlaceholderData && statusMessages.admin.productCount(items.length, hasNextPage)}
       </Text>
       {renderContent()}
 
       <ConfirmModal
         opened={deleting.opened}
-        title={`Delete ${deleting.target?.title ?? "this product"}?`}
-        confirmLabel="Delete product"
-        dismissLabel="Keep it"
+        title={ui.admin.deleteTitle(deleting.target?.title)}
+        confirmLabel={ui.admin.deleteConfirm}
+        dismissLabel={ui.common.keepIt}
         pending={remove.isPending}
-        error={remove.isError ? "Couldn't delete the product. Try again." : undefined}
+        error={remove.isError ? alerts.admin.deleteProductFailed : undefined}
         onConfirm={() => deleting.target && remove.mutate({ params: { id: deleting.target.id } })}
         onClose={deleting.close}
         onExitTransitionEnd={deleting.afterClose}
       >
-        It comes out of the catalog along with its images. Past orders keep its name.
+        {ui.admin.deleteFromListWarning}
       </ConfirmModal>
     </section>
   );

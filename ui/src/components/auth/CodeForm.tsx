@@ -4,6 +4,8 @@ import { schemaResolver, useForm } from "@mantine/form";
 import { VerifySignInBody } from "@mm/lib/auth";
 import type { ReactNode } from "react";
 
+import { ui } from "@/copy";
+
 type CodeFormProps = {
   email: string;
   submitLabel: string;
@@ -46,8 +48,8 @@ const CodeForm = ({
           </Alert>
         )}
         <TextInput
-          label="Code"
-          description={`We emailed a code to ${email}.`}
+          label={ui.auth.code}
+          description={ui.auth.codeSent(email)}
           inputMode="numeric"
           autoComplete="one-time-code"
           autoFocus

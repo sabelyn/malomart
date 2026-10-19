@@ -2,13 +2,8 @@ import { Alert, Button, Divider, Stack } from "@mantine/core";
 import { GOOGLE_ERROR_PARAM, GoogleSignInError, startGoogleSignIn } from "@mm/lib/auth";
 import { useSearchParams } from "react-router";
 
+import { alerts, ui } from "@/copy";
 import classes from "./auth.module.css";
-
-const ERROR_MESSAGES: Record<GoogleSignInError, string> = {
-  cancelled: "Google sign-in cancelled.",
-  failed: "Google sign-in didn't work. Try again or use your email.",
-  wrongAccount: "That's a different Google account."
-};
 
 const GoogleLogo = () => (
   <svg viewBox="0 0 48 48" width={18} height={18} aria-hidden="true" focusable="false">
@@ -45,14 +40,14 @@ const GoogleSignIn = ({ showError = false }: GoogleSignInProps) => {
 
   return (
     <Stack className={classes.alt}>
-      <Divider label="or" labelPosition="center" />
+      <Divider label={ui.common.or} labelPosition="center" />
       {showError && error.success && (
         <Alert color="red" variant="light">
-          {ERROR_MESSAGES[error.data]}
+          {alerts.auth.google[error.data]}
         </Alert>
       )}
       <Button component="a" href={href} variant="default" leftSection={<GoogleLogo />}>
-        Continue with Google
+        {ui.auth.continueWithGoogle}
       </Button>
     </Stack>
   );

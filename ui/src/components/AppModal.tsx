@@ -1,6 +1,7 @@
 import { Modal } from "@mantine/core";
 import type { ReactNode } from "react";
 
+import { ui } from "@/copy";
 import classes from "./AppModal.module.css";
 
 type AppModalProps = {
@@ -24,7 +25,7 @@ const AppModal = ({ opened, title, description, children, onClose, onExitTransit
     <Modal.Content>
       <Modal.Header component="div">
         <Modal.Title>{title}</Modal.Title>
-        <Modal.CloseButton aria-label="Close" />
+        <Modal.CloseButton aria-label={ui.common.close} />
       </Modal.Header>
       {description && <Modal.Body className={classes.description}>{description}</Modal.Body>}
       <div className={classes.body}>{children}</div>

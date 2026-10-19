@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 import type { CartProduct } from "@/components/cart/CartProvider";
 import { useCart } from "@/components/cart/CartProvider";
+import { ui } from "@/copy";
 import classes from "./AddToCart.module.css";
 
 type AddToCartProps = {
@@ -45,7 +46,7 @@ const AddToCart = ({ product, size, className, describedBy }: AddToCartProps) =>
         disabled={product.stockCount === 0}
         onClick={() => change(add, true)}
       >
-        Add to cart
+        {ui.cart.addToCart}
       </Button>
     );
   }
@@ -55,17 +56,17 @@ const AddToCart = ({ product, size, className, describedBy }: AddToCartProps) =>
       <Button
         size={size}
         variant="outline"
-        aria-label={`Remove one ${product.title}`}
+        aria-label={ui.cart.removeOne(product.title)}
         onClick={() => change(subtract, amount === 1)}
       >
         −
       </Button>
-      <Text className={classes.amount}>{amount} in cart</Text>
+      <Text className={classes.amount}>{ui.cart.inCart(amount)}</Text>
       <Button
         ref={moreRef}
         size={size}
         variant="outline"
-        aria-label={`Add one more ${product.title}`}
+        aria-label={ui.cart.addOneMore(product.title)}
         aria-disabled={atStock}
         data-disabled={atStock || undefined}
         onClick={() => change(add, false)}

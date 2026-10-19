@@ -20,6 +20,7 @@ import CheckoutSummary from "@/components/checkout/CheckoutSummary";
 import PaymentStep from "@/components/checkout/PaymentStep";
 import ShippingSection from "@/components/checkout/ShippingSection";
 import { usePlaceOrder } from "@/components/checkout/usePlaceOrder";
+import { malo, ui } from "@/copy";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import classes from "@/styles/pages.module.css";
 
@@ -30,7 +31,7 @@ const focusFirstControl = (section: HTMLElement | null) =>
   )?.focus();
 
 const CheckoutPage = () => {
-  useDocumentTitle("Checkout");
+  useDocumentTitle(ui.pageTitles.checkout);
   const { cart, products, lines, subtotal, notices, isError, refetch } = useCartProducts();
   const addresses = useQuery(endpointQuery(listAddresses, {}));
   const paymentMethods = useQuery(endpointQuery(listPaymentMethods, {}));
@@ -78,12 +79,12 @@ const CheckoutPage = () => {
 
   return (
     <Container size="lg" className={classes.page}>
-      <Title order={1}>Checkout</Title>
+      <Title order={1}>{ui.checkout.heading}</Title>
       {notices.length > 0 && <CartAdjustmentsAlert notices={notices} onClose={cart.clearAdjustments} />}
       <CartGate
         productsLoaded={!!products}
         productsFailed={isError}
-        emptyMessage="Nothing to check out. Bold strategy."
+        emptyMessage={malo.checkout.empty}
         onRetryProducts={() => void refetch()}
       >
         <div className={cartClasses.layout}>

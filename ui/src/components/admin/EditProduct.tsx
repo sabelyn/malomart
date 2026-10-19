@@ -7,6 +7,7 @@ import { Link } from "react-router";
 
 import { endpointQuery } from "@/api";
 import PageLoader from "@/components/PageLoader";
+import { toasts, ui } from "@/copy";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { productPath } from "@/routes/paths";
 import pages from "@/styles/pages.module.css";
@@ -29,13 +30,13 @@ const EditProduct = ({ id }: { id: string }) => {
     throwOnError: err => !isMissing(err)
   });
   const notFound = !validId || isMissing(error);
-  useDocumentTitle(`${notFound ? "Product not found" : (product?.title ?? "Product")} · Back office`);
+  useDocumentTitle(ui.pageTitles.adminProduct(notFound ? ui.pageTitles.productNotFound : product?.title));
 
   if (notFound) {
     return (
       <>
-        <Title order={1}>Product not found</Title>
-        <Text mt="md">It may have been deleted.</Text>
+        <Title order={1}>{ui.admin.productNotFound}</Title>
+        <Text mt="md">{ui.admin.productMaybeDeleted}</Text>
         <ProductsBackLink />
       </>
     );
@@ -47,25 +48,25 @@ const EditProduct = ({ id }: { id: string }) => {
   return (
     <>
       <div className={classes.editorHeader}>
-        <Title order={1}>Edit {product.title}</Title>
+        <Title order={1}>{ui.admin.editTitle(product.title)}</Title>
         <Link to={productPath(product.id)} className={pages.backLink}>
-          View in the shop
+          {ui.admin.viewInShop}
         </Link>
       </div>
 
-      <EditorSection id="product-details-heading" title="Details">
+      <EditorSection id="product-details-heading" title={ui.admin.details}>
         <ProductForm
           key={product.id}
           product={product}
-          onSaved={saved => notify({ message: `Saved ${saved.title}.` })}
+          onSaved={saved => notify({ message: toasts.admin.saved(saved.title) })}
         />
       </EditorSection>
 
-      <EditorSection id="product-stock-heading" title="Stock">
+      <EditorSection id="product-stock-heading" title={ui.admin.stock}>
         <StockSection product={product} />
       </EditorSection>
 
-      <EditorSection id="product-images-heading" title="Images">
+      <EditorSection id="product-images-heading" title={ui.admin.images}>
         <ImagesSection product={product} />
       </EditorSection>
 

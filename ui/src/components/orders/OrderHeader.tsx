@@ -3,6 +3,7 @@ import type { OrderDto } from "@mm/lib/orders";
 import { OrderStatus } from "@mm/lib/orders";
 import type { Ref } from "react";
 
+import { ui } from "@/copy";
 import { formatOrderDate, isCancellable, orderNumber } from "./orderDisplay";
 import classes from "./orders.module.css";
 
@@ -19,19 +20,19 @@ const OrderHeader = ({ order, headingRef, onCancel }: OrderHeaderProps) => {
     <div className={classes.header}>
       <div>
         <Title order={1} ref={headingRef} tabIndex={-1}>
-          Order {orderNumber(order.id)}
+          {ui.orders.order(orderNumber(order.id))}
         </Title>
         <Text className={classes.placedOn}>
-          Placed {formatOrderDate(orderDate)}.{" "}
+          {ui.orders.placedOn(formatOrderDate(orderDate))}{" "}
           <Badge component="span" variant="outline" color={currentStatus === OrderStatus.Cancelled ? "red.4" : "gold"}>
-            <VisuallyHidden>Status: </VisuallyHidden>
+            <VisuallyHidden>{ui.common.statusPrefix}</VisuallyHidden>
             {currentStatus}
           </Badge>
         </Text>
       </div>
       {isCancellable(currentStatus) && (
         <Button variant="outline" color="red.4" onClick={onCancel}>
-          Cancel order
+          {ui.orders.cancel}
         </Button>
       )}
     </div>

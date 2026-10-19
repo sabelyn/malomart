@@ -4,6 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
 import { endpointQuery } from "@/api";
+import { alerts } from "@/copy";
 import { isEmptyCart, stockAdjustments } from "@/utils/cartItems";
 import { useCart } from "./CartProvider";
 
@@ -17,15 +18,13 @@ const adjustmentNotices = (adjustments: Record<string, number>, products: Map<st
     if (!product) {
       missing++;
     } else if (amount === 0) {
-      notices.push(`${product.title} sold out, so I took it out.`);
+      notices.push(alerts.cartAdjustments.soldOut(product.title));
     } else {
-      notices.push(`${product.title}: only ${amount} left, so that's what you get.`);
+      notices.push(alerts.cartAdjustments.limited(product.title, amount));
     }
   }
-  if (missing === 1) {
-    notices.push("Something in your cart isn't sold anymore, so I took it out.");
-  } else if (missing > 1) {
-    notices.push(`${missing} things in your cart aren't sold anymore, so I took them out.`);
+  if (missing > 0) {
+    notices.push(alerts.cartAdjustments.discontinued(missing));
   }
   return notices;
 };

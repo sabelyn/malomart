@@ -8,6 +8,7 @@ import { boolean, strictObject } from "zod";
 import { useEndpointMutation } from "@/api";
 import { paymentMethodName } from "@/components/account/accountDisplay";
 import AppModal from "@/components/AppModal";
+import { alerts, ui } from "@/copy";
 import ExpirationFields, { expirationFields, expiredIssue, notExpired } from "./ExpirationFields";
 
 const EditCardForm = strictObject({
@@ -16,9 +17,7 @@ const EditCardForm = strictObject({
 }).refine(notExpired, expiredIssue);
 
 const saveErrorMessage = (error: unknown) =>
-  error instanceof ApiRequestError && error.status === 404
-    ? "That card is gone. Someone deleted it."
-    : "Couldn't save that card. Try again.";
+  error instanceof ApiRequestError && error.status === 404 ? alerts.cards.gone : alerts.cards.saveFailed;
 
 type EditPaymentMethodFormProps = {
   method: PaymentMethodDto;
@@ -63,7 +62,7 @@ const EditPaymentMethodForm = ({ method, onCancel, onSaved }: EditPaymentMethodF
             {saveErrorMessage(update.error)}
           </Alert>
         )}
-        <Text>Got a replacement card with the same number? Update the expiration here.</Text>
+        <Text>{ui.cards.editIntro}</Text>
         <ExpirationFields
           autoFocus
           currentYear={method.expirationYear}
@@ -71,17 +70,14 @@ const EditPaymentMethodForm = ({ method, onCancel, onSaved }: EditPaymentMethodF
           yearProps={form.getInputProps("expirationYear")}
         />
         {!method.isDefault && (
-          <Checkbox
-            label="Make this my default payment method"
-            {...form.getInputProps("setAsDefault", { type: "checkbox" })}
-          />
+          <Checkbox label={ui.cards.makeDefault} {...form.getInputProps("setAsDefault", { type: "checkbox" })} />
         )}
         <Group justify="flex-end">
           <Button variant="subtle" onClick={onCancel}>
-            Cancel
+            {ui.common.cancel}
           </Button>
           <Button type="submit" loading={update.isPending}>
-            Save card
+            {ui.cards.save}
           </Button>
         </Group>
       </Stack>
@@ -95,7 +91,7 @@ type EditPaymentMethodModalProps = Omit<EditPaymentMethodFormProps, "method"> & 
 };
 
 const EditPaymentMethodModal = ({ opened, method, onCancel, onSaved }: EditPaymentMethodModalProps) => (
-  <AppModal opened={opened} title={method ? `Edit ${paymentMethodName(method)}` : "Edit card"} onClose={onCancel}>
+  <AppModal opened={opened} title={ui.cards.edit(method && paymentMethodName(method))} onClose={onCancel}>
     {method && <EditPaymentMethodForm key={method.id} method={method} onCancel={onCancel} onSaved={onSaved} />}
   </AppModal>
 );

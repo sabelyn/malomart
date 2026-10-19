@@ -3,7 +3,7 @@ import type { ProductDto } from "@mm/lib/products";
 
 import AddToCart from "@/components/cart/AddToCart";
 import PriceTag from "@/components/product/PriceTag";
-import { stockLine } from "@/components/product/productDisplay";
+import { ui } from "@/copy";
 import classes from "./ProductSummary.module.css";
 
 type ProductSummaryProps = {
@@ -17,12 +17,12 @@ const ProductSummary = ({ product }: ProductSummaryProps) => (
     <PriceTag price={product.price} chudleyPrice={product.originalPrice ?? undefined} />
     <div className={classes.purchase}>
       <AddToCart product={product} size="lg" />
-      <Text className={classes.stock}>{stockLine(product.stockCount)}</Text>
+      <Text className={classes.stock}>{ui.product.stock(product.stockCount)}</Text>
     </div>
     {product.features.length > 0 && (
       <section aria-labelledby="features-heading" className={classes.features}>
         <Title order={2} id="features-heading" className={classes.featuresHeading}>
-          What it does
+          {ui.product.featuresHeading}
         </Title>
         <ul>
           {product.features.map(feature => (

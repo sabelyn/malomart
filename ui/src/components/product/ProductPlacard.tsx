@@ -4,8 +4,9 @@ import { Link } from "react-router";
 
 import AddToCart from "@/components/cart/AddToCart";
 import PriceTag from "@/components/product/PriceTag";
-import { percentOff, productImageSrc, stockLine } from "@/components/product/productDisplay";
+import { percentOff, productImageSrc } from "@/components/product/productDisplay";
 import SaleSticker from "@/components/product/SaleSticker";
+import { ui } from "@/copy";
 import { productPath } from "@/routes/paths";
 import classes from "./ProductPlacard.module.css";
 
@@ -40,7 +41,7 @@ const ProductPlacard = ({ product, hideCategory }: ProductPlacardProps) => {
       <div className={classes.footer}>
         <PriceTag price={product.price} chudleyPrice={originalPrice} />
         <Group justify="space-between" align="center">
-          <Text className={classes.stock}>{stockLine(product.stockCount)}</Text>
+          <Text className={classes.stock}>{ui.product.stock(product.stockCount)}</Text>
           <AddToCart product={product} className={classes.action} describedBy={`product-${product.id}`} />
         </Group>
       </div>

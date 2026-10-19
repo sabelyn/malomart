@@ -14,13 +14,14 @@ import SectionHeader from "@/components/layout/SectionHeader";
 import MaloSays from "@/components/MaloSays";
 import PageLoader from "@/components/PageLoader";
 import RetryAlert from "@/components/RetryAlert";
+import { alerts, malo, statusMessages, ui } from "@/copy";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 type EditState = { opened: boolean; target?: AddressDto };
 
 const AddressesSection = () => {
-  useDocumentTitle("Addresses");
+  useDocumentTitle(ui.pageTitles.addresses);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const deleting = useConfirmDialog<AddressDto>(headingRef);
   const [editing, setEditing] = useState<EditState>({ opened: false });
@@ -32,7 +33,7 @@ const AddressesSection = () => {
   const remove = useEndpointMutation(deleteAddress, {
     invalidates: [customers],
     onSuccess: () => {
-      setStatus(`Deleted ${deleting.target ? addressName(deleting.target) : "the address"}.`);
+      setStatus(statusMessages.addresses.deleted(deleting.target && addressName(deleting.target)));
       deleting.complete();
     }
   });
@@ -41,7 +42,7 @@ const AddressesSection = () => {
     invalidates: [customers],
     onSuccess: address => {
       setFocusEditId(address.id);
-      setStatus(`${addressName(address)} is now your default address.`);
+      setStatus(statusMessages.addresses.madeDefault(addressName(address)));
     }
   });
 
@@ -51,7 +52,7 @@ const AddressesSection = () => {
   };
 
   const saved = (address: AddressDto) => {
-    setStatus(`Saved ${addressName(address)}.`);
+    setStatus(statusMessages.addresses.saved(addressName(address)));
     setEditing(current => ({ ...current, opened: false }));
   };
 
@@ -62,12 +63,12 @@ const AddressesSection = () => {
     if (!addresses) {
       return (
         <RetryAlert onRetry={() => void refetch()}>
-          <MaloSays>Couldn't find your addresses. Not my fault.</MaloSays>
+          <MaloSays>{malo.addresses.loadFailed}</MaloSays>
         </RetryAlert>
       );
     }
     if (addresses.length === 0) {
-      return <MaloSays>No addresses yet. Can't deliver to nowhere.</MaloSays>;
+      return <MaloSays>{malo.addresses.empty}</MaloSays>;
     }
     return (
       <AddressList
@@ -83,15 +84,15 @@ const AddressesSection = () => {
 
   return (
     <section aria-labelledby="addresses-heading">
-      <SectionHeader id="addresses-heading" title="Addresses" headingRef={headingRef}>
-        <Button onClick={() => setEditing({ opened: true })}>Add an address</Button>
+      <SectionHeader id="addresses-heading" title={ui.addresses.heading} headingRef={headingRef}>
+        <Button onClick={() => setEditing({ opened: true })}>{ui.addresses.add}</Button>
       </SectionHeader>
       <Text role="status" className={classes.status}>
         {status}
       </Text>
       {makeDefault.isError && (
         <Text role="alert" className={classes.error}>
-          Couldn't change your default address. Try again.
+          {alerts.addresses.makeDefaultFailed}
         </Text>
       )}
       {renderContent()}
@@ -104,15 +105,15 @@ const AddressesSection = () => {
       />
       <ConfirmModal
         opened={deleting.opened}
-        title="Delete this address?"
-        confirmLabel="Delete address"
+        title={ui.addresses.deleteTitle}
+        confirmLabel={ui.addresses.deleteConfirm}
         pending={remove.isPending}
-        error={remove.isError ? "Couldn't delete that address. Try again." : undefined}
+        error={remove.isError ? alerts.addresses.deleteFailed : undefined}
         onConfirm={() => deleting.target && remove.mutate({ params: { id: deleting.target.id } })}
         onClose={deleting.close}
         onExitTransitionEnd={deleting.afterClose}
       >
-        {deleting.target && `${addressName(deleting.target)} will be gone for good.`}
+        {deleting.target && ui.addresses.deleteWarning(addressName(deleting.target))}
       </ConfirmModal>
     </section>
   );

@@ -2,6 +2,7 @@ import { lazy } from "react";
 import { Navigate, Route, Routes } from "react-router";
 
 import Layout from "@/components/layout/Layout";
+import { ui } from "@/copy";
 import CartPage from "@/pages/CartPage";
 import CatalogPage from "@/pages/CatalogPage";
 import NotFoundPage from "@/pages/NotFoundPage";
@@ -81,7 +82,7 @@ const App = () => (
         <Route path={ADMIN_PRODUCT_ROUTE} element={<ProductEditorPage />} />
         <Route
           path={ADMIN_ORDER_ROUTE}
-          element={<OrderDetailsPage backTo={ADMIN_ORDERS_PATH} backLabel="All orders" />}
+          element={<OrderDetailsPage backTo={ADMIN_ORDERS_PATH} backLabel={ui.orders.allOrders} />}
         />
       </Route>
       <Route path="*" element={<NotFoundPage />} />

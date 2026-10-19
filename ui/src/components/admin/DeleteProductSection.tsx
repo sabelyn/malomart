@@ -7,6 +7,7 @@ import { useNavigate } from "react-router";
 
 import { routeKey, useEndpointMutation } from "@/api";
 import ConfirmModal from "@/components/ConfirmModal";
+import { alerts, toasts, ui } from "@/copy";
 import { ADMIN_PRODUCTS_PATH } from "@/routes/paths";
 import { notify } from "@/utils/notify";
 import classes from "./admin.module.css";
@@ -19,17 +20,15 @@ const DeleteProductSection = ({ product }: { product: ProductDto }) => {
 
   const remove = useEndpointMutation(deleteProduct, {
     onSuccess: async () => {
-      notify({ message: `Deleted ${product.title}.` });
+      notify({ message: toasts.admin.deleted(product.title) });
       await navigate(ADMIN_PRODUCTS_PATH, { replace: true });
       await queryClient.invalidateQueries({ queryKey: routeKey(products) });
     }
   });
 
   return (
-    <EditorSection id="product-delete-heading" title="Delete product">
-      <Text className={classes.dangerZone}>
-        Takes it out of the catalog and deletes its images. Past orders keep its name.
-      </Text>
+    <EditorSection id="product-delete-heading" title={ui.admin.deleteSection}>
+      <Text className={classes.dangerZone}>{ui.admin.deleteSectionBlurb}</Text>
       <Button
         mt="md"
         variant="outline"
@@ -39,20 +38,20 @@ const DeleteProductSection = ({ product }: { product: ProductDto }) => {
           setConfirming(true);
         }}
       >
-        Delete {product.title}
+        {ui.admin.deleteButton(product.title)}
       </Button>
 
       <ConfirmModal
         opened={confirming}
-        title={`Delete ${product.title}?`}
-        confirmLabel="Delete product"
-        dismissLabel="Keep it"
+        title={ui.admin.deleteTitle(product.title)}
+        confirmLabel={ui.admin.deleteConfirm}
+        dismissLabel={ui.common.keepIt}
         pending={remove.isPending}
-        error={remove.isError ? "Couldn't delete the product. Try again." : undefined}
+        error={remove.isError ? alerts.admin.deleteProductFailed : undefined}
         onConfirm={() => remove.mutate({ params: { id: product.id } })}
         onClose={() => setConfirming(false)}
       >
-        There's no undo.
+        {ui.admin.noUndo}
       </ConfirmModal>
     </EditorSection>
   );

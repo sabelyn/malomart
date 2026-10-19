@@ -15,13 +15,14 @@ import SectionHeader from "@/components/layout/SectionHeader";
 import MaloSays from "@/components/MaloSays";
 import PageLoader from "@/components/PageLoader";
 import RetryAlert from "@/components/RetryAlert";
+import { alerts, malo, statusMessages, ui } from "@/copy";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 type EditState = { opened: boolean; target?: PaymentMethodDto };
 
 const PaymentMethodsSection = () => {
-  useDocumentTitle("Payment methods");
+  useDocumentTitle(ui.pageTitles.cards);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const deleting = useConfirmDialog<PaymentMethodDto>(headingRef);
   const [adding, setAdding] = useState(false);
@@ -34,7 +35,7 @@ const PaymentMethodsSection = () => {
   const remove = useEndpointMutation(deletePaymentMethod, {
     invalidates: [customers],
     onSuccess: () => {
-      setStatus(`Removed ${deleting.target ? paymentMethodName(deleting.target) : "the card"}.`);
+      setStatus(statusMessages.cards.removed(deleting.target && paymentMethodName(deleting.target)));
       deleting.complete();
     }
   });
@@ -43,7 +44,7 @@ const PaymentMethodsSection = () => {
     invalidates: [customers],
     onSuccess: method => {
       setFocusEditId(method.id);
-      setStatus(`${paymentMethodName(method)} is now your default payment method.`);
+      setStatus(statusMessages.cards.madeDefault(paymentMethodName(method)));
     }
   });
 
@@ -53,12 +54,12 @@ const PaymentMethodsSection = () => {
   };
 
   const added = (method: PaymentMethodDto) => {
-    setStatus(`Added ${paymentMethodName(method)}.`);
+    setStatus(statusMessages.cards.added(paymentMethodName(method)));
     setAdding(false);
   };
 
   const saved = (method: PaymentMethodDto) => {
-    setStatus(`Saved ${paymentMethodName(method)}.`);
+    setStatus(statusMessages.cards.saved(paymentMethodName(method)));
     setEditing(current => ({ ...current, opened: false }));
   };
 
@@ -69,12 +70,12 @@ const PaymentMethodsSection = () => {
     if (!methods) {
       return (
         <RetryAlert onRetry={() => void refetch()}>
-          <MaloSays>Couldn't find your cards. Not my fault.</MaloSays>
+          <MaloSays>{malo.cards.loadFailed}</MaloSays>
         </RetryAlert>
       );
     }
     if (methods.length === 0) {
-      return <MaloSays>No cards on file. I don't do IOUs.</MaloSays>;
+      return <MaloSays>{malo.cards.empty}</MaloSays>;
     }
     return (
       <PaymentMethodList
@@ -90,15 +91,15 @@ const PaymentMethodsSection = () => {
 
   return (
     <section aria-labelledby="payment-methods-heading">
-      <SectionHeader id="payment-methods-heading" title="Payment methods" headingRef={headingRef}>
-        <Button onClick={() => setAdding(true)}>Add a card</Button>
+      <SectionHeader id="payment-methods-heading" title={ui.cards.heading} headingRef={headingRef}>
+        <Button onClick={() => setAdding(true)}>{ui.cards.add}</Button>
       </SectionHeader>
       <Text role="status" className={classes.status}>
         {status}
       </Text>
       {makeDefault.isError && (
         <Text role="alert" className={classes.error}>
-          Couldn't change your default payment method. Try again.
+          {alerts.cards.makeDefaultFailed}
         </Text>
       )}
       {renderContent()}
@@ -112,15 +113,15 @@ const PaymentMethodsSection = () => {
       />
       <ConfirmModal
         opened={deleting.opened}
-        title="Remove this card?"
-        confirmLabel="Remove card"
+        title={ui.cards.removeTitle}
+        confirmLabel={ui.cards.removeConfirm}
         pending={remove.isPending}
-        error={remove.isError ? "Couldn't remove that card. Try again." : undefined}
+        error={remove.isError ? alerts.cards.removeFailed : undefined}
         onConfirm={() => deleting.target && remove.mutate({ params: { id: deleting.target.id } })}
         onClose={deleting.close}
         onExitTransitionEnd={deleting.afterClose}
       >
-        {deleting.target && `${paymentMethodName(deleting.target)} will be wiped from the vault.`}
+        {deleting.target && ui.cards.removeWarning(paymentMethodName(deleting.target))}
       </ConfirmModal>
     </section>
   );

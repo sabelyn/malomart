@@ -8,6 +8,7 @@ import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import PageError from "@/components/layout/PageError";
 import SiteHeader from "@/components/layout/SiteHeader";
 import PageLoader from "@/components/PageLoader";
+import { ui } from "@/copy";
 import classes from "./Layout.module.css";
 
 const Layout = () => {
@@ -29,7 +30,7 @@ const Layout = () => {
   return (
     <>
       <a href="#main" className={classes.skipLink}>
-        Skip to content
+        {ui.site.skipLink}
       </a>
       <SiteHeader cartCount={cart.ready ? cart.count : undefined} />
       <main id="main" ref={mainRef} tabIndex={-1} className={classes.main}>
@@ -41,10 +42,8 @@ const Layout = () => {
       </main>
       <footer className={classes.footer}>
         <Container size="lg">
-          <p>Come back with more rupees.</p>
-          <p className={classes.credits}>
-            Item icons ripped by Colbydude. Rupee art by Side__Steppa. The Legend of Zelda belongs to Nintendo.
-          </p>
+          <p>{ui.site.footer}</p>
+          <p className={classes.credits}>{ui.site.credits}</p>
         </Container>
       </footer>
     </>

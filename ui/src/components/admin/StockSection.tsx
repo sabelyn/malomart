@@ -5,17 +5,17 @@ import { adjustProductStock, MAX_STOCK_CHANGE, products } from "@mm/lib/products
 import { useState } from "react";
 
 import { useEndpointMutation } from "@/api";
+import { alerts, statusMessages, ui } from "@/copy";
 import classes from "./admin.module.css";
-import { stockLabel } from "./adminDisplay";
 
 const errorMessage = (error: unknown) => {
   if (error instanceof ApiRequestError && error.status === 409) {
     return error.message;
   }
   if (error instanceof ApiRequestError && error.status === 404) {
-    return "That product is gone. Someone deleted it.";
+    return alerts.admin.productGone;
   }
-  return "Couldn't change the stock. Try again.";
+  return alerts.admin.stockFailed;
 };
 
 const StockSection = ({ product }: { product: ProductDto }) => {
@@ -26,7 +26,7 @@ const StockSection = ({ product }: { product: ProductDto }) => {
   const adjust = useEndpointMutation(adjustProductStock, {
     invalidates: [products],
     onSuccess: (updated, { body: { change } }) => {
-      setStatus(`${change > 0 ? "Added" : "Removed"} ${Math.abs(change)}. ${stockLabel(updated.stockCount)} now.`);
+      setStatus(statusMessages.admin.stockChanged(change, updated.stockCount));
     }
   });
 
@@ -37,7 +37,7 @@ const StockSection = ({ product }: { product: ProductDto }) => {
     setStatus("");
     adjust.reset();
     if (typeof amount !== "number" || !Number.isInteger(amount) || amount < 1 || amount > MAX_STOCK_CHANGE) {
-      setInputError(`Enter a whole number from 1 to ${MAX_STOCK_CHANGE.toLocaleString("en-US")}.`);
+      setInputError(alerts.admin.stockAmountRange(MAX_STOCK_CHANGE));
       return;
     }
     setInputError(undefined);
@@ -46,10 +46,10 @@ const StockSection = ({ product }: { product: ProductDto }) => {
 
   return (
     <>
-      <Text className={classes.stockCount}>{stockLabel(product.stockCount)}.</Text>
+      <Text className={classes.stockCount}>{ui.admin.stockLabel(product.stockCount)}.</Text>
       <div className={classes.stockControls}>
         <NumberInput
-          label="Amount"
+          label={ui.admin.stockAmount}
           min={1}
           max={MAX_STOCK_CHANGE}
           allowDecimal={false}
@@ -60,10 +60,10 @@ const StockSection = ({ product }: { product: ProductDto }) => {
           onChange={setAmount}
         />
         <Button variant="outline" onClick={() => submit(1)}>
-          Add stock
+          {ui.admin.addStock}
         </Button>
         <Button variant="outline" color="red.4" onClick={() => submit(-1)}>
-          Remove stock
+          {ui.admin.removeStock}
         </Button>
       </div>
       <Text role="status" className={classes.status}>

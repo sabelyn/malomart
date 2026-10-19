@@ -1,5 +1,4 @@
 import { Button, Text } from "@mantine/core";
-import type { OrderStatus } from "@mm/lib/orders";
 import { ListOrdersQuery, listOrders } from "@mm/lib/orders";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
@@ -12,6 +11,7 @@ import orderClasses from "@/components/orders/orders.module.css";
 import OrderStatusFilter from "@/components/orders/OrderStatusFilter";
 import PageLoader from "@/components/PageLoader";
 import RetryAlert from "@/components/RetryAlert";
+import { malo, statusMessages, ui } from "@/copy";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useSchemaSearch } from "@/hooks/useSchemaSearch";
 import { CATALOG_PATH } from "@/routes/paths";
@@ -20,16 +20,8 @@ const PAGE_SIZE = 20;
 
 const OrdersSearch = ListOrdersQuery.pick({ status: true });
 
-const statusText = (count: number, hasMore: boolean, status?: OrderStatus) => {
-  if (count === 0) {
-    return "No orders found.";
-  }
-  const kind = status ? `${status.toLowerCase()} ` : "";
-  return `Showing ${hasMore ? "the first " : ""}${count} ${kind}order${count === 1 ? "" : "s"}.`;
-};
-
 const OrdersSection = () => {
-  useDocumentTitle("Orders");
+  useDocumentTitle(ui.pageTitles.orders);
   const [{ status }, updateSearch] = useSchemaSearch(OrdersSearch);
 
   const {
@@ -55,18 +47,18 @@ const OrdersSection = () => {
     if (!data) {
       return (
         <RetryAlert onRetry={() => void refetch()}>
-          <MaloSays>Couldn't find your orders. Not my fault.</MaloSays>
+          <MaloSays>{malo.orders.loadFailed}</MaloSays>
         </RetryAlert>
       );
     }
     if (orders.length === 0) {
       return status ? (
-        <MaloSays>Nothing {status.toLowerCase()}. Try another.</MaloSays>
+        <MaloSays>{malo.orders.emptyForStatus(status)}</MaloSays>
       ) : (
         <>
-          <MaloSays>No orders yet. The shelves aren't going to empty themselves.</MaloSays>
+          <MaloSays>{malo.orders.empty}</MaloSays>
           <Button mt="lg" component={Link} to={CATALOG_PATH}>
-            Browse the catalog
+            {ui.orders.browseCatalog}
           </Button>
         </>
       );
@@ -85,10 +77,10 @@ const OrdersSection = () => {
 
   return (
     <section aria-labelledby="orders-heading">
-      <SectionHeader id="orders-heading" title="Orders" />
+      <SectionHeader id="orders-heading" title={ui.orders.heading} />
       <OrderStatusFilter status={status} onChange={value => updateSearch({ status: value })} />
       <Text role="status" className={orderClasses.count}>
-        {data && !isPlaceholderData && statusText(orders.length, hasNextPage, status)}
+        {data && !isPlaceholderData && statusMessages.orders.count(orders.length, hasNextPage, status)}
       </Text>
       {renderContent()}
     </section>

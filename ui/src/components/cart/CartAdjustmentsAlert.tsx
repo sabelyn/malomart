@@ -1,5 +1,6 @@
 import { Alert } from "@mantine/core";
 
+import { alerts, ui } from "@/copy";
 import classes from "./cart.module.css";
 
 type CartAdjustmentsAlertProps = {
@@ -12,9 +13,9 @@ const CartAdjustmentsAlert = ({ notices, onClose }: CartAdjustmentsAlertProps) =
     mt="xl"
     variant="light"
     color="gilt"
-    title="I fixed your cart"
+    title={alerts.cartAdjustments.title}
     withCloseButton
-    closeButtonLabel="Dismiss"
+    closeButtonLabel={ui.common.dismiss}
     onClose={onClose}
   >
     <ul className={classes.notices}>

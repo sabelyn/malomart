@@ -4,8 +4,7 @@ import { OrderStatus } from "@mm/lib/orders";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 
-import { itemsLabel } from "@/components/checkout/checkoutDisplay";
-import { formatRupees } from "@/components/product/PriceTag";
+import { alerts, rupees, ui } from "@/copy";
 import { orderPath as customerOrderPath } from "@/routes/paths";
 import { formatOrderDate, orderNumber } from "./orderDisplay";
 import classes from "./orders.module.css";
@@ -55,35 +54,35 @@ const OrderList = ({
             <div>
               <Title order={3} className={classes.orderTitle}>
                 <Link to={orderPath(id)} className={classes.orderLink}>
-                  Order {orderNumber(id)}
+                  {ui.orders.order(orderNumber(id))}
                 </Link>
                 <Badge
                   component="span"
                   variant="outline"
                   color={currentStatus === OrderStatus.Cancelled ? "red.4" : "gold"}
                 >
-                  <VisuallyHidden>Status: </VisuallyHidden>
+                  <VisuallyHidden>{ui.common.statusPrefix}</VisuallyHidden>
                   {currentStatus}
                 </Badge>
               </Title>
               <Text className={classes.orderMeta}>
-                {showRecipient && `For ${recipient}. `}Placed {formatOrderDate(orderDate)}. {itemsLabel(itemCount)}.
+                {ui.orders.listMeta(formatOrderDate(orderDate), itemCount, showRecipient ? recipient : undefined)}
               </Text>
             </div>
-            <Text className={classes.orderTotal}>{formatRupees(total)} rupees</Text>
+            <Text className={classes.orderTotal}>{rupees(total)}</Text>
           </li>
         ))}
       </ul>
       {hasMore && (
         <Group justify="center" mt="xl">
           <Button variant="outline" onClick={showMore} loading={loadingMore}>
-            Show more
+            {ui.common.showMore}
           </Button>
         </Group>
       )}
       {loadMoreFailed && (
         <Text role="alert" ta="center" mt="md" c="red.4">
-          Couldn't load more. Try again.
+          {alerts.loadMoreFailed}
         </Text>
       )}
     </>

@@ -1,9 +1,11 @@
 import { Center, Loader, VisuallyHidden } from "@mantine/core";
 
+import { ui } from "@/copy";
+
 const PageLoader = () => (
   <Center role="status" py="xl">
     <Loader />
-    <VisuallyHidden>Loading…</VisuallyHidden>
+    <VisuallyHidden>{ui.common.loading}</VisuallyHidden>
   </Center>
 );
 

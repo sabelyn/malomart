@@ -1,6 +1,7 @@
 import { Alert, Button, Stack, TextInput } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 
+import { ui } from "@/copy";
 import classes from "./auth.module.css";
 import { authErrorMessage } from "./authErrors";
 
@@ -25,9 +26,9 @@ const SignInEmailForm = ({ form, pending, error, notice, onSubmit }: SignInEmail
           {notice}
         </Alert>
       )}
-      <TextInput label="Email" type="email" autoComplete="email" required {...form.getInputProps("email")} />
+      <TextInput label={ui.auth.email} type="email" autoComplete="email" required {...form.getInputProps("email")} />
       <Button type="submit" loading={pending}>
-        Email me a code
+        {ui.auth.emailMeACode}
       </Button>
     </Stack>
   </form>

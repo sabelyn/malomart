@@ -5,6 +5,7 @@ import { UpdateProfileBody, updateProfile } from "@mm/lib/auth";
 
 import { useEndpointMutation, useSetSession } from "@/api";
 import AppModal from "@/components/AppModal";
+import { alerts, ui } from "@/copy";
 
 type ChangeNameFormProps = {
   name: string;
@@ -31,16 +32,22 @@ const ChangeNameForm = ({ name, onCancel, onSaved }: ChangeNameFormProps) => {
       <Stack>
         {save.error && (
           <Alert color="red" variant="light">
-            Couldn't change your name. Try again.
+            {alerts.profile.nameFailed}
           </Alert>
         )}
-        <TextInput label="Name" autoComplete="name" required data-autofocus {...form.getInputProps("name")} />
+        <TextInput
+          label={ui.profile.name}
+          autoComplete="name"
+          required
+          data-autofocus
+          {...form.getInputProps("name")}
+        />
         <Group justify="flex-end">
           <Button variant="subtle" onClick={onCancel}>
-            Cancel
+            {ui.common.cancel}
           </Button>
           <Button type="submit" loading={save.isPending}>
-            Save name
+            {ui.profile.saveName}
           </Button>
         </Group>
       </Stack>
@@ -53,7 +60,7 @@ type ChangeNameModalProps = ChangeNameFormProps & {
 };
 
 const ChangeNameModal = ({ opened, name, onCancel, onSaved }: ChangeNameModalProps) => (
-  <AppModal opened={opened} title="Change your name" onClose={onCancel}>
+  <AppModal opened={opened} title={ui.profile.changeNameTitle} onClose={onCancel}>
     <ChangeNameForm name={name} onCancel={onCancel} onSaved={onSaved} />
   </AppModal>
 );

@@ -1,6 +1,7 @@
 import { Title } from "@mantine/core";
 import { Link } from "react-router";
 
+import { ui } from "@/copy";
 import { CART_PATH } from "@/routes/paths";
 import classes from "./checkout.module.css";
 import type { CheckoutItem } from "./CheckoutItems";
@@ -10,10 +11,10 @@ const CheckoutItemsSection = ({ items }: { items: CheckoutItem[] }) => (
   <section aria-labelledby="checkout-items-heading">
     <div className={classes.sectionHeader}>
       <Title order={2} id="checkout-items-heading" className={classes.sectionTitle}>
-        Your items
+        {ui.checkout.yourItems}
       </Title>
       <Link to={CART_PATH} className={classes.headerLink}>
-        Edit cart
+        {ui.checkout.editCart}
       </Link>
     </div>
     <CheckoutItems items={items} />

@@ -3,16 +3,18 @@ import type { GetInputPropsReturnType } from "@mantine/form";
 import { isCardExpired } from "@mm/lib/customers";
 import { string } from "zod";
 
+import { alerts, ui } from "@/copy";
+
 const YEARS_AHEAD = 15;
 
 export const expirationFields = {
-  expirationMonth: string().nonempty({ error: "Choose a month." }).transform(Number),
-  expirationYear: string().nonempty({ error: "Choose a year." }).transform(Number)
+  expirationMonth: string().nonempty({ error: alerts.cards.chooseMonth }).transform(Number),
+  expirationYear: string().nonempty({ error: alerts.cards.chooseYear }).transform(Number)
 };
 
 export const notExpired = (value: { expirationMonth: number; expirationYear: number }) => !isCardExpired(value);
 
-export const expiredIssue = { error: "That card has expired.", path: ["expirationYear"] };
+export const expiredIssue = { error: alerts.cards.expired, path: ["expirationYear"] };
 
 const MONTHS = Array.from({ length: 12 }, (_, month) => ({
   value: String(month),
@@ -35,18 +37,18 @@ type ExpirationFieldsProps = {
 const ExpirationFields = ({ autoFocus, currentYear, monthProps, yearProps }: ExpirationFieldsProps) => (
   <Group grow align="flex-start">
     <NativeSelect
-      label="Expiration month"
+      label={ui.cards.expirationMonth}
       autoComplete="cc-exp-month"
       required
       data-autofocus={autoFocus || undefined}
-      data={[{ value: "", label: "Month", disabled: true }, ...MONTHS]}
+      data={[{ value: "", label: ui.cards.month, disabled: true }, ...MONTHS]}
       {...monthProps}
     />
     <NativeSelect
-      label="Expiration year"
+      label={ui.cards.expirationYear}
       autoComplete="cc-exp-year"
       required
-      data={[{ value: "", label: "Year", disabled: true }, ...yearOptions(currentYear)]}
+      data={[{ value: "", label: ui.cards.year, disabled: true }, ...yearOptions(currentYear)]}
       {...yearProps}
     />
   </Group>

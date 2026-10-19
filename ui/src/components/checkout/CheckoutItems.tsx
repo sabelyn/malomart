@@ -1,8 +1,8 @@
 import { Text, Title, VisuallyHidden } from "@mantine/core";
 import { Link } from "react-router";
 
-import { formatRupees } from "@/components/product/PriceTag";
 import { productImageSrc } from "@/components/product/productDisplay";
+import { formatRupees, ui } from "@/copy";
 import { productPath } from "@/routes/paths";
 import classes from "./checkout.module.css";
 
@@ -21,7 +21,7 @@ type CheckoutItemsProps = {
 };
 
 const CheckoutItems = ({ items }: CheckoutItemsProps) => (
-  <ul className={classes.items} aria-label="Items">
+  <ul className={classes.items} aria-label={ui.common.items}>
     {items.map(({ id, title, thumbnailKey, amount, pricePerUnit }) => (
       <li key={id} className={classes.item}>
         {thumbnailKey ? (
@@ -33,13 +33,11 @@ const CheckoutItems = ({ items }: CheckoutItemsProps) => (
           <Title order={3} className={classes.itemTitle}>
             <Link to={productPath(id)}>{title}</Link>
           </Title>
-          <Text className={classes.itemMeta}>
-            Quantity {amount}, {formatRupees(pricePerUnit)} rupees each
-          </Text>
+          <Text className={classes.itemMeta}>{ui.checkout.itemMeta(amount, pricePerUnit)}</Text>
         </div>
         <Text className={classes.itemTotal}>
           <span aria-hidden="true">{formatRupees(amount * pricePerUnit)}</span>
-          <VisuallyHidden>{formatRupees(amount * pricePerUnit)} rupees total</VisuallyHidden>
+          <VisuallyHidden>{ui.common.rupeesTotal(amount * pricePerUnit)}</VisuallyHidden>
         </Text>
       </li>
     ))}

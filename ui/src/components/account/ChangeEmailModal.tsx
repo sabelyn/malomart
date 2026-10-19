@@ -8,6 +8,7 @@ import { useEndpointMutation, useSetSession } from "@/api";
 import AppModal from "@/components/AppModal";
 import { authErrorMessage } from "@/components/auth/authErrors";
 import CodeForm from "@/components/auth/CodeForm";
+import { alerts, ui } from "@/copy";
 
 type ChangeEmailFlowProps = {
   currentEmail: string;
@@ -21,7 +22,7 @@ const ChangeEmailFlow = ({ currentEmail, onCancel, onSaved }: ChangeEmailFlowPro
   const [notice, setNotice] = useState<string>();
 
   const EmailForm = RequestEmailChangeBody.refine(({ email }) => email.toLowerCase() !== currentEmail.toLowerCase(), {
-    error: "That's already your email.",
+    error: alerts.profile.sameEmail,
     path: ["email"]
   });
 
@@ -43,7 +44,7 @@ const ChangeEmailFlow = ({ currentEmail, onCancel, onSaved }: ChangeEmailFlowPro
 
   const resend = (email: string) => {
     confirm.reset();
-    request.mutate({ body: { email } }, { onSuccess: () => setNotice("New code sent.") });
+    request.mutate({ body: { email } }, { onSuccess: () => setNotice(alerts.auth.newCodeSent) });
   };
 
   const startOver = () => {
@@ -57,7 +58,7 @@ const ChangeEmailFlow = ({ currentEmail, onCancel, onSaved }: ChangeEmailFlowPro
     return (
       <CodeForm
         email={pendingEmail}
-        submitLabel="Confirm new email"
+        submitLabel={ui.profile.confirmNewEmail}
         pending={confirm.isPending}
         error={confirm.error ? authErrorMessage(confirm.error) : undefined}
         notice={notice}
@@ -65,10 +66,10 @@ const ChangeEmailFlow = ({ currentEmail, onCancel, onSaved }: ChangeEmailFlowPro
       >
         <Group justify="space-between">
           <Button variant="subtle" onClick={() => resend(pendingEmail)} loading={request.isPending}>
-            Send a new code
+            {ui.auth.sendNewCode}
           </Button>
           <Button variant="subtle" onClick={startOver}>
-            Use a different email
+            {ui.auth.useDifferentEmail}
           </Button>
         </Group>
       </CodeForm>
@@ -84,8 +85,8 @@ const ChangeEmailFlow = ({ currentEmail, onCancel, onSaved }: ChangeEmailFlowPro
           </Alert>
         )}
         <TextInput
-          label="New email"
-          description={`Your current email, ${currentEmail}, keeps working until you confirm the new one.`}
+          label={ui.profile.newEmail}
+          description={ui.profile.newEmailHint(currentEmail)}
           type="email"
           autoComplete="email"
           required
@@ -94,10 +95,10 @@ const ChangeEmailFlow = ({ currentEmail, onCancel, onSaved }: ChangeEmailFlowPro
         />
         <Group justify="flex-end">
           <Button variant="subtle" onClick={onCancel}>
-            Cancel
+            {ui.common.cancel}
           </Button>
           <Button type="submit" loading={request.isPending}>
-            Email me a code
+            {ui.auth.emailMeACode}
           </Button>
         </Group>
       </Stack>
@@ -110,7 +111,7 @@ type ChangeEmailModalProps = ChangeEmailFlowProps & {
 };
 
 const ChangeEmailModal = ({ opened, currentEmail, onCancel, onSaved }: ChangeEmailModalProps) => (
-  <AppModal opened={opened} title="Change your email" onClose={onCancel}>
+  <AppModal opened={opened} title={ui.profile.changeEmailTitle} onClose={onCancel}>
     <ChangeEmailFlow currentEmail={currentEmail} onCancel={onCancel} onSaved={onSaved} />
   </AppModal>
 );

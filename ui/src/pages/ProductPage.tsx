@@ -12,6 +12,7 @@ import { percentOff } from "@/components/product/productDisplay";
 import ProductGallery from "@/components/product/ProductGallery";
 import ProductNotFound from "@/components/product/ProductNotFound";
 import ProductSummary from "@/components/product/ProductSummary";
+import { ui } from "@/copy";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { adminProductPath } from "@/routes/paths";
 import classes from "@/styles/pages.module.css";
@@ -28,7 +29,7 @@ const ProductPage = () => {
     throwOnError: err => !isMissing(err)
   });
   const notFound = !validId || isMissing(error);
-  useDocumentTitle(notFound ? "Product not found" : product?.title);
+  useDocumentTitle(notFound ? ui.pageTitles.productNotFound : product?.title);
 
   const renderContent = () => {
     if (notFound) {
@@ -42,7 +43,7 @@ const ProductPage = () => {
         <ProductBreadcrumbs category={product.category} title={product.title} />
         {user?.isAdmin && (
           <Link to={adminProductPath(product.id)} className={classes.adminLink}>
-            Edit product
+            {ui.product.editLink}
           </Link>
         )}
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing={48} verticalSpacing="xl">

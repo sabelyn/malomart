@@ -1,5 +1,6 @@
 import { notifications } from "@mantine/notifications";
 
+import { ui } from "@/copy";
 import classes from "@/styles/notifications.module.css";
 
 export type NotifyTone = "success" | "info" | "error";
@@ -38,7 +39,7 @@ export const notify = ({ message, title, tone = "success" }: NotifyOptions) => {
     role: "none",
     classNames: { root: classes.notification, title: classes.title, description: classes.description },
     autoClose: tone === "error" ? false : AUTO_CLOSE_MS,
-    closeButtonProps: { "aria-label": "Dismiss notification" }
+    closeButtonProps: { "aria-label": ui.common.dismissNotification }
   });
   announce(title ? `${title}. ${message}` : message, tone === "error");
 };

@@ -12,13 +12,14 @@ import GoogleSignIn from "@/components/auth/GoogleSignIn";
 import SignUpForm from "@/components/auth/SignUpForm";
 import ChudleyHype from "@/components/ChudleyHype";
 import MaloSays from "@/components/MaloSays";
+import { alerts, chudley, malo, ui } from "@/copy";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { SIGN_IN_PATH } from "@/routes/paths";
 import type { SignInState } from "@/routes/paths";
 import pages from "@/styles/pages.module.css";
 
 const SignUpPage = () => {
-  useDocumentTitle("Sign up");
+  useDocumentTitle(ui.pageTitles.signUp);
   const location = useLocation();
   const navigate = useNavigate();
   const setSession = useSetSession();
@@ -41,7 +42,7 @@ const SignUpPage = () => {
         setSession(user);
         return;
       }
-      const state: SignInState = { email: body.email, notice: "Account confirmed. Sign in to finish." };
+      const state: SignInState = { email: body.email, notice: alerts.auth.accountConfirmed };
       void navigate(signInLocation, { state });
     }
   });
@@ -54,24 +55,24 @@ const SignUpPage = () => {
 
   return (
     <Container size="xs" className={pages.page}>
-      <ChudleyHype>Join the Malo Mart family! Membership is free!</ChudleyHype>
-      <MaloSays>No passwords. I don't trust you with one.</MaloSays>
+      <ChudleyHype>{chudley.signUp}</ChudleyHype>
+      <MaloSays>{malo.signUp}</MaloSays>
 
       {pendingEmail ? (
         <CodeForm
           className={classes.form}
           email={pendingEmail}
-          submitLabel="Confirm account"
+          submitLabel={ui.auth.confirmAccount}
           pending={confirm.isPending}
           error={confirm.error ? authErrorMessage(confirm.error) : undefined}
           onSubmit={code => confirm.mutate({ body: { email: pendingEmail, code } })}
         >
           <Group justify="space-between">
             <Link to={signInLocation} state={{ email: pendingEmail } satisfies SignInState}>
-              Didn't get a code? Sign in instead
+              {ui.auth.noCodeSignIn}
             </Link>
             <Button variant="subtle" onClick={startOver}>
-              Use a different email
+              {ui.auth.useDifferentEmail}
             </Button>
           </Group>
         </CodeForm>
@@ -88,7 +89,7 @@ const SignUpPage = () => {
       {!pendingEmail && <GoogleSignIn />}
 
       <Text className={classes.switch}>
-        Already a member? <Link to={signInLocation}>Sign in</Link>
+        {ui.auth.alreadyMember} <Link to={signInLocation}>{ui.auth.signIn}</Link>
       </Text>
     </Container>
   );

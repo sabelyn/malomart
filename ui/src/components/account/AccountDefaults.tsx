@@ -6,6 +6,7 @@ import { endpointQuery } from "@/api";
 import MaloSays from "@/components/MaloSays";
 import PageLoader from "@/components/PageLoader";
 import RetryAlert from "@/components/RetryAlert";
+import { malo, ui } from "@/copy";
 import { ACCOUNT_ADDRESSES_PATH, ACCOUNT_PAYMENT_METHODS_PATH } from "@/routes/paths";
 import classes from "./account.module.css";
 import { addressLines, paymentMethodExpiry, paymentMethodName } from "./accountDisplay";
@@ -19,7 +20,7 @@ const AccountDefaults = () => {
   if (!customer) {
     return (
       <RetryAlert onRetry={() => void refetch()}>
-        <MaloSays>Couldn't find your defaults. Not my fault.</MaloSays>
+        <MaloSays>{malo.profile.defaultsFailed}</MaloSays>
       </RetryAlert>
     );
   }
@@ -27,7 +28,7 @@ const AccountDefaults = () => {
   const { defaultAddress, defaultPaymentMethod } = customer;
   return (
     <dl className={classes.facts}>
-      <dt>Shipping address</dt>
+      <dt>{ui.profile.shippingAddress}</dt>
       <dd>
         {defaultAddress ? (
           <address>
@@ -36,13 +37,13 @@ const AccountDefaults = () => {
             ))}
           </address>
         ) : (
-          <span>None set.</span>
+          <span>{ui.profile.noneSet}</span>
         )}
         <Link to={ACCOUNT_ADDRESSES_PATH} className={classes.factLink}>
-          Manage addresses
+          {ui.profile.manageAddresses}
         </Link>
       </dd>
-      <dt>Payment method</dt>
+      <dt>{ui.profile.paymentMethod}</dt>
       <dd>
         {defaultPaymentMethod ? (
           <>
@@ -50,10 +51,10 @@ const AccountDefaults = () => {
             <span>{paymentMethodExpiry(defaultPaymentMethod)}</span>
           </>
         ) : (
-          <span>None set.</span>
+          <span>{ui.profile.noneSet}</span>
         )}
         <Link to={ACCOUNT_PAYMENT_METHODS_PATH} className={classes.factLink}>
-          Manage payment methods
+          {ui.profile.manageCards}
         </Link>
       </dd>
     </dl>

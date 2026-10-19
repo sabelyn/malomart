@@ -2,6 +2,7 @@ import { Badge, Button, Group, Title } from "@mantine/core";
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 
+import { ui } from "@/copy";
 import classes from "./AccountCard.module.css";
 
 type AccountCardProps = {
@@ -42,13 +43,13 @@ const AccountCard = ({
     <article className={classes.card} aria-labelledby={headingId}>
       <Title order={3} id={headingId} className={classes.title}>
         {title}
-        {isDefault && <Badge variant="outline">Default</Badge>}
+        {isDefault && <Badge variant="outline">{ui.common.defaultBadge}</Badge>}
         {badges}
       </Title>
       {children}
       <Group gap="xs" className={classes.actions}>
         <Button ref={editRef} size="xs" variant="outline" aria-describedby={headingId} onClick={onEdit}>
-          Edit
+          {ui.common.edit}
         </Button>
         {!isDefault && (
           <Button
@@ -58,11 +59,11 @@ const AccountCard = ({
             loading={makingDefault}
             onClick={onMakeDefault}
           >
-            Make default
+            {ui.common.makeDefault}
           </Button>
         )}
         <Button size="xs" variant="subtle" color="red.4" aria-describedby={headingId} onClick={onDelete}>
-          Delete
+          {ui.common.delete}
         </Button>
       </Group>
     </article>

@@ -3,6 +3,7 @@ import { ApiRequestError } from "@mm/lib/api";
 import { Link } from "react-router";
 
 import MaloSays from "@/components/MaloSays";
+import { malo, ui } from "@/copy";
 import { ACCOUNT_ORDERS_PATH } from "@/routes/paths";
 import classes from "@/styles/pages.module.css";
 
@@ -16,18 +17,16 @@ const OrderLoadError = ({ error, onRetry }: OrderLoadErrorProps) => {
 
   return (
     <Container size="lg" className={classes.page}>
-      <Title order={1}>Order</Title>
+      <Title order={1}>{ui.orders.loadErrorHeading}</Title>
       <div role="alert">
-        <MaloSays>
-          {missing ? "No order by that number. Check your orders." : "Couldn't find that order. Not my fault."}
-        </MaloSays>
+        <MaloSays>{missing ? malo.orders.orderMissing : malo.orders.orderFailed}</MaloSays>
         {missing ? (
           <Button component={Link} to={ACCOUNT_ORDERS_PATH} mt="lg" variant="outline">
-            Your orders
+            {ui.orders.yourOrders}
           </Button>
         ) : (
           <Button mt="lg" variant="outline" onClick={onRetry}>
-            Try again
+            {ui.common.tryAgain}
           </Button>
         )}
       </div>

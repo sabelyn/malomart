@@ -8,6 +8,7 @@ import { preprocess } from "zod";
 import { useEndpointMutation } from "@/api";
 import { addressName } from "@/components/account/accountDisplay";
 import AppModal from "@/components/AppModal";
+import { alerts, ui } from "@/copy";
 
 const blankToUndefined = (value: unknown) => (typeof value === "string" && value.trim() === "" ? undefined : value);
 
@@ -16,9 +17,7 @@ const AddressForm = CreateAddressBody.extend({
 });
 
 const saveErrorMessage = (error: unknown) =>
-  error instanceof ApiRequestError && error.status === 404
-    ? "That address is gone. Someone deleted it."
-    : "Couldn't save that address. Try again.";
+  error instanceof ApiRequestError && error.status === 404 ? alerts.addresses.gone : alerts.addresses.saveFailed;
 
 type AddressFormProps = {
   address?: AddressDto;
@@ -65,23 +64,28 @@ const AddressFormBody = ({ address, onCancel, onSaved }: AddressFormProps) => {
           </Alert>
         )}
         <TextInput
-          label="Label"
-          description="Optional. Something like Home or Link's hideout."
+          label={ui.addresses.label}
+          description={ui.addresses.labelHint}
           data-autofocus
           {...form.getInputProps("label")}
         />
-        <TextInput label="Recipient" autoComplete="name" required {...form.getInputProps("recipient")} />
-        <TextInput label="Street" autoComplete="address-line1" required {...form.getInputProps("street")} />
-        <TextInput label="City" autoComplete="address-level2" required {...form.getInputProps("city")} />
+        <TextInput label={ui.addresses.recipient} autoComplete="name" required {...form.getInputProps("recipient")} />
+        <TextInput
+          label={ui.addresses.street}
+          autoComplete="address-line1"
+          required
+          {...form.getInputProps("street")}
+        />
+        <TextInput label={ui.addresses.city} autoComplete="address-level2" required {...form.getInputProps("city")} />
         <NativeSelect
-          label="Region"
+          label={ui.addresses.region}
           autoComplete="address-level1"
           required
-          data={[{ value: "", label: "Choose a region", disabled: true }, ...Regions]}
+          data={[{ value: "", label: ui.addresses.chooseRegion, disabled: true }, ...Regions]}
           {...form.getInputProps("region")}
         />
         <TextInput
-          label="Postal code"
+          label={ui.addresses.postalCode}
           inputMode="numeric"
           autoComplete="postal-code"
           maxLength={5}
@@ -89,17 +93,14 @@ const AddressFormBody = ({ address, onCancel, onSaved }: AddressFormProps) => {
           {...form.getInputProps("postalCode")}
         />
         {!address?.isDefault && (
-          <Checkbox
-            label="Make this my default address"
-            {...form.getInputProps("setAsDefault", { type: "checkbox" })}
-          />
+          <Checkbox label={ui.addresses.makeDefault} {...form.getInputProps("setAsDefault", { type: "checkbox" })} />
         )}
         <Group justify="flex-end">
           <Button variant="subtle" onClick={onCancel}>
-            Cancel
+            {ui.common.cancel}
           </Button>
           <Button type="submit" loading={save.isPending}>
-            Save address
+            {ui.addresses.save}
           </Button>
         </Group>
       </Stack>
@@ -112,7 +113,11 @@ type AddressFormModalProps = AddressFormProps & {
 };
 
 const AddressFormModal = ({ opened, address, onCancel, onSaved }: AddressFormModalProps) => (
-  <AppModal opened={opened} title={address ? `Edit ${addressName(address)}` : "Add an address"} onClose={onCancel}>
+  <AppModal
+    opened={opened}
+    title={address ? ui.addresses.edit(addressName(address)) : ui.addresses.add}
+    onClose={onCancel}
+  >
     <AddressFormBody key={address?.id ?? "new"} address={address} onCancel={onCancel} onSaved={onSaved} />
   </AppModal>
 );

@@ -6,19 +6,20 @@ import { Link, useLocation } from "react-router";
 
 import { isUnauthorized, useEndpointMutation, useSetSession } from "@/api";
 import classes from "@/components/auth/auth.module.css";
-import { authErrorMessage, SESSION_TIMED_OUT } from "@/components/auth/authErrors";
+import { authErrorMessage } from "@/components/auth/authErrors";
 import CodeForm from "@/components/auth/CodeForm";
 import GoogleSignIn from "@/components/auth/GoogleSignIn";
 import SignInEmailForm from "@/components/auth/SignInEmailForm";
 import ChudleyHype from "@/components/ChudleyHype";
 import MaloSays from "@/components/MaloSays";
+import { alerts, chudley, malo, ui } from "@/copy";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { SIGN_UP_PATH } from "@/routes/paths";
 import type { SignInState } from "@/routes/paths";
 import pages from "@/styles/pages.module.css";
 
 const SignInPage = () => {
-  useDocumentTitle("Sign in");
+  useDocumentTitle(ui.pageTitles.signIn);
   const location = useLocation();
   const state = location.state as SignInState | null;
   const setSession = useSetSession();
@@ -39,7 +40,7 @@ const SignInPage = () => {
     onError: error => {
       if (isUnauthorized(error)) {
         setPendingEmail(undefined);
-        setNotice(SESSION_TIMED_OUT);
+        setNotice(alerts.auth.sessionTimedOut);
       }
     }
   });
@@ -53,19 +54,19 @@ const SignInPage = () => {
 
   const resend = (email: string) => {
     verify.reset();
-    start.mutate({ body: { email } }, { onSuccess: () => setNotice("New code sent.") });
+    start.mutate({ body: { email } }, { onSuccess: () => setNotice(alerts.auth.newCodeSent) });
   };
 
   return (
     <Container size="xs" className={pages.page}>
-      <ChudleyHype>Welcome back, valued customer!</ChudleyHype>
-      <MaloSays>Email. Code. Shop.</MaloSays>
+      <ChudleyHype>{chudley.signIn}</ChudleyHype>
+      <MaloSays>{malo.signIn}</MaloSays>
 
       {pendingEmail ? (
         <CodeForm
           className={classes.form}
           email={pendingEmail}
-          submitLabel="Sign in"
+          submitLabel={ui.auth.signIn}
           pending={verify.isPending}
           error={verify.error && !isUnauthorized(verify.error) ? authErrorMessage(verify.error) : undefined}
           notice={notice}
@@ -73,10 +74,10 @@ const SignInPage = () => {
         >
           <Group justify="space-between">
             <Button variant="subtle" onClick={() => resend(pendingEmail)} loading={start.isPending}>
-              Send a new code
+              {ui.auth.sendNewCode}
             </Button>
             <Button variant="subtle" onClick={startOver}>
-              Use a different email
+              {ui.auth.useDifferentEmail}
             </Button>
           </Group>
         </CodeForm>
@@ -96,7 +97,7 @@ const SignInPage = () => {
       {!pendingEmail && <GoogleSignIn showError />}
 
       <Text className={classes.switch}>
-        New here? <Link to={{ pathname: SIGN_UP_PATH, search: location.search }}>Make an account</Link>
+        {ui.auth.newHere} <Link to={{ pathname: SIGN_UP_PATH, search: location.search }}>{ui.auth.makeAccount}</Link>
       </Text>
     </Container>
   );

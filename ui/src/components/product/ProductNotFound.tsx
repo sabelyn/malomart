@@ -2,15 +2,16 @@ import { Title } from "@mantine/core";
 import { Link } from "react-router";
 
 import MaloSays from "@/components/MaloSays";
+import { malo, ui } from "@/copy";
 import { CATALOG_PATH } from "@/routes/paths";
 import pages from "@/styles/pages.module.css";
 
 const ProductNotFound = () => (
   <>
-    <Title order={1}>Not on the shelves</Title>
-    <MaloSays>Never heard of it. Maybe Chudley sold it.</MaloSays>
+    <Title order={1}>{ui.product.notFoundHeading}</Title>
+    <MaloSays>{malo.productNotFound}</MaloSays>
     <Link to={CATALOG_PATH} className={pages.backLink}>
-      Back to the catalog
+      {ui.product.backToCatalog}
     </Link>
   </>
 );

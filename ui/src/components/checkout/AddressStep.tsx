@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { addressName } from "@/components/account/accountDisplay";
 import AddressFormModal from "@/components/account/AddressFormModal";
+import { malo, statusMessages, ui } from "@/copy";
 import { addressChoice, toChoices } from "./checkoutChoices";
 import ChoiceSection from "./ChoiceSection";
 
@@ -22,7 +23,7 @@ const AddressStep = ({ ref, addresses, value, error, onChange }: AddressStepProp
 
   const added = (address: AddressDto) => {
     onChange(address.id);
-    setStatus(`Added ${addressName(address)} and picked it for this order.`);
+    setStatus(statusMessages.addresses.addedToOrder(addressName(address)));
     setAdding(false);
   };
 
@@ -31,13 +32,13 @@ const AddressStep = ({ ref, addresses, value, error, onChange }: AddressStepProp
       <ChoiceSection
         ref={ref}
         id="checkout-address"
-        title="Ship to"
-        groupLabel="Shipping address"
+        title={ui.checkout.shipTo}
+        groupLabel={ui.checkout.shippingAddress}
         choices={toChoices(addresses.data, addressChoice)}
         isPending={addresses.isPending}
-        loadFailedMessage="Couldn't find your addresses. Not my fault."
-        emptyMessage="No addresses yet. Can't deliver to nowhere."
-        addLabel="Add an address"
+        loadFailedMessage={malo.addresses.loadFailed}
+        emptyMessage={malo.addresses.empty}
+        addLabel={ui.addresses.add}
         value={value}
         error={error}
         status={status}

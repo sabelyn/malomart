@@ -1,31 +1,19 @@
 import { Badge, Button, FileInput, Text, VisuallyHidden } from "@mantine/core";
 import type { ProductDto } from "@mm/lib/products";
-import { deleteProductImage, getProduct, MAX_UPLOAD_BYTES, products, setImageAsThumbnail } from "@mm/lib/products";
+import { deleteProductImage, getProduct, products, setImageAsThumbnail } from "@mm/lib/products";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
 import { endpointKey, routeKey, useEndpointMutation } from "@/api";
 import ConfirmModal from "@/components/ConfirmModal";
 import { productImageSrc } from "@/components/product/productDisplay";
+import { alerts, statusMessages, ui } from "@/copy";
 import { announce } from "@/utils/notify";
 import classes from "./admin.module.css";
 import type { ImageUploadItem, UploadState } from "./useImageUploads";
 import { isUploadDone, useImageUploads } from "./useImageUploads";
 
 const PREVIEW_WIDTH = 320;
-const MAX_UPLOAD_MB = MAX_UPLOAD_BYTES / (1024 * 1024);
-
-const UPLOAD_TEXT: Record<UploadState, string> = {
-  uploading: "Uploading…",
-  processing: "Processing…",
-  added: "Added.",
-  duplicate: "Already one of this product's images.",
-  rejected: "Couldn't read it as an image.",
-  notImage: "Not an image file.",
-  tooLarge: `Over the ${MAX_UPLOAD_MB} MB limit.`,
-  timedOut: "Still processing. Check back in a minute.",
-  failed: "Upload failed. Try again."
-};
 
 const ERROR_STATES = new Set<UploadState>(["rejected", "notImage", "tooLarge", "failed"]);
 
@@ -49,7 +37,7 @@ const ImagesSection = ({ product }: { product: ProductDto }) => {
   const refreshProduct = () => queryClient.invalidateQueries({ queryKey: routeKey(products) });
 
   const { uploads, start, clearFinished } = useImageUploads(product.id, (upload: ImageUploadItem) => {
-    announce(`${upload.name}: ${UPLOAD_TEXT[upload.state]}`, ERROR_STATES.has(upload.state));
+    announce(ui.admin.upload(upload.name, upload.state), ERROR_STATES.has(upload.state));
     if (upload.state === "added" || upload.state === "duplicate" || upload.state === "timedOut") {
       void refreshProduct();
     }
@@ -62,7 +50,7 @@ const ImagesSection = ({ product }: { product: ProductDto }) => {
     invalidates: [products],
     onSuccess: updated => {
       updateCachedProduct(updated);
-      setStatus("Thumbnail updated. It's now image 1.");
+      setStatus(statusMessages.admin.thumbnailUpdated);
       setFocusThumbnail(true);
     }
   });
@@ -72,7 +60,7 @@ const ImagesSection = ({ product }: { product: ProductDto }) => {
     onSuccess: updated => {
       updateCachedProduct(updated);
       deletedRef.current = true;
-      setStatus(`Deleted ${deleting.label ?? "the image"}.`);
+      setStatus(statusMessages.admin.imageDeleted(deleting.label));
       setDeleting(current => ({ ...current, opened: false }));
     }
   });
@@ -101,11 +89,11 @@ const ImagesSection = ({ product }: { product: ProductDto }) => {
   return (
     <>
       {images.length === 0 ? (
-        <Text mb="lg">No images yet. The catalog shows a blank placard until you add one.</Text>
+        <Text mb="lg">{ui.admin.imagesEmpty}</Text>
       ) : (
         <ul ref={imageListRef} className={classes.imageGrid}>
           {images.map((imageKey, index) => {
-            const label = `Image ${index + 1}`;
+            const label = ui.admin.imageLabel(index + 1);
             const isThumbnail = imageKey === product.thumbnailKey;
             return (
               <li key={imageKey} className={classes.imageCard} data-thumbnail={isThumbnail || undefined}>
@@ -114,7 +102,7 @@ const ImagesSection = ({ product }: { product: ProductDto }) => {
                   {label}
                   {isThumbnail && (
                     <Badge component="span" variant="outline" color="gold">
-                      Thumbnail
+                      {ui.admin.thumbnail}
                     </Badge>
                   )}
                 </p>
@@ -139,7 +127,7 @@ const ImagesSection = ({ product }: { product: ProductDto }) => {
                     size="compact-sm"
                     onClick={() => openDelete(imageKey, label.toLowerCase())}
                   >
-                    Delete <VisuallyHidden>{label.toLowerCase()}</VisuallyHidden>
+                    {ui.common.delete} <VisuallyHidden>{label.toLowerCase()}</VisuallyHidden>
                   </Button>
                 </div>
               </li>
@@ -152,15 +140,15 @@ const ImagesSection = ({ product }: { product: ProductDto }) => {
       </Text>
       {makeThumbnail.isError && (
         <Text role="alert" className={classes.error}>
-          Couldn't change the thumbnail. Try again.
+          {alerts.admin.thumbnailFailed}
         </Text>
       )}
 
       <FileInput
         ref={uploadInputRef}
-        label="Add images"
-        description={`PNG, JPEG, WebP, or GIF up to ${MAX_UPLOAD_MB} MB each. Big ones are resized.`}
-        placeholder="Choose files"
+        label={ui.admin.addImages}
+        description={ui.admin.addImagesHint}
+        placeholder={ui.admin.chooseFiles}
         accept="image/*"
         multiple
         clearable={false}
@@ -171,16 +159,16 @@ const ImagesSection = ({ product }: { product: ProductDto }) => {
       />
       {uploads.length > 0 && (
         <>
-          <ul aria-label="Uploads" className={classes.uploads}>
+          <ul aria-label={ui.admin.uploads} className={classes.uploads}>
             {uploads.map(({ id, name, state }) => (
               <li key={id} data-tone={ERROR_STATES.has(state) ? "error" : undefined}>
-                {name}: {UPLOAD_TEXT[state]}
+                {ui.admin.upload(name, state)}
               </li>
             ))}
           </ul>
           {uploadsDone && (
             <Button variant="subtle" size="compact-sm" mt="xs" onClick={clearFinished}>
-              Clear the upload list
+              {ui.admin.clearUploads}
             </Button>
           )}
         </>
@@ -188,20 +176,18 @@ const ImagesSection = ({ product }: { product: ProductDto }) => {
 
       <ConfirmModal
         opened={deleting.opened}
-        title={`Delete ${deleting.label ?? "this image"}?`}
-        confirmLabel="Delete image"
-        dismissLabel="Keep it"
+        title={ui.admin.deleteImageTitle(deleting.label)}
+        confirmLabel={ui.admin.deleteImageConfirm}
+        dismissLabel={ui.common.keepIt}
         pending={remove.isPending}
-        error={remove.isError ? "Couldn't delete the image. Try again." : undefined}
+        error={remove.isError ? alerts.admin.deleteImageFailed : undefined}
         onConfirm={() =>
           deleting.imageKey && remove.mutate({ params: { id: product.id, hash: imageHash(deleting.imageKey) } })
         }
         onClose={() => setDeleting(current => ({ ...current, opened: false }))}
         onExitTransitionEnd={afterDeleteClosed}
       >
-        {deleting.imageKey === product.thumbnailKey
-          ? "It's the thumbnail, so the product goes without one until you pick another."
-          : "It's removed from the product page right away."}
+        {deleting.imageKey === product.thumbnailKey ? ui.admin.deleteThumbnailWarning : ui.admin.deleteImageWarning}
       </ConfirmModal>
     </>
   );

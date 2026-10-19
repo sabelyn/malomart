@@ -6,6 +6,7 @@ import { useCart } from "@/components/cart/CartProvider";
 import MaloSays from "@/components/MaloSays";
 import PageLoader from "@/components/PageLoader";
 import RetryAlert from "@/components/RetryAlert";
+import { malo, ui } from "@/copy";
 import { CATALOG_PATH } from "@/routes/paths";
 import { isEmptyCart } from "@/utils/cartItems";
 
@@ -23,7 +24,7 @@ const CartGate = ({ productsLoaded, productsFailed, emptyMessage, children, onRe
   if (cart.loadFailed) {
     return (
       <RetryAlert onRetry={cart.retryLoad}>
-        <MaloSays>Lost track of your cart. Not my fault.</MaloSays>
+        <MaloSays>{malo.cart.loadFailed}</MaloSays>
       </RetryAlert>
     );
   }
@@ -35,7 +36,7 @@ const CartGate = ({ productsLoaded, productsFailed, emptyMessage, children, onRe
       <>
         <MaloSays>{emptyMessage}</MaloSays>
         <Button component={Link} to={CATALOG_PATH} mt="xl">
-          Go shopping
+          {ui.cart.goShopping}
         </Button>
       </>
     );
@@ -43,7 +44,7 @@ const CartGate = ({ productsLoaded, productsFailed, emptyMessage, children, onRe
   if (!productsLoaded) {
     return productsFailed ? (
       <RetryAlert onRetry={onRetryProducts}>
-        <MaloSays>Couldn't find what's in your cart. Probably the shelves.</MaloSays>
+        <MaloSays>{malo.cart.productsFailed}</MaloSays>
       </RetryAlert>
     ) : (
       <PageLoader />

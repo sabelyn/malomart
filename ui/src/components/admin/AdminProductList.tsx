@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 
 import { productImageSrc } from "@/components/product/productDisplay";
+import { alerts, ui } from "@/copy";
 import { adminProductPath } from "@/routes/paths";
 import classes from "./admin.module.css";
-import { priceLabel, stockLabel } from "./adminDisplay";
 
 const THUMBNAIL_WIDTH = 320;
 
@@ -69,13 +69,15 @@ const AdminProductList = ({
                   </Link>
                 </Title>
                 <Text className={classes.productMeta}>
-                  {category}. {priceLabel(price, originalPrice)}.{" "}
-                  <span className={stockCount === 0 ? classes.soldOut : undefined}>{stockLabel(stockCount)}.</span>
-                  {!thumbnailKey && " No images."}
+                  {category}. {ui.admin.priceLabel(price, originalPrice)}.{" "}
+                  <span className={stockCount === 0 ? classes.soldOut : undefined}>
+                    {ui.admin.stockLabel(stockCount)}.
+                  </span>
+                  {!thumbnailKey && ` ${ui.admin.noImages}`}
                 </Text>
               </div>
               <Button variant="subtle" color="red.4" size="compact-sm" onClick={() => onDelete(product)}>
-                Delete <VisuallyHidden>{title}</VisuallyHidden>
+                {ui.common.delete} <VisuallyHidden>{title}</VisuallyHidden>
               </Button>
             </li>
           );
@@ -84,13 +86,13 @@ const AdminProductList = ({
       {hasMore && (
         <Group justify="center" mt="xl">
           <Button variant="outline" onClick={showMore} loading={loadingMore}>
-            Show more
+            {ui.common.showMore}
           </Button>
         </Group>
       )}
       {loadMoreFailed && (
         <Text role="alert" ta="center" mt="md" c="red.4">
-          Couldn't load more. Try again.
+          {alerts.loadMoreFailed}
         </Text>
       )}
     </>

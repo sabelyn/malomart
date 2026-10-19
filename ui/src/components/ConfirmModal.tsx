@@ -2,6 +2,7 @@ import { Alert, Button, Group, Stack } from "@mantine/core";
 import type { ReactNode } from "react";
 
 import AppModal from "@/components/AppModal";
+import { ui } from "@/copy";
 
 type ConfirmModalProps = {
   opened: boolean;
@@ -20,7 +21,7 @@ const ConfirmModal = ({
   opened,
   title,
   confirmLabel,
-  dismissLabel = "Cancel",
+  dismissLabel = ui.common.cancel,
   pending,
   error,
   children,

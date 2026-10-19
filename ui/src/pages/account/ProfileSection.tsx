@@ -13,19 +13,14 @@ import ProfileFacts from "@/components/account/ProfileFacts";
 import SignOutEverywhere from "@/components/account/SignOutEverywhere";
 import SectionHeader from "@/components/layout/SectionHeader";
 import MaloSays from "@/components/MaloSays";
+import { alerts, malo, statusMessages, ui } from "@/copy";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useExitSession } from "@/routes/sessionExit";
 
 type OpenModal = "name" | "email" | "delete";
 
-const GOOGLE_DELETION_ERRORS: Record<GoogleSignInError, string> = {
-  cancelled: "Google check cancelled. Your account is still here.",
-  failed: "Couldn't confirm with Google, so your account is still here. Try again.",
-  wrongAccount: "That's a different Google account. Use the one you sign in with here."
-};
-
 const ProfileSection = () => {
-  useDocumentTitle("Your account");
+  useDocumentTitle(ui.pageTitles.profile);
   const exitSession = useExitSession();
   const { data: user } = useSession();
   const [openModal, setOpenModal] = useState<OpenModal>();
@@ -51,46 +46,46 @@ const ProfileSection = () => {
 
   return (
     <section aria-labelledby="profile-heading">
-      <SectionHeader id="profile-heading" title="Profile" />
+      <SectionHeader id="profile-heading" title={ui.profile.heading} />
       <Text role="status" className={classes.status}>
         {status}
       </Text>
       <ProfileFacts user={user} onChangeName={() => setOpenModal("name")} onChangeEmail={() => setOpenModal("email")} />
 
       <Title order={3} className={classes.subheading}>
-        Defaults
+        {ui.profile.defaults}
       </Title>
       <AccountDefaults />
 
       <Title order={3} className={classes.subheading}>
-        Devices
+        {ui.profile.devices}
       </Title>
       <SignOutEverywhere email={user.email} />
 
       <Title order={3} className={classes.subheading}>
-        Close your account
+        {ui.profile.closeAccount}
       </Title>
-      <MaloSays>Leaving? Fine. Your addresses and cards go with you. No take-backs.</MaloSays>
+      <MaloSays>{malo.profile.closeAccount}</MaloSays>
       {googleError.success && (
         <Alert mt="lg" color="red" variant="light">
-          {GOOGLE_DELETION_ERRORS[googleError.data]}
+          {alerts.profile.googleDeletion[googleError.data]}
         </Alert>
       )}
       <Button mt="lg" color="red.5" variant="outline" onClick={() => setOpenModal("delete")}>
-        Delete account
+        {ui.profile.deleteAccount}
       </Button>
 
       <ChangeNameModal
         opened={openModal === "name"}
         name={user.name}
         onCancel={close}
-        onSaved={() => saved("Name updated.")}
+        onSaved={() => saved(statusMessages.profile.nameUpdated)}
       />
       <ChangeEmailModal
         opened={openModal === "email"}
         currentEmail={user.email}
         onCancel={close}
-        onSaved={() => saved("Email updated.")}
+        onSaved={() => saved(statusMessages.profile.emailUpdated)}
       />
       <DeleteAccountModal
         opened={openModal === "delete"}
