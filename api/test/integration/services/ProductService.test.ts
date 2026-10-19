@@ -1,5 +1,6 @@
+import { DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
-import { dbClient, s3Client } from "@mm/clients";
+import { dbClient, IMAGE_WIDTHS, imageVariantKey, productImageKey, s3Client } from "@mm/clients";
 import type { CreateProductBody, ImageUpload, Product } from "@mm/lib";
 import { Category, ImageUploadStatus } from "@mm/lib";
 import { mockClient } from "aws-sdk-client-mock";
@@ -32,6 +33,18 @@ const makeProduct = (overrides: Partial<Product> = {}): Product => ({
 });
 
 const toDto = ({ inStock: _, imageKeys, ...product }: Product) => ({ ...product, imageKeys: [...(imageKeys ?? [])] });
+
+const makeProductWithImages = (thumbnailHash: string | null, ...hashes: string[]) => {
+  const id = crypto.randomUUID();
+  return makeProduct({
+    id,
+    imageKeys: new Set(hashes.map(hash => productImageKey(id, hash))),
+    ...(thumbnailHash ? { thumbnailKey: productImageKey(id, thumbnailHash) } : {})
+  });
+};
+
+const variantObjects = (...imageKeys: string[]) =>
+  imageKeys.flatMap(imageKey => IMAGE_WIDTHS.map(width => ({ Key: imageVariantKey(imageKey, width) })));
 
 const toOverview = ({ id, title, category, price, stockCount }: Product) => ({
   id,
@@ -322,6 +335,114 @@ describe("deleteProduct", () => {
 
   it("does not throw when the product does not exist", async () => {
     await expect(service.deleteProduct(crypto.randomUUID())).resolves.toBeUndefined();
+    expect(s3).not.toHaveReceivedCommand(DeleteObjectsCommand);
+  });
+
+  it("deletes every variant of the product's images from storage", async () => {
+    const product = makeProductWithImages("aaaa", "aaaa", "bbbb");
+    await putItems(db, TableName, [product]);
+
+    await service.deleteProduct(product.id);
+
+    expect(await getRawItem(product.id)).toBeUndefined();
+    expect(s3).toHaveReceivedCommandTimes(DeleteObjectsCommand, 1);
+    const [call] = s3.commandCalls(DeleteObjectsCommand);
+    const { Bucket, Delete } = call.args[0].input;
+    const expectedObjects = variantObjects(productImageKey(product.id, "aaaa"), productImageKey(product.id, "bbbb"));
+    expect(Bucket).toBe(env.BUCKET_NAMES.image);
+    expect(Delete?.Objects).toHaveLength(expectedObjects.length);
+    expect(Delete?.Objects).toEqual(expect.arrayContaining(expectedObjects));
+  });
+
+  it("does not touch storage when the product has no images", async () => {
+    const product = makeProduct();
+    await putItems(db, TableName, [product]);
+
+    await service.deleteProduct(product.id);
+
+    expect(s3).not.toHaveReceivedCommand(DeleteObjectsCommand);
+  });
+});
+
+describe("deleteProductImage", () => {
+  it("removes the image from the product and deletes its variants from storage", async () => {
+    const product = makeProductWithImages("aaaa", "aaaa", "bbbb");
+    await putItems(db, TableName, [product]);
+    const removedKey = productImageKey(product.id, "bbbb");
+
+    const updated = await service.deleteProductImage(product.id, "bbbb");
+
+    const expected = { ...product, imageKeys: new Set([productImageKey(product.id, "aaaa")]) };
+    expect(updated).toEqual(toDto(expected));
+    expect(await getRawItem(product.id)).toEqual(expected);
+    expect(s3).toHaveReceivedCommandWith(DeleteObjectsCommand, {
+      Bucket: env.BUCKET_NAMES.image,
+      Delete: { Objects: variantObjects(removedKey) }
+    });
+  });
+
+  it("clears the thumbnail when deleting the thumbnail image", async () => {
+    const product = makeProductWithImages("aaaa", "aaaa", "bbbb");
+    await putItems(db, TableName, [product]);
+
+    const updated = await service.deleteProductImage(product.id, "aaaa");
+
+    expect(updated.thumbnailKey).toBeUndefined();
+    expect(updated.imageKeys).toEqual([productImageKey(product.id, "bbbb")]);
+    const stored = await getRawItem(product.id);
+    expect(stored).not.toHaveProperty("thumbnailKey");
+    expect(stored?.imageKeys).toEqual(new Set([productImageKey(product.id, "bbbb")]));
+  });
+
+  it("removes the image set when deleting the last image", async () => {
+    const product = makeProductWithImages("aaaa", "aaaa");
+    await putItems(db, TableName, [product]);
+
+    const updated = await service.deleteProductImage(product.id, "aaaa");
+
+    expect(updated.imageKeys).toEqual([]);
+    const stored = await getRawItem(product.id);
+    expect(stored).not.toHaveProperty("imageKeys");
+    expect(stored).not.toHaveProperty("thumbnailKey");
+  });
+
+  it("throws a 404 without creating the product or touching storage when it does not exist", async () => {
+    const id = crypto.randomUUID();
+
+    await expectApiError(service.deleteProductImage(id, "aaaa"), 404);
+
+    expect(await getRawItem(id)).toBeUndefined();
+    expect(s3).not.toHaveReceivedCommand(DeleteObjectsCommand);
+  });
+});
+
+describe("setImageAsThumbnail", () => {
+  it("sets one of the product's images as its thumbnail", async () => {
+    const product = makeProductWithImages("aaaa", "aaaa", "bbbb");
+    await putItems(db, TableName, [product]);
+    const thumbnailKey = productImageKey(product.id, "bbbb");
+
+    const updated = await service.setImageAsThumbnail(product.id, "bbbb");
+
+    expect(updated).toEqual(toDto({ ...product, thumbnailKey }));
+    expect(await getRawItem(product.id)).toMatchObject({ thumbnailKey });
+  });
+
+  it("throws a 404 and leaves the thumbnail alone when the image is not on the product", async () => {
+    const product = makeProductWithImages("aaaa", "aaaa");
+    await putItems(db, TableName, [product]);
+
+    await expectApiError(service.setImageAsThumbnail(product.id, "bbbb"), 404);
+
+    expect(await getRawItem(product.id)).toMatchObject({ thumbnailKey: product.thumbnailKey });
+  });
+
+  it("throws a 404 and does not create the product when it does not exist", async () => {
+    const id = crypto.randomUUID();
+
+    await expectApiError(service.setImageAsThumbnail(id, "aaaa"), 404);
+
+    expect(await getRawItem(id)).toBeUndefined();
   });
 });
 
