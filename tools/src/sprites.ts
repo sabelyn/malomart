@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
+import type { Sharp } from "sharp";
 import sharp from "sharp";
 
 type Rect = { x: number; y: number; width: number; height: number };
@@ -205,7 +206,7 @@ const clearBackground = (pixels: Pixels, background: string) => {
   return data;
 };
 
-const padToSquare = async (image: sharp.Sharp) => {
+const padToSquare = async (image: Sharp) => {
   const { data, info } = await image.png().toBuffer({ resolveWithObject: true });
   const size = Math.max(info.width, info.height);
   const left = Math.floor((size - info.width) / 2);

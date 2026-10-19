@@ -10,6 +10,9 @@
     "lint:fix": "turbo run lint:fix",
     "test": "turbo run test",
     "format": "prettier . --write",
+    "deps:check": "syncpack update --check",
+    "deps:update": "syncpack update && pnpm install",
+    "deps:lint": "syncpack lint",
     "spec": "pnpm --filter api spec",
     "dev": "turbo run dev --filter=@mm/api --filter=@mm/ui --ui=stream",
     "deploy:dev": "pnpm --filter @mm/ui build && pnpm --filter @mm/infra cdk deploy \"MaloMartDev/*\" --outputs-file ../local/cdk-outputs.json && pnpm --filter @mm/api env:dev",
@@ -22,8 +25,9 @@
   "devDependencies": {
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
-    "prettier": "^3.9.6",
-    "turbo": "^2.11.3"
+    "prettier": "^3.9.10",
+    "syncpack": "^15.3.3",
+    "turbo": "^2.11.9"
   },
   "packageManager": "pnpm@12.6.0"
 }

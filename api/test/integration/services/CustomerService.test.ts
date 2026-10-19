@@ -347,7 +347,7 @@ describe("listAddresses", () => {
   });
 
   it("returns only the customer's addresses", async () => {
-    const own = [makeAddress(), makeAddress({ city: "Hateno", region: "Necluda" })];
+    const own = [makeAddress(), makeAddress({ city: "Hateno", region: "East Necluda" })];
     await putItems(db, AddressesTable, [...own, makeAddress({ customerId: crypto.randomUUID() })]);
 
     const result = await makeService({ defaultAddressId: own[1].id }).listAddresses();

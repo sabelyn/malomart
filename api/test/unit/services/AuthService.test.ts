@@ -298,7 +298,7 @@ describe("exchangeAuthorizationCode", () => {
       tokens
     );
 
-    const [url, init] = fetchMock.mock.calls[0]!;
+    const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("https://auth.malomart.test/oauth2/token");
     expect(init?.headers).toMatchObject({
       Authorization: `Basic ${Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString("base64")}`

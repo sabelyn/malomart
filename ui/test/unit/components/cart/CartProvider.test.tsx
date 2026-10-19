@@ -114,7 +114,10 @@ describe("CartProvider", () => {
     await user.click(screen.getByRole("button", { name: "Three shields" }));
     await user.click(screen.getByRole("button", { name: "Four shields" }));
     await waitFor(() => expect(requestsTo(fetch, SAVE)).toHaveLength(1));
-    await act(async () => failFirstSave(json(500, { message: "boom" })));
+    await act(() => {
+      failFirstSave(json(500, { message: "boom" }));
+      return Promise.resolve();
+    });
 
     await waitFor(() => expect(requestsTo(fetch, SAVE)).toEqual([{ [shield.id]: 3 }, { [shield.id]: 4 }]));
     expect(announced("assertive")).toBe("Couldn't save your cart. It's back to how it was. Try again.");

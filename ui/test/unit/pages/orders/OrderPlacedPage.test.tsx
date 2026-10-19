@@ -78,7 +78,7 @@ describe("OrderPlacedPage", () => {
     const details = section("The details");
     expect(within(details).getByText("Order number").nextElementSibling?.textContent).toBe(ORDER_NUMBER);
     expect(within(details).getByText("2 Lon Lon Road")).toBeTruthy();
-    expect(within(details).getByText("Postman on Foot, 5 to 7 days. Free.")).toBeTruthy();
+    expect(within(details).getByText("Postman Standard, 5 to 7 days. Free.")).toBeTruthy();
     expect(within(details).getByText("Hyrulean Express ending in 4242")).toBeTruthy();
     expect(within(details).getByText("Total").nextElementSibling?.textContent).toBe("420 rupees for 3 items");
 

@@ -46,16 +46,16 @@
   },
   "devDependencies": {
     "@mm/config": "workspace:*",
-    "@types/aws-lambda": "^8.10.163",
-    "@types/node": "^24.10.1",
-    "eslint": "^10.10.0",
-    "typescript": "~6.0.3",
-    "vite": "^8.3.1",
-    "vitest": "^5.0.0",
+    "@types/aws-lambda": "^8.10.164",
+    "@types/node": "^24.19.2",
+    "eslint": "^10.13.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5",
     "zod-openapi": "^6.0.2"
   },
   "dependencies": {
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "sideEffects": false
 }

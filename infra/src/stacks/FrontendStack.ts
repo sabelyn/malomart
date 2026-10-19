@@ -30,6 +30,8 @@ import type { Bucket } from "aws-cdk-lib/aws-s3";
 import { HttpMethods } from "aws-cdk-lib/aws-s3";
 import { BucketDeployment, CacheControl, Source } from "aws-cdk-lib/aws-s3-deployment";
 import type { Construct } from "constructs";
+import { readFileSync } from "node:fs";
+import { findPackageJSON } from "node:module";
 import path from "node:path";
 
 import { FailureQueue } from "../constructs/FailureQueue";
@@ -51,8 +53,8 @@ type Props = StackProps & {
   localDevOrigin?: string;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const SHARP_VERSION = (require("sharp/package.json") as { version: string }).version;
+const SHARP_VERSION = (JSON.parse(readFileSync(findPackageJSON("sharp", __filename)!, "utf8")) as { version: string })
+  .version;
 
 const uiDist = path.resolve(__dirname, "../../../ui/dist");
 

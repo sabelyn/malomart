@@ -12,19 +12,19 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-cognito-identity-provider": "^3.1141.0",
-    "@aws-sdk/client-dynamodb": "^3.1131.0",
-    "@aws-sdk/client-s3": "^3.1131.0",
-    "@aws-sdk/lib-dynamodb": "^3.1138.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.1152.0",
+    "@aws-sdk/client-dynamodb": "^3.1152.0",
+    "@aws-sdk/client-s3": "^3.1152.0",
+    "@aws-sdk/lib-dynamodb": "^3.1152.0",
     "@mm/clients": "workspace:*",
     "@mm/lib": "workspace:*",
-    "mailparser": "^3.9.38",
-    "sharp": "^0.34.4"
+    "mailparser": "^3.9.45",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@mm/config": "workspace:*",
     "@types/mailparser": "^3.9.0",
-    "@types/node": "^24.10.1",
-    "typescript": "~6.0.3"
+    "@types/node": "^24.19.2",
+    "typescript": "^6.0.3"
   }
 }

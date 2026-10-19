@@ -94,12 +94,12 @@ type GoogleFlow = Omit<OAuthState, "state" | "verifier">;
 const googleErrorPath = (flow: GoogleFlow | undefined, error: GoogleSignInError) => {
   const params = new URLSearchParams({ [GOOGLE_ERROR_PARAM]: error });
   if (flow?.purpose === "deleteAccount") {
-    return `${ACCOUNT_PAGE_PATH}?${params}`;
+    return `${ACCOUNT_PAGE_PATH}?${params.toString()}`;
   }
   if (flow && flow.returnTo !== "/") {
     params.set("returnTo", flow.returnTo);
   }
-  return `${SIGN_IN_PAGE_PATH}?${params}`;
+  return `${SIGN_IN_PAGE_PATH}?${params.toString()}`;
 };
 
 const redirectToGoogle = (req: Request, res: Response, flow: GoogleFlow) => {

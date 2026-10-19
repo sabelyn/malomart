@@ -188,7 +188,7 @@ export class AuthService implements IAuthService {
       code_challenge: codeChallenge,
       code_challenge_method: "S256"
     });
-    return `${this.oauthDomain()}/oauth2/authorize?${params}`;
+    return `${this.oauthDomain()}/oauth2/authorize?${params.toString()}`;
   };
 
   exchangeAuthorizationCode = async (code: string, redirectUri: string, codeVerifier: string) => {

@@ -191,7 +191,7 @@ describe("CheckoutPage", () => {
     expect(
       within(section("Pay with")).getByRole("link", { name: "Update them in your account" }).getAttribute("href")
     ).toBe("/account/payment-methods");
-    expect(isChecked(radio("Delivery", "Postman on Foot"))).toBe(true);
+    expect(isChecked(radio("Delivery", "Postman Standard"))).toBe(true);
 
     const items = section("Your items");
     expect(

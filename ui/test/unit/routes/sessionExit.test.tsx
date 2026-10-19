@@ -57,7 +57,10 @@ describe("useExitSession", () => {
     expect(screen.getByRole("status").textContent).toContain("Loading");
     expect(location()).toBe("/orders");
 
-    await act(async () => finishLoading());
+    await act(() => {
+      finishLoading();
+      return Promise.resolve();
+    });
 
     expect(await screen.findByText("sign in form: Signed out everywhere.")).toBeTruthy();
     expect(location()).toBe("/auth/sign-in");

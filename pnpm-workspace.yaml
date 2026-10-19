@@ -12,3 +12,5 @@ allowBuilds:
   sharp: false
   ssh2: true
   unrs-resolver: true
+
+dedupePeers: true

@@ -39,7 +39,7 @@ it("lists items by the titles saved on the order and shows free shipping", () =>
   const { text } = render();
 
   expect(text).toContain("Deku Nut x3: 30 rupees");
-  expect(text).toContain("Shipping (Postman on Foot): Free");
+  expect(text).toContain("Shipping (Postman Standard): Free");
   expect(text).toContain("Total: 1,530 rupees");
 });
 

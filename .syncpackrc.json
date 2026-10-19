@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/syncpack/schema.json",
+  "source": ["package.json", "*/package.json"],
+  "updateGroups": [
+    {
+      "label": "Workspace packages are versioned locally",
+      "dependencies": ["@mm/**"],
+      "isIgnored": true
+    },
+    {
+      "label": "Only take patch and minor updates",
+      "dependencies": ["**"],
+      "target": "minor"
+    }
+  ]
+}
