@@ -2,6 +2,7 @@ import { Container, Group, UnstyledButton, VisuallyHidden } from "@mantine/core"
 import { Link, NavLink, useLocation } from "react-router";
 
 import { useSession, useSignOut } from "@/api";
+import logoMark from "@/assets/logo-mark.svg";
 import { alerts, ui } from "@/copy";
 import { ACCOUNT_PATH, ADMIN_PATH, CART_PATH, CATALOG_PATH, HOME_PATH, signInPath } from "@/routes/paths";
 import { useExitSession } from "@/routes/sessionExit";
@@ -68,6 +69,7 @@ const SiteHeader = ({ cartCount }: SiteHeaderProps) => (
       <Group justify="space-between" align="center" wrap="wrap" gap="md">
         <div className={classes.brand}>
           <Link to={HOME_PATH} className={classes.logo}>
+            <img src={logoMark} alt="" className={classes.mark} />
             {ui.site.name}
           </Link>
           <p className={classes.formerly}>
