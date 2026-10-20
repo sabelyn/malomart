@@ -40,6 +40,11 @@ export const malo = {
     empty: "Nothing to check out. Bold strategy."
   },
   signIn: "Email. Code. Shop.",
+  privacy:
+    "The shop's pretend. Your email isn't. I keep what I need to run the place, nobody buys it off me, and you can close your account whenever you want.",
+  terms:
+    "Nothing here's real. Not the rupees, not the shipping. Don't feed the shop a real card, don't try to break it, and don't cry to me if it vanishes overnight.",
+  credits: "Somebody had to make all this stuff. Wasn't me. I just sell it.",
   signUp: "No passwords. I don't trust you with one.",
   profile: {
     defaultsFailed: "Couldn't find your defaults. Not my fault.",
@@ -51,7 +56,9 @@ export const malo = {
   },
   cards: {
     loadFailed: "Couldn't find your cards. Not my fault.",
-    empty: "No cards on file. I don't do IOUs."
+    empty: "No cards on file. I don't do IOUs.",
+    fakeNumbersOnly:
+      "For the love of Hylia, please don't give me your actual credit card number! This is a pretend shop. Any 16 digits will do."
   },
   orders: {
     loadFailed: "Couldn't find your orders. Not my fault.",
@@ -253,8 +260,14 @@ export const ui = {
     account: "Account",
     signIn: "Sign in",
     signOut: "Sign out",
+    siteNav: "Site info",
+    privacy: "Privacy policy",
+    terms: "Terms of service",
+    credits: "Credits",
     footer: "Come back with more rupees.",
-    credits: "Item icons ripped by Colbydude. Rupee art by Side__Steppa. The Legend of Zelda belongs to Nintendo."
+    builtBy: "Built by Sabelyn Thorpe.",
+    sourceCode: "Code on GitHub",
+    nintendo: "The Legend of Zelda belongs to Nintendo."
   },
   pageTitles: {
     pageError: "Something broke",
@@ -265,6 +278,9 @@ export const ui = {
     checkout: "Checkout",
     signIn: "Sign in",
     signUp: "Sign up",
+    privacy: "Privacy policy",
+    terms: "Terms of service",
+    credits: "Credits",
     profile: "Your account",
     addresses: "Addresses",
     cards: "Payment methods",
@@ -307,6 +323,20 @@ export const ui = {
   },
   notFound: {
     backLink: "Back to the shop"
+  },
+  legal: {
+    lastUpdated: (date: string) => `Last updated ${date}.`
+  },
+  privacy: {
+    heading: "Privacy Policy",
+    plainVersion: "That's Malo's version. The details below are the actual policy."
+  },
+  credits: {
+    heading: "Credits"
+  },
+  terms: {
+    heading: "Terms of Service",
+    plainVersion: "That's Malo's version. The details below are the actual terms."
   },
   catalog: {
     eyebrow: "Catalog",
@@ -389,6 +419,8 @@ export const ui = {
     newHere: "New here?",
     makeAccount: "Make an account",
     alreadyMember: "Already a member?",
+    agreementPrefix: "By signing up, you agree to the",
+    agreementJoiner: "and acknowledge the",
     continueWithGoogle: "Continue with Google"
   },
   account: {
@@ -464,6 +496,8 @@ export const ui = {
     brand: "Card brand",
     number: "Card number",
     numberHint: "Goes straight to the vault. I never see it.",
+    numberWarning: "Warning about card numbers",
+    gotIt: "Got it",
     expirationMonth: "Expiration month",
     month: "Month",
     expirationYear: "Expiration year",

@@ -207,6 +207,26 @@ describe("PaymentMethodsSection", () => {
     ).toBeTruthy();
   });
 
+  it("closes the card number warning on Escape without closing the form", async () => {
+    stubApi({ [LIST]: () => json(200, methods) });
+    const user = userEvent.setup();
+    renderSection();
+    await loaded();
+
+    await user.click(screen.getByRole("button", { name: "Add a card" }));
+    const warningButton = screen.getByRole("button", { name: "Warning about card numbers" });
+    await user.click(warningButton);
+    const warning = await screen.findByRole("dialog", { name: "Warning about card numbers" });
+    const descriptionId = warning.getAttribute("aria-describedby") ?? "";
+    expect(document.getElementById(descriptionId)?.textContent).toMatch(/^For the love of Hylia/);
+
+    await user.keyboard("{Escape}");
+
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Warning about card numbers" })).toBeNull());
+    expect(screen.getByRole("dialog", { name: "Add a card" })).toBeTruthy();
+    expect(document.activeElement).toBe(warningButton);
+  });
+
   it("updates the expiration", async () => {
     const fetch = stubApi({
       [LIST]: () => json(200, methods),

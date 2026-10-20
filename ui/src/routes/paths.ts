@@ -6,6 +6,9 @@ export const CATALOG_PATH = "/products";
 export const PRODUCT_ROUTE = "/products/:id";
 export const CART_PATH = "/cart";
 export const CHECKOUT_PATH = "/checkout";
+export const PRIVACY_PATH = "/privacy";
+export const TERMS_PATH = "/terms";
+export const CREDITS_PATH = "/credits";
 
 export const AUTH_PATH = "/auth";
 export const SIGN_IN_PATH = "/auth/sign-in";

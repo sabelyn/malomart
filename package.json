@@ -29,5 +29,6 @@
     "syncpack": "^15.3.3",
     "turbo": "^2.11.9"
   },
-  "packageManager": "pnpm@12.6.0"
+  "packageManager": "pnpm@12.6.0",
+  "homepage": "https://malomart.link/"
 }

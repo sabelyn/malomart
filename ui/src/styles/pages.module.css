@@ -22,3 +22,15 @@
   margin-top: var(--mantine-spacing-xl);
   color: var(--mantine-color-gilt-3);
 }
+
+.prose {
+  margin-top: var(--mantine-spacing-xl);
+}
+
+.prose a {
+  color: var(--mantine-color-gilt-3);
+}
+
+.prose section + section {
+  margin-top: calc(var(--mantine-spacing-xl) * 1.5);
+}

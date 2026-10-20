@@ -54,6 +54,14 @@ describe("SignUpPage", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it("links to the terms and privacy policy", () => {
+    stubApi({});
+    renderSignUp();
+
+    expect(screen.getByRole("link", { name: "Terms of Service" }).getAttribute("href")).toBe("/terms");
+    expect(screen.getByRole("link", { name: "Privacy Policy" }).getAttribute("href")).toBe("/privacy");
+  });
+
   it("signs the user in right after confirming the account", async () => {
     const fetch = stubApi({
       "POST /api/auth/sign-up": () => new Response(null, { status: 202 }),

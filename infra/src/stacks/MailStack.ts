@@ -4,6 +4,8 @@ import { Alarm, ComparisonOperator, Metric, TreatMissingData } from "aws-cdk-lib
 import { SnsAction } from "aws-cdk-lib/aws-cloudwatch-actions";
 import { EventBus, Rule } from "aws-cdk-lib/aws-events";
 import { CloudWatchLogGroup } from "aws-cdk-lib/aws-events-targets";
+import { PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { SqsDestination } from "aws-cdk-lib/aws-lambda-destinations";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import type { IPublicHostedZone } from "aws-cdk-lib/aws-route53";
 import { CfnRecordSet, MxRecord, TxtRecord } from "aws-cdk-lib/aws-route53";
@@ -17,21 +19,27 @@ import {
   ReceiptRuleSet,
   SuppressionReasons
 } from "aws-cdk-lib/aws-ses";
-import { S3 } from "aws-cdk-lib/aws-ses-actions";
+import { Lambda, LambdaInvocationType, S3 } from "aws-cdk-lib/aws-ses-actions";
 import { Topic } from "aws-cdk-lib/aws-sns";
 import { EmailSubscription } from "aws-cdk-lib/aws-sns-subscriptions";
 import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from "aws-cdk-lib/custom-resources";
 import type { Construct } from "constructs";
 
-import { createPrivateBucket } from "../helpers";
+import { FailureQueue } from "../constructs/FailureQueue";
+import { createFunction, createPrivateBucket } from "../helpers";
 
 type Props = StackProps & {
   zone: IPublicHostedZone;
   inboxDomain: string;
   alarmEmail?: string;
+  forwarding?: {
+    recipients: string[];
+    to: string;
+  };
 };
 
 export const INBOX_KEY_PREFIX = "mail/";
+export const FORWARD_KEY_PREFIX = "forward/";
 
 export class MailStack extends Stack {
   constructor(scope: Construct, id: string, props: Props) {
@@ -146,6 +154,54 @@ export class MailStack extends Stack {
       installLatestAwsSdk: false
     });
     activation.node.addDependency(ruleSet);
+
+    if (props.forwarding) {
+      new MxRecord(this, "ApexMxRecord", {
+        zone,
+        values: [{ priority: 10, hostName: `inbound-smtp.${this.region}.amazonaws.com` }]
+      });
+      new EmailIdentity(this, "ForwardToIdentity", { identity: Identity.email(props.forwarding.to) });
+
+      const forwarderFailures = new FailureQueue(this, "ForwarderFailures", {
+        description: "Contact emails failed to forward after retries",
+        alarmTopic
+      });
+      const forwarder = createFunction(this, "Forwarder", "mailForwarder", {
+        timeout: Duration.seconds(30),
+        memorySize: 256,
+        retryAttempts: 2,
+        onFailure: new SqsDestination(forwarderFailures.queue),
+        environment: {
+          FORWARD_BUCKET_NAME: inboxBucket.bucketName,
+          FORWARD_KEY_PREFIX,
+          FORWARD_FROM: `forwarder@${zone.zoneName}`,
+          FORWARD_TO: props.forwarding.to
+        }
+      });
+      inboxBucket.grantRead(forwarder, `${FORWARD_KEY_PREFIX}*`);
+      forwarder.addToRolePolicy(
+        new PolicyStatement({
+          actions: ["ses:SendEmail"],
+          resources: [
+            this.formatArn({ service: "ses", resource: "identity", resourceName: "*" }),
+            this.formatArn({
+              service: "ses",
+              resource: "configuration-set",
+              resourceName: configurationSet.configurationSetName
+            })
+          ]
+        })
+      );
+
+      ruleSet.addRule("ForwardRule", {
+        recipients: props.forwarding.recipients,
+        scanEnabled: true,
+        actions: [
+          new S3({ bucket: inboxBucket, objectKeyPrefix: FORWARD_KEY_PREFIX }),
+          new Lambda({ function: forwarder, invocationType: LambdaInvocationType.EVENT })
+        ]
+      });
+    }
 
     new CfnOutput(this, "InboxBucketName", { value: inboxBucket.bucketName });
     new CfnOutput(this, "InboxDomain", { value: inboxDomain });

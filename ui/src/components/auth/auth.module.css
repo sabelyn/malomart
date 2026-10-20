@@ -14,6 +14,16 @@
   color: var(--mantine-color-gilt-3);
 }
 
+.agreement {
+  margin-top: var(--mantine-spacing-lg);
+  color: var(--mantine-color-dark-1);
+  font-size: var(--mantine-font-size-sm);
+}
+
+.agreement a {
+  color: var(--mantine-color-gilt-3);
+}
+
 .alt {
   margin-top: var(--mantine-spacing-lg);
 }

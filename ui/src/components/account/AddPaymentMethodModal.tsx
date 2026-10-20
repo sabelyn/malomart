@@ -1,4 +1,4 @@
-import { Alert, Button, Checkbox, Group, Radio, Stack, TextInput } from "@mantine/core";
+import { Alert, Box, Button, Checkbox, Group, Radio, Stack, TextInput } from "@mantine/core";
 import { schemaResolver, useForm } from "@mantine/form";
 import { ApiRequestError } from "@mm/lib/api";
 import type { PaymentMethodDto } from "@mm/lib/customers";
@@ -11,6 +11,7 @@ import { boolean, preprocess, strictObject } from "zod";
 import { apiCall, routeKey } from "@/api";
 import AppModal from "@/components/AppModal";
 import { alerts, ui } from "@/copy";
+import CardNumberWarning from "./CardNumberWarning";
 import ExpirationFields, { expirationFields, expiredIssue, notExpired } from "./ExpirationFields";
 
 const stripSeparators = (value: unknown) => (typeof value === "string" ? value.replace(/[\s-]/g, "") : value);
@@ -90,15 +91,18 @@ const AddPaymentMethodForm = ({ onCancel, onSaved }: AddPaymentMethodFormProps) 
             ))}
           </Group>
         </Radio.Group>
-        <TextInput
-          label={ui.cards.number}
-          description={ui.cards.numberHint}
-          inputMode="numeric"
-          autoComplete="cc-number"
-          maxLength={19}
-          required
-          {...form.getInputProps("cardNumber")}
-        />
+        <Box pos="relative">
+          <CardNumberWarning />
+          <TextInput
+            label={ui.cards.number}
+            description={ui.cards.numberHint}
+            inputMode="numeric"
+            autoComplete="cc-number"
+            maxLength={19}
+            required
+            {...form.getInputProps("cardNumber")}
+          />
+        </Box>
         <ExpirationFields
           monthProps={form.getInputProps("expirationMonth")}
           yearProps={form.getInputProps("expirationYear")}

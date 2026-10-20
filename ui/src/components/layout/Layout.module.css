@@ -25,7 +25,33 @@
   font-size: var(--mantine-font-size-sm);
 }
 
-.credits {
+.byline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mantine-spacing-md);
+  margin-top: var(--mantine-spacing-xs);
+}
+
+.repoLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--mantine-color-gilt-3);
+}
+
+.siteNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mantine-spacing-md);
+  margin-top: var(--mantine-spacing-xs);
+}
+
+.siteNav a {
+  color: var(--mantine-color-gilt-3);
+}
+
+.fineprint {
   margin-top: var(--mantine-spacing-xs);
   font-size: var(--mantine-font-size-xs);
 }

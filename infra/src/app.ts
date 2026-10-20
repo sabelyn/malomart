@@ -21,7 +21,10 @@ new MailStack(app, "MaloMartMail", {
   env,
   zone: domainStack.zone,
   inboxDomain: `inbox.${DOMAIN_NAME}`,
-  alarmEmail: process.env.DEV_ALARM_EMAIL
+  alarmEmail: process.env.DEV_ALARM_EMAIL,
+  forwarding: process.env.CONTACT_FORWARD_EMAIL
+    ? { recipients: [`contact@${DOMAIN_NAME}`], to: process.env.CONTACT_FORWARD_EMAIL }
+    : undefined
 });
 
 const stages: Record<string, { env: StackProps["env"]; config: StageConfig }> = {

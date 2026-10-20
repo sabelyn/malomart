@@ -14,7 +14,7 @@ import ChudleyHype from "@/components/ChudleyHype";
 import MaloSays from "@/components/MaloSays";
 import { alerts, chudley, malo, ui } from "@/copy";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { SIGN_IN_PATH } from "@/routes/paths";
+import { PRIVACY_PATH, SIGN_IN_PATH, TERMS_PATH } from "@/routes/paths";
 import type { SignInState } from "@/routes/paths";
 import pages from "@/styles/pages.module.css";
 
@@ -86,7 +86,15 @@ const SignUpPage = () => {
         />
       )}
 
-      {!pendingEmail && <GoogleSignIn />}
+      {!pendingEmail && (
+        <>
+          <GoogleSignIn />
+          <Text className={classes.agreement}>
+            {ui.auth.agreementPrefix} <Link to={TERMS_PATH}>{ui.terms.heading}</Link> {ui.auth.agreementJoiner}{" "}
+            <Link to={PRIVACY_PATH}>{ui.privacy.heading}</Link>.
+          </Text>
+        </>
+      )}
 
       <Text className={classes.switch}>
         {ui.auth.alreadyMember} <Link to={signInLocation}>{ui.auth.signIn}</Link>

@@ -23,12 +23,15 @@ import {
   CART_PATH,
   CATALOG_PATH,
   CHECKOUT_PATH,
+  CREDITS_PATH,
   ORDER_PLACED_ROUTE,
   ORDER_ROUTE,
   ORDERS_PATH,
+  PRIVACY_PATH,
   PRODUCT_ROUTE,
   SIGN_IN_PATH,
-  SIGN_UP_PATH
+  SIGN_UP_PATH,
+  TERMS_PATH
 } from "@/routes/paths";
 
 const AccountPage = lazy(() => import("@/pages/account/AccountPage"));
@@ -37,14 +40,17 @@ const AdminOrdersSection = lazy(() => import("@/pages/admin/AdminOrdersSection")
 const AdminPage = lazy(() => import("@/pages/admin/AdminPage"));
 const AdminProductsSection = lazy(() => import("@/pages/admin/AdminProductsSection"));
 const CheckoutPage = lazy(() => import("@/pages/CheckoutPage"));
+const CreditsPage = lazy(() => import("@/pages/CreditsPage"));
 const OrderDetailsPage = lazy(() => import("@/pages/orders/OrderDetailsPage"));
 const OrderPlacedPage = lazy(() => import("@/pages/orders/OrderPlacedPage"));
 const OrdersSection = lazy(() => import("@/pages/account/OrdersSection"));
+const PrivacyPage = lazy(() => import("@/pages/PrivacyPage"));
 const PaymentMethodsSection = lazy(() => import("@/pages/account/PaymentMethodsSection"));
 const ProductEditorPage = lazy(() => import("@/pages/admin/ProductEditorPage"));
 const ProfileSection = lazy(() => import("@/pages/account/ProfileSection"));
 const SignInPage = lazy(() => import("@/pages/auth/SignInPage"));
 const SignUpPage = lazy(() => import("@/pages/auth/SignUpPage"));
+const TermsPage = lazy(() => import("@/pages/TermsPage"));
 
 const App = () => (
   <Routes>
@@ -55,6 +61,9 @@ const App = () => (
         <Route path={PRODUCT_ROUTE} element={<ProductPage />} />
       </Route>
       <Route path={CART_PATH} element={<CartPage />} />
+      <Route path={PRIVACY_PATH} element={<PrivacyPage />} />
+      <Route path={TERMS_PATH} element={<TermsPage />} />
+      <Route path={CREDITS_PATH} element={<CreditsPage />} />
       <Route path={AUTH_PATH} element={<GuestOnly />}>
         <Route index element={<Navigate to={SIGN_IN_PATH} replace />} />
         <Route path={SIGN_IN_PATH} element={<SignInPage />} />
