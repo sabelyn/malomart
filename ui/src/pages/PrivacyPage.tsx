@@ -1,7 +1,7 @@
 import LegalDocument from "@/components/LegalDocument";
 import { malo, ui } from "@/copy";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { privacyPolicy } from "@/legal/privacyPolicy";
+import { privacyPolicy } from "@/content/privacyPolicy";
 
 const PrivacyPage = () => {
   useDocumentTitle(ui.pageTitles.privacy);

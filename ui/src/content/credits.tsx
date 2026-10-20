@@ -11,7 +11,14 @@ export const credits: CreditSection[] = [
   {
     id: "artwork",
     heading: "Artwork",
-    items: ["Item icons ripped by Colbydude.", "Rupee art by Side__Steppa."]
+    items: [
+      <>
+        Item icons ripped by <a href="https://www.spriters-resource.com/profile/colbydude/">Colbydude</a>
+      </>,
+      <>
+        Rupee art by <a href="https://www.spriters-resource.com/profile/side+steppa/">Side Steppa</a>.
+      </>
+    ]
   },
   {
     id: "fonts",

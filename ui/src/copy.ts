@@ -21,11 +21,11 @@ const shippingCost = (cost: number) => (cost === 0 ? "Free" : rupees(cost));
 const orderKind = (status?: OrderStatus) => (status ? `${status.toLowerCase()} ` : "");
 
 export const malo = {
-  cite: "Malo, owner",
+  cite: "Malo",
   pageError: "Not my fault. Try again.",
   notFound: "Wrong aisle.",
   catalog: {
-    intro: "Everything here is for sale. Pick something.",
+    intro: "Buy something.",
     loadFailed: "Couldn't get the stock list. Not my fault.",
     empty: "Nothing on that shelf. Try another.",
     emptyInStock: "Nothing on that shelf right now. Come back after restocking."
@@ -40,15 +40,13 @@ export const malo = {
     empty: "Nothing to check out. Bold strategy."
   },
   signIn: "Email. Code. Shop.",
-  privacy:
-    "The shop's pretend. Your email isn't. I keep what I need to run the place, nobody buys it off me, and you can close your account whenever you want.",
-  terms:
-    "Nothing here's real. Not the rupees, not the shipping. Don't feed the shop a real card, don't try to break it, and don't cry to me if it vanishes overnight.",
+  privacy: "Everything here is for sale, except your data.",
+  terms: "Don't feed the shop sensitive data, don't try to break it, and don't cry to me if it vanishes overnight.",
   credits: "Somebody had to make all this stuff. Wasn't me. I just sell it.",
   signUp: "No passwords. I don't trust you with one.",
   profile: {
     defaultsFailed: "Couldn't find your defaults. Not my fault.",
-    closeAccount: "Leaving? Fine. Your addresses and cards go with you. No take-backs."
+    closeAccount: "Leaving? Fine. Your data goes with you. No take-backs."
   },
   addresses: {
     loadFailed: "Couldn't find your addresses. Not my fault.",
@@ -56,9 +54,7 @@ export const malo = {
   },
   cards: {
     loadFailed: "Couldn't find your cards. Not my fault.",
-    empty: "No cards on file. I don't do IOUs.",
-    fakeNumbersOnly:
-      "For the love of Hylia, please don't give me your actual credit card number! This is a pretend shop. Any 16 digits will do."
+    empty: "No cards on file. I don't do IOUs."
   },
   orders: {
     loadFailed: "Couldn't find your orders. Not my fault.",
@@ -249,7 +245,6 @@ export const ui = {
     name: "Malo Mart",
     formerlyPrefix: "Formerly ",
     formerName: "Chudley's Fine Goods and Fancy Trinkets Emporium",
-    branch: "Castle Town branch",
     skipLink: "Skip to content",
     mainNav: "Main",
     shop: "Shop",
@@ -497,6 +492,8 @@ export const ui = {
     number: "Card number",
     numberHint: "Goes straight to the vault. I never see it.",
     numberWarning: "Warning about card numbers",
+    fakeNumbersOnly:
+      "For the love of Hylia, please don't give me your actual credit card number! This is a pretend shop. Any 16 digits will do.",
     gotIt: "Got it",
     expirationMonth: "Expiration month",
     month: "Month",

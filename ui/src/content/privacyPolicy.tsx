@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 
 import type { LegalSection } from "@/components/LegalDocument";
-import { contactLink } from "@/legal/contact";
+import { contactLink } from "@/content/contact";
 import { ACCOUNT_PATH, TERMS_PATH } from "@/routes/paths";
 
 export const privacyPolicy: { lastUpdated: string; sections: LegalSection[] } = {
@@ -48,8 +48,8 @@ export const privacyPolicy: { lastUpdated: string; sections: LegalSection[] } = 
           <p>
             <strong>Saved payment cards.</strong> The card brand, card number, and expiration date you enter. Card
             brands are fictional and the site only accepts made-up card numbers. Please don't enter a real card. Card
-            numbers are encrypted with a dedicated key and stored apart from the rest of your account; the rest of the
-            site only ever sees the last four digits.
+            numbers are encrypted with a dedicated key and stored apart from the rest of your account; still, give us
+            fake ones.
           </p>
           <p>
             <strong>Orders.</strong> The items, prices, delivery option, and order status, along with a copy of the

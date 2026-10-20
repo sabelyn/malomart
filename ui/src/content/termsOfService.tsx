@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 
 import type { LegalSection } from "@/components/LegalDocument";
-import { contactLink } from "@/legal/contact";
+import { contactLink } from "@/content/contact";
 import { ACCOUNT_PATH, CREDITS_PATH, PRIVACY_PATH } from "@/routes/paths";
 
 export const termsOfService: { lastUpdated: string; sections: LegalSection[] } = {

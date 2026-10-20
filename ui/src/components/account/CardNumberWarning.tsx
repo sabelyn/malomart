@@ -1,7 +1,7 @@
 import { ActionIcon, Button, Popover, Stack, Text } from "@mantine/core";
 import { useId, useState } from "react";
 
-import { malo, ui } from "@/copy";
+import { ui } from "@/copy";
 
 const WarningIcon = () => (
   <svg
@@ -55,7 +55,7 @@ const CardNumberWarning = () => {
       <Popover.Dropdown aria-describedby={messageId} data-mantine-stop-propagation="true">
         <Stack gap="xs">
           <Text id={messageId} size="sm">
-            {malo.cards.fakeNumbersOnly}
+            {ui.cards.fakeNumbersOnly}
           </Text>
           <Button size="xs" variant="default" data-mantine-stop-propagation="true" onClick={() => setOpened(false)}>
             {ui.cards.gotIt}
