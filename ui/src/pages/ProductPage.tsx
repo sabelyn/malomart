@@ -46,7 +46,7 @@ const ProductPage = () => {
             {ui.product.editLink}
           </Link>
         )}
-        <SimpleGrid cols={{ base: 1, md: 2 }} spacing={48} verticalSpacing="xl">
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={{ base: "xl", md: 48 }} verticalSpacing="xl">
           <ProductGallery
             key={product.id}
             title={product.title}

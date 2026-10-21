@@ -5,6 +5,7 @@ import {
   ConfirmEmailChangeBody,
   ConfirmSignUpBody,
   RequestEmailChangeBody,
+  ResendSignUpCodeBody,
   SignInBody,
   SignUpBody,
   StartGoogleSignInQuery,
@@ -44,6 +45,21 @@ export const confirmSignUp = new Endpoint(auth, {
   schemas: { body: ConfirmSignUpBody, response: ConfirmSignUpResponse },
   successDescription: "The account was confirmed.",
   summary: "Confirm Sign Up"
+});
+
+export const resendSignUpCode = new Endpoint(auth, {
+  description: "Emails a new confirmation code for an account that hasn't been confirmed yet.",
+  errors: {
+    400: "The email was invalid or the account is already confirmed.",
+    429: "Too many attempts. Try again later."
+  },
+  id: "resendSignUpCode",
+  method: "POST",
+  path: "/sign-up/resend",
+  schemas: { body: ResendSignUpCodeBody },
+  successDescription: "A new confirmation code was sent.",
+  successStatus: "202",
+  summary: "Resend Sign Up Code"
 });
 
 export const signIn = new Endpoint(auth, {

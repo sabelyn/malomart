@@ -11,6 +11,7 @@ import {
   refreshSession,
   requestAccountDeletion,
   requestEmailChange,
+  resendSignUpCode,
   safeReturnTo,
   SIGN_IN_PAGE_PATH,
   signIn,
@@ -223,6 +224,20 @@ router.post(...pathAndMiddleware(confirmSignUp, verifyCodeLimit), async (req, re
 
     setSessionCookies(res, tokens);
     return respond(res, confirmSignUp, { user: userFromIssuedToken(tokens.accessToken) });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.post(...pathAndMiddleware(resendSignUpCode, sendCodeLimit), async (req, res, next) => {
+  try {
+    const {
+      body: { email }
+    } = validateRequest(resendSignUpCode, req);
+
+    const service = req.container.resolve(AUTH_SERVICE);
+    await service.resendSignUpCode(email);
+    return respondEmpty(res, resendSignUpCode);
   } catch (err) {
     return next(err);
   }

@@ -126,4 +126,33 @@ describe("SignUpPage", () => {
     expect((await screen.findByRole("alert")).textContent).toBe("That code expired. Get a new one.");
     expect(screen.getByRole("textbox", { name: /code/i })).toBeTruthy();
   });
+
+  it("sends a new code on request", async () => {
+    const fetch = stubApi({
+      "POST /api/auth/sign-up": () => new Response(null, { status: 202 }),
+      "POST /api/auth/sign-up/resend": () => new Response(null, { status: 202 })
+    });
+    const user = userEvent.setup();
+    renderSignUp();
+
+    await register(user);
+    await user.click(await screen.findByRole("button", { name: "Send a new code" }));
+
+    expect((await screen.findByRole("status")).textContent).toBe("New code sent.");
+    expect(requestsTo(fetch, "POST /api/auth/sign-up/resend")).toEqual([{ email: EMAIL }]);
+    expect(requestsTo(fetch, "POST /api/auth/sign-up")).toHaveLength(1);
+  });
+
+  it("carries the pending email to sign in", async () => {
+    stubApi({ "POST /api/auth/sign-up": () => new Response(null, { status: 202 }) });
+    const user = userEvent.setup();
+    renderSignUp();
+
+    await register(user);
+    await screen.findByRole("textbox", { name: /code/i });
+    await user.click(screen.getByRole("link", { name: "Sign in" }));
+
+    expect(screen.getByTestId("location").textContent).toBe("/auth/sign-in");
+    expect(screen.getByRole<HTMLInputElement>("textbox", { name: /email/i }).value).toBe(EMAIL);
+  });
 });

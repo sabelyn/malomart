@@ -11,3 +11,9 @@
 .description {
   color: var(--mantine-color-dark-0);
 }
+
+.action {
+  color: var(--mantine-color-gold-4);
+  font-weight: 600;
+  white-space: nowrap;
+}

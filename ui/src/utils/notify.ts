@@ -1,14 +1,19 @@
 import { notifications } from "@mantine/notifications";
+import { createElement, Fragment } from "react";
+import { Link } from "react-router";
 
 import { ui } from "@/copy";
 import classes from "@/styles/notifications.module.css";
 
 export type NotifyTone = "success" | "info" | "error";
 
+type NotifyAction = { label: string; to: string };
+
 type NotifyOptions = {
   message: string;
   title?: string;
   tone?: NotifyTone;
+  action?: NotifyAction;
 };
 
 type Announcement = { id: number; message: string; urgent: boolean };
@@ -31,10 +36,26 @@ export const announce = (message: string, urgent = false) => {
   listeners.forEach(listener => listener());
 };
 
-export const notify = ({ message, title, tone = "success" }: NotifyOptions) => {
+const withAction = (message: string, id: string, action?: NotifyAction) =>
+  action
+    ? createElement(
+        Fragment,
+        null,
+        `${message} `,
+        createElement(
+          Link,
+          { to: action.to, className: classes.action, onClick: () => notifications.hide(id) },
+          action.label
+        )
+      )
+    : message;
+
+export const notify = ({ message, title, tone = "success", action }: NotifyOptions) => {
+  const id = crypto.randomUUID();
   notifications.show({
+    id,
     title,
-    message,
+    message: withAction(message, id, action),
     color: TONE_COLORS[tone],
     role: "none",
     classNames: { root: classes.notification, title: classes.title, description: classes.description },

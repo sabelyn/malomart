@@ -18,6 +18,7 @@ export { DomainStack, MailStack };
 
 export type StageConfig = {
   siteDomain?: SiteDomain;
+  redirectWww?: boolean;
   emailDomain?: string;
   alarmEmail?: string;
   fulfillmentTimeScale?: number;
@@ -34,6 +35,7 @@ export const configureStacks = (stage: Stage, config: StageConfig) => {
     dbStack,
     gatewayStack,
     siteDomain: config.siteDomain,
+    redirectWww: config.redirectWww,
     localDevOrigin: config.localDevOrigin
   });
   const authStack = new AuthStack(stage, "MaloMartAuthStack", {

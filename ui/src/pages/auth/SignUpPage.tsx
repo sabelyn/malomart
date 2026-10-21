@@ -1,6 +1,6 @@
 import { Button, Container, Group, Text } from "@mantine/core";
 import { schemaResolver, useForm } from "@mantine/form";
-import { confirmSignUp, SignUpBody, signUp } from "@mm/lib/auth";
+import { confirmSignUp, resendSignUpCode, SignUpBody, signUp } from "@mm/lib/auth";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 
@@ -24,6 +24,7 @@ const SignUpPage = () => {
   const navigate = useNavigate();
   const setSession = useSetSession();
   const [pendingEmail, setPendingEmail] = useState<string>();
+  const [notice, setNotice] = useState<string>();
 
   const form = useForm({
     initialValues: { name: "", email: "" },
@@ -47,11 +48,19 @@ const SignUpPage = () => {
     }
   });
 
+  const resend = useEndpointMutation(resendSignUpCode, {
+    onSuccess: () => setNotice(alerts.auth.newCodeSent)
+  });
+
   const startOver = () => {
     setPendingEmail(undefined);
+    setNotice(undefined);
     register.reset();
     confirm.reset();
+    resend.reset();
   };
+
+  const authError = confirm.error ?? resend.error;
 
   return (
     <Container size="xs" className={pages.page}>
@@ -64,13 +73,22 @@ const SignUpPage = () => {
           email={pendingEmail}
           submitLabel={ui.auth.confirmAccount}
           pending={confirm.isPending}
-          error={confirm.error ? authErrorMessage(confirm.error) : undefined}
+          error={authError ? authErrorMessage(authError) : undefined}
+          notice={notice}
           onSubmit={code => confirm.mutate({ body: { email: pendingEmail, code } })}
         >
           <Group justify="space-between">
-            <Link to={signInLocation} state={{ email: pendingEmail } satisfies SignInState}>
-              {ui.auth.noCodeSignIn}
-            </Link>
+            <Button
+              variant="subtle"
+              onClick={() => {
+                confirm.reset();
+                setNotice(undefined);
+                resend.mutate({ body: { email: pendingEmail } });
+              }}
+              loading={resend.isPending}
+            >
+              {ui.auth.sendNewCode}
+            </Button>
             <Button variant="subtle" onClick={startOver}>
               {ui.auth.useDifferentEmail}
             </Button>
@@ -97,7 +115,10 @@ const SignUpPage = () => {
       )}
 
       <Text className={classes.switch}>
-        {ui.auth.alreadyMember} <Link to={signInLocation}>{ui.auth.signIn}</Link>
+        {ui.auth.alreadyMember}{" "}
+        <Link to={signInLocation} state={pendingEmail ? ({ email: pendingEmail } satisfies SignInState) : undefined}>
+          {ui.auth.signIn}
+        </Link>
       </Text>
     </Container>
   );

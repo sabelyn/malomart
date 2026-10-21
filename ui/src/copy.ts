@@ -171,6 +171,7 @@ export const toasts = {
     stillLoading: "Your cart is still loading. Try again in a moment.",
     allInStock: (title: string) => `Your cart already has every ${title} in stock.`,
     added: (title: string, amount: number) => `Added ${title} to your cart. ${amount} in cart.`,
+    viewCart: "View cart",
     removed: (title: string) => `Removed ${title} from your cart.`,
     removedOne: (title: string, amount: number) => `Removed one ${title} from your cart. ${amount} in cart.`
   },
@@ -409,7 +410,6 @@ export const ui = {
     useDifferentEmail: "Use a different email",
     signIn: "Sign in",
     signInInstead: "Sign in instead",
-    noCodeSignIn: "Didn't get a code? Sign in instead",
     confirmAccount: "Confirm account",
     newHere: "New here?",
     makeAccount: "Make an account",

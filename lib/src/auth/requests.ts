@@ -15,6 +15,11 @@ export const ConfirmSignUpBody = strictObject({
 }).meta({ id: "ConfirmSignUpBody" });
 export type ConfirmSignUpBody = zinfer<typeof ConfirmSignUpBody>;
 
+export const ResendSignUpCodeBody = strictObject({
+  email: Email
+}).meta({ id: "ResendSignUpCodeBody" });
+export type ResendSignUpCodeBody = zinfer<typeof ResendSignUpCodeBody>;
+
 export const SignInBody = strictObject({
   email: Email
 }).meta({ id: "SignInBody" });

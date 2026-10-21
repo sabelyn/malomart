@@ -86,7 +86,8 @@ describe("ProductPage", () => {
 
     expect(JSON.parse(localStorage.getItem(GUEST_CART_KEY) ?? "{}")).toEqual({ [ID]: 1 });
     expect(announced()).toBe("Added Hylian Shield to your cart. 1 in cart.");
-    expect(toasts()).toEqual(["Added Hylian Shield to your cart. 1 in cart."]);
+    expect(toasts()).toEqual(["Added Hylian Shield to your cart. 1 in cart. View cart"]);
+    expect(screen.getByRole("link", { name: "View cart" }).getAttribute("href")).toBe("/cart");
   });
 
   it("swaps to quantity buttons after adding and moves focus between them", async () => {

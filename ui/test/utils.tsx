@@ -45,8 +45,8 @@ export const renderWithProviders = (ui: ReactNode, { route = "/", session, withC
   const result = render(
     <QueryClientProvider client={queryClient}>
       <MantineProvider env="test">
-        <AppNotifications />
         <MemoryRouter initialEntries={[route]}>
+          <AppNotifications />
           <SessionExitProvider>{withCart ? <CartProvider>{ui}</CartProvider> : ui}</SessionExitProvider>
         </MemoryRouter>
       </MantineProvider>

@@ -1,6 +1,6 @@
 import type { CallOptions, Endpoint, RequestInput, ResponseOutput, Schemas } from "@mm/lib/api";
 import { ApiRequestError, call } from "@mm/lib/api";
-import { confirmSignUp, refreshSession, signIn, signOut, signUp, verifySignIn } from "@mm/lib/auth";
+import { confirmSignUp, refreshSession, resendSignUpCode, signIn, signOut, signUp, verifySignIn } from "@mm/lib/auth";
 
 export type ApiCallerOptions = Pick<CallOptions, "baseUrl" | "fetch" | "validateResponse"> & {
   onSessionExpired?: () => void;
@@ -9,7 +9,7 @@ export type ApiCallerOptions = Pick<CallOptions, "baseUrl" | "fetch" | "validate
 export type RequestOptions = Pick<CallOptions, "signal">;
 
 const NO_REFRESH = new Set(
-  [confirmSignUp, refreshSession, signIn, signOut, signUp, verifySignIn].map(endpoint => endpoint.id)
+  [confirmSignUp, refreshSession, resendSignUpCode, signIn, signOut, signUp, verifySignIn].map(endpoint => endpoint.id)
 );
 
 export const isUnauthorized = (err: unknown) => err instanceof ApiRequestError && err.status === 401;

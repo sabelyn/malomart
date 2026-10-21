@@ -1,7 +1,7 @@
 import LegalDocument from "@/components/LegalDocument";
+import { termsOfService } from "@/content/termsOfService";
 import { malo, ui } from "@/copy";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { termsOfService } from "@/content/termsOfService";
 
 const TermsPage = () => {
   useDocumentTitle(ui.pageTitles.terms);

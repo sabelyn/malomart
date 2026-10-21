@@ -50,6 +50,7 @@ type Props = StackProps & {
   dbStack: DbStack;
   gatewayStack: GatewayStack;
   siteDomain?: SiteDomain;
+  redirectWww?: boolean;
   localDevOrigin?: string;
 };
 
@@ -58,9 +59,28 @@ const SHARP_VERSION = (JSON.parse(readFileSync(findPackageJSON("sharp", __filena
 
 const uiDist = path.resolve(__dirname, "../../../ui/dist");
 
-const spaRewrite = `
+const wwwRedirect = (hostName: string) => `
+  if (request.headers.host && request.headers.host.value === "www.${hostName}") {
+    const query = Object.keys(request.querystring)
+      .map(function (key) {
+        const param = request.querystring[key];
+        return (param.multiValue || [param])
+          .map(function (entry) {
+            return entry.value ? key + "=" + entry.value : key;
+          })
+          .join("&");
+      })
+      .join("&");
+    return {
+      statusCode: 301,
+      statusDescription: "Moved Permanently",
+      headers: { location: { value: "https://${hostName}" + request.uri + (query ? "?" + query : "") } }
+    };
+  }`;
+
+const viewerRequest = (redirectHostName?: string) => `
 function handler(event) {
-  const request = event.request;
+  const request = event.request;${redirectHostName ? wwwRedirect(redirectHostName) : ""}
   if (!request.uri.includes(".")) {
     request.uri = "/index.html";
   }
@@ -81,25 +101,27 @@ export class FrontendStack extends Stack {
 
     this.imageBucket = createPrivateBucket(this, "ImageBucket");
 
-    const spaRewriteFunction = new CloudFrontFunction(this, "SpaRewrite", {
-      code: FunctionCode.fromInline(spaRewrite)
-    });
-
     const site = props.siteDomain && {
       hostName: props.siteDomain.hostName,
+      wwwHostName: props.redirectWww ? `www.${props.siteDomain.hostName}` : undefined,
       zone: HostedZone.fromLookup(this, "HostedZone", { domainName: props.siteDomain.zoneName })
     };
     const certificate =
       site &&
       new DnsValidatedCertificate(this, "SiteCertificate", {
         domainName: site.hostName,
+        subjectAlternativeNames: site.wwwHostName ? [site.wwwHostName] : undefined,
         hostedZone: site.zone,
         region: "us-east-1",
         cleanupRoute53Records: true
       });
 
+    const spaRewriteFunction = new CloudFrontFunction(this, "SpaRewrite", {
+      code: FunctionCode.fromInline(viewerRequest(site?.wwwHostName && site.hostName))
+    });
+
     this.distribution = new Distribution(this, "Distribution", {
-      domainNames: site && [site.hostName],
+      domainNames: site && [site.hostName, ...(site.wwwHostName ? [site.wwwHostName] : [])],
       certificate,
       defaultBehavior: {
         origin: S3BucketOrigin.withOriginAccessControl(siteBucket),
@@ -144,6 +166,10 @@ export class FrontendStack extends Stack {
       const target = RecordTarget.fromAlias(new CloudFrontTarget(this.distribution));
       new ARecord(this, "SiteARecord", { zone: site.zone, recordName: site.hostName, target });
       new AaaaRecord(this, "SiteAaaaRecord", { zone: site.zone, recordName: site.hostName, target });
+      if (site.wwwHostName) {
+        new ARecord(this, "WwwARecord", { zone: site.zone, recordName: site.wwwHostName, target });
+        new AaaaRecord(this, "WwwAaaaRecord", { zone: site.zone, recordName: site.wwwHostName, target });
+      }
     }
     this.appOrigin = `https://${site?.hostName ?? this.distribution.distributionDomainName}`;
 

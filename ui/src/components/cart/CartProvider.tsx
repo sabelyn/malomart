@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useRef, useState, useSyncExternal
 
 import { apiCall, routeKey, useSession } from "@/api";
 import { toasts } from "@/copy";
+import { CART_PATH } from "@/routes/paths";
 import { addItems, applyQuantities, countItems, isEmptyCart } from "@/utils/cartItems";
 import type { CartItems } from "@/utils/guestCart";
 import { readGuestCart, subscribeGuestCart, writeGuestCart } from "@/utils/guestCart";
@@ -140,7 +141,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       [product.id]: Math.min((current[product.id] ?? 0) + 1, product.stockCount)
     }));
     if (added) {
-      notify({ message: toasts.cart.added(product.title, amount + 1) });
+      notify({
+        message: toasts.cart.added(product.title, amount + 1),
+        action: { label: toasts.cart.viewCart, to: CART_PATH }
+      });
     }
   };
 

@@ -6,6 +6,7 @@ import {
   GetTokensFromRefreshTokenCommand,
   GlobalSignOutCommand,
   InitiateAuthCommand,
+  ResendConfirmationCodeCommand,
   RespondToAuthChallengeCommand,
   RevokeTokenCommand,
   SignUpCommand,
@@ -136,6 +137,20 @@ describe("confirmSignUp", () => {
     cognito.on(ConfirmSignUpCommand).rejects(new Error("bad code"));
 
     await expect(service.confirmSignUp(EMAIL, "123456")).rejects.toThrow("bad code");
+  });
+});
+
+describe("resendSignUpCode", () => {
+  it("asks Cognito to resend the confirmation code", async () => {
+    cognito.on(ResendConfirmationCodeCommand).resolves({});
+
+    await service.resendSignUpCode(EMAIL);
+
+    expect(cognito).toHaveReceivedCommandWith(ResendConfirmationCodeCommand, {
+      ClientId: CLIENT_ID,
+      SecretHash: secretHash(EMAIL),
+      Username: EMAIL
+    });
   });
 });
 

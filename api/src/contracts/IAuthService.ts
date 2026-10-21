@@ -17,6 +17,7 @@ export interface IAuthService {
   googleSignInUrl: (redirectUri: string, state: string, codeChallenge: string) => string;
   refresh: (refreshToken: string) => Promise<AuthTokens>;
   requestEmailChange: (accessToken: string, email: string) => Promise<void>;
+  resendSignUpCode: (email: string) => Promise<void>;
   signOut: (refreshToken: string) => Promise<void>;
   signOutEverywhere: (accessToken: string) => Promise<void>;
   signUp: (email: string, name: string) => Promise<PendingAuth | undefined>;

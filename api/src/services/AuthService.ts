@@ -9,6 +9,7 @@ import {
   GetTokensFromRefreshTokenCommand,
   GlobalSignOutCommand,
   InitiateAuthCommand,
+  ResendConfirmationCodeCommand,
   RespondToAuthChallengeCommand,
   RevokeTokenCommand,
   SignUpCommand,
@@ -94,6 +95,12 @@ export class AuthService implements IAuthService {
       console.warn("Automatic sign-in after sign-up confirmation failed.", err);
       return undefined;
     }
+  };
+
+  resendSignUpCode = async (email: string) => {
+    await this.cognito.send(
+      new ResendConfirmationCodeCommand({ ClientId, SecretHash: await this.secretHash(email), Username: email })
+    );
   };
 
   startSignIn = async (email: string) => {

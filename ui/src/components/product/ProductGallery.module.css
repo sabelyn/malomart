@@ -4,6 +4,13 @@
   gap: var(--mantine-spacing-md);
 }
 
+@media (max-width: 47.99em) {
+  .gallery {
+    width: min(100%, 36rem, 60svh);
+    margin-inline: auto;
+  }
+}
+
 .stage {
   position: relative;
   display: grid;

@@ -77,6 +77,7 @@ beforeEach(() => {
     googleSignInUrl: vi.fn<IAuthService["googleSignInUrl"]>().mockReturnValue(GOOGLE_URL),
     refresh: vi.fn<IAuthService["refresh"]>().mockResolvedValue(tokens()),
     requestEmailChange: vi.fn<IAuthService["requestEmailChange"]>().mockResolvedValue(),
+    resendSignUpCode: vi.fn<IAuthService["resendSignUpCode"]>().mockResolvedValue(),
     signOut: vi.fn<IAuthService["signOut"]>().mockResolvedValue(),
     signOutEverywhere: vi.fn<IAuthService["signOutEverywhere"]>().mockResolvedValue(),
     signUp: vi.fn<IAuthService["signUp"]>().mockResolvedValue({ email: EMAIL, session: "signup-session" }),
@@ -194,6 +195,34 @@ describe("POST /api/auth/sign-up/confirm", () => {
 
     expect(res.status).toBe(400);
     expect(service.confirmSignUp).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/auth/sign-up/resend", () => {
+  it("resends the confirmation code and keeps the pending session", async () => {
+    const res = await request(app)
+      .post("/api/auth/sign-up/resend")
+      .set("Cookie", pendingCookie())
+      .send({ email: EMAIL });
+
+    expect(res.status).toBe(202);
+    expect(service.resendSignUpCode).toHaveBeenCalledWith(EMAIL);
+    expect(setCookies(res)[SessionCookie.Pending]).toBeUndefined();
+  });
+
+  it("rejects an invalid email with a 400", async () => {
+    const res = await request(app).post("/api/auth/sign-up/resend").send({ email: "nope" });
+
+    expect(res.status).toBe(400);
+    expect(service.resendSignUpCode).not.toHaveBeenCalled();
+  });
+
+  it("returns a 429 when Cognito limits resends", async () => {
+    service.resendSignUpCode.mockRejectedValue(cognitoError("LimitExceededException"));
+
+    const res = await request(app).post("/api/auth/sign-up/resend").send({ email: EMAIL });
+
+    expect(res.status).toBe(429);
   });
 });
 
