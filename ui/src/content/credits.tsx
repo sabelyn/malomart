@@ -34,6 +34,15 @@ export const credits: CreditSection[] = [
     ]
   },
   {
+    id: "testing",
+    heading: "Testing",
+    intro: "Human testers who critiqued styling, helped catch bugs, and suggested missing features.",
+    items: [
+      "My Norwegian friend, who wishes to remain anonymous.",
+      "Saph, another friend who does not wish to provide their real name."
+    ]
+  },
+  {
     id: "built-with",
     heading: "Built with",
     intro: "Malo Mart runs on Amazon Web Services and a lot of open source.",

@@ -155,7 +155,10 @@ export class OrdersStack extends Stack {
       notifier.addToRolePolicy(
         new PolicyStatement({
           actions: ["ses:SendEmail"],
-          resources: [this.formatArn({ service: "ses", resource: "identity", resourceName: "*" })]
+          resources: [
+            this.formatArn({ service: "ses", resource: "identity", resourceName: "*" }),
+            this.formatArn({ service: "ses", resource: "configuration-set", resourceName: "*" })
+          ]
         })
       );
       new Rule(this, "NotifyRule", {

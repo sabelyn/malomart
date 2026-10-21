@@ -109,6 +109,21 @@ describe("PaymentMethodsSection", () => {
     expect(screen.getByRole("status").textContent).toBe(`Added ${EXPRESS_NAME}.`);
   });
 
+  it("keeps the card number to 16 digits grouped with dashes", async () => {
+    stubApi({ [LIST]: () => json(200, methods) });
+    const user = userEvent.setup();
+    renderSection();
+    await loaded();
+
+    await user.click(screen.getByRole("button", { name: "Add a card" }));
+    const input = screen.getByLabelText<HTMLInputElement>(/^Card number/);
+    await user.type(input, "4111a1111 1111-42429999");
+    expect(input.value).toBe("4111-1111-1111-4242");
+
+    await user.type(input, "{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowLeft}{Backspace}");
+    expect(input.value).toBe("4111-1111-1114-242");
+  });
+
   it("shows validation errors without contacting the vault", async () => {
     const fetch = stubApi({ [LIST]: () => json(200, methods) });
     const user = userEvent.setup();
